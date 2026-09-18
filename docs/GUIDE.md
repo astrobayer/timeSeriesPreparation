@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.1 · 2026-09-18 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.2 · 2026-09-18 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -193,8 +193,8 @@ immutable)**
    - move `docs/timeSeriesPreparation/` from gracefoReading's branch
      `claude/preproc-concept` to `docs/`: `CONCEPT.md`, `GUIDE.md`, `inputs/`;
    - add a `HANDOVER.md` stub (status: no code) and the README;
-   - open PR #1 as a draft. There is no CI yet: you review and merge by hand,
-     the only merge without CI.
+   - open the X-00a PR as a draft (it closes issue #1). There is no CI yet:
+     you review and merge by hand, the only merge without CI.
 6. **Then gracefoReading #15:**
    - the Session removes `docs/timeSeriesPreparation/`;
    - O-13 points to the new repository;

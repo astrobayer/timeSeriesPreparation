@@ -24,6 +24,7 @@ disagree, the concept is right.
     `psd2arma`, `tsCheckResiduals`.
   - The Lyapunov solver exists in four local copies (its HANDOFF §4 says so).
 
-**Gate safety.** Zip files are never unpacked inside this repository.
-`testSourceIntegrity` walks `**/*.m`, and about 110 foreign `.m` files would
-reach it and `docsrc/auditHelp.py`.
+**Gate safety.** Zip files are never unpacked inside a repository. The static
+audits walk every `.m` file (gracefoReading's `testSourceIntegrity`; here the
+shared audit C-01 from X-00b), and about 110 foreign `.m` files would reach
+them.

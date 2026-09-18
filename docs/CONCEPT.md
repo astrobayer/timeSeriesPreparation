@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.11 (DRAFT) · 2026-09-18 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.12 (DRAFT) · 2026-09-18 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -9,11 +9,11 @@ truth for its own status, obligations and decisions and points here
 
 Nothing in this file is implemented yet.
 
-**Hosting (Q14, item 5).** The timeSeriesPreparation repository is created
-now with documents only (X-00a), and this folder moves there at once.
-gracefoReading #15 then shrinks to a pointer plus the G-01/G-02 records, and
-the input zips never enter the reader's history. gracefoReading gains **no preprocessing code**; its
-only items are two reader obligations, G-01 (its O-11) and G-02 (its O-1).
+**Hosting (Q14, item 5).** Since X-00a (2026-09-18) this file lives in the
+timeSeriesPreparation repository, `docs/`. It came from gracefoReading branch
+`claude/preproc-concept` at `4c08cb7`, where its earlier history stays; the
+input zips never enter the reader's history. gracefoReading gains **no
+preprocessing code**; its only items are reader obligations, G-01 … G-06.
 
 **History**
 
@@ -30,7 +30,8 @@ only items are two reader obligations, G-01 (its O-11) and G-02 (its O-1).
 | 0.8 | Q4: no orbit integration and no LGD; Q6: classic GRACE is supported as well, with real files supplied by the owner when the work starts |
 | 0.9 | Q14: improvements 1–9 adopted — gpsns epoch authority (R-02), campaign mode (X-15, N-09), stage cache (X-14), regression baseline (N-10), concept moved now (X-00a), decisions recorded once, shared static audit (C-01), downstream contracts (C-02), X-02 later in the order |
 | 0.10 | Q15: improvements 11–20 adopted — output-epoch CRN, QC speed after an unchanged port, reading profiled, streaming accumulation, real-day defect catalogue, minimum-data gate, array conventions, data-handling rules, one help template and generator, executed documentation |
-| **0.11** | **Q16: the deep-research findings of 2026-09-18 are distributed to the repositories (W-1…W-15 → G-04…G-06, X-17, X-18, N-11, N-12, L-07…L-09; ORC-12, ORC-13; V-13…V-16); research answers to V-1…V-11 recorded as expected values (9.2); the global order and all procedures move to `GUIDE.md`** |
+| 0.11 | Q16: the deep-research findings of 2026-09-18 are distributed to the repositories (W-1…W-15 → G-04…G-06, X-17, X-18, N-11, N-12, L-07…L-09; ORC-12, ORC-13; V-13…V-16); research answers to V-1…V-11 recorded as expected values (9.2); the global order and all procedures move to `GUIDE.md` |
+| **0.12** | **moved to the timeSeriesPreparation repository (X-00a); no design change** |
 
 **Read at**
 
@@ -667,8 +668,7 @@ their only authority; this section is not a copy of it.
 1. **The order of work and every procedure are in `GUIDE.md`.** Follow it;
    do not reconstruct them from this file.
 2. gracefoReading gains **no preprocessing code**; G-01 (O-11) and G-02
-   (O-1, classic layouts) are reader fixes. This folder moves at X-00a, which
-   comes first.
+   (O-1, classic layouts) are reader fixes. This folder moved here at X-00a.
 3. **Decisions live in section 11 only.** A HANDOVER cites the Q-id and
    states the consequence for its own repository; it never restates the
    decision.
