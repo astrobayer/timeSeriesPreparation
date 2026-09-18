@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.2 · 2026-09-18 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.3 · 2026-09-18 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 merges gracefoReading #15 by squash and keeps its branch; new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -45,7 +45,7 @@ does not apply, the PR body says why.
 | 8 | CI | automatic | Every required check of the repository (section 2) must be green on the **last** commit. |
 | 9 | Local gate | You or Session (tier A) | The repository's MATLAB gate command (section 2). The verdict goes into the PR body with the date and the MATLAB release. |
 | 10 | Record | Session | HANDOVER rows in **the same PR**: measured status, the verdict per tier, any debt with its reason, and the "next session" note. **No record, no merge.** |
-| 11 | Ready | Session | Mark the PR ready, citing both verdicts: CI run id and local gate. |
+| 11 | Ready | Session, then you | The Session posts both verdicts (CI run id, local gate) as a PR comment; **you** click *Ready for review*. The token cannot do it: `markPullRequestReadyForReview` returns FORBIDDEN for it (measured 2026-09-18). |
 | 12 | Merge | **You only** | Checklist in section 6. Method: **Create a merge commit**. Then delete the branch. |
 | 13 | Release | You + Session | Only when the WP completes a release (section 3): version bump in the PR before the merge; after the merge an annotated tag and a GitHub release; open the PRs that raise downstream minimum versions. |
 
@@ -62,6 +62,10 @@ does not apply, the PR body says why.
 - **Token:** read from the project file at call time, never echoed, never in
   a remote URL, output piped through `sed "s/$TOKEN/***/g"`.
 - **Tags are never moved or deleted.** The rulesets forbid it anyway.
+- **Never push to the branch of a merged PR.** The push silently recreates
+  the branch without a PR, and no CI runs, although `git push` and
+  `git ls-remote` both look like success (NonGravForces, twice on
+  2026-09-18). Follow-up work starts on a new branch from `main`.
 
 ---
 
@@ -199,7 +203,11 @@ immutable)**
    - the Session removes `docs/timeSeriesPreparation/`;
    - O-13 points to the new repository;
    - the G-01…G-06 records stay;
-   - static audit, CI green, record, ready → **you merge**.
+   - static audit, CI green, record, ready → **you merge with Squash and
+     merge** (the one exception to step 12: a merge commit would carry the
+     branch's input zips and concept drafts into the reader's history);
+   - **keep** the branch `claude/preproc-concept`: it is the concept's
+     archive before X-00a.
 7. **Then NonGravForces #57:** the Session updates the concept path in O-45;
    audit, CI green → **you merge**.
 
@@ -445,5 +453,5 @@ next action as a command.
 | NonGravForces | N-01 #58 · N-02 #59 · N-03 #60 · N-04 #61 · N-05 #62 · N-06 #63 · N-07 #64 · N-08 #65 · N-09 #66 · N-10 #67 · N-11 #68 · N-12 #69 |
 | lsqvce | release v6.1.0 + V-6 #107 |
 | ci-actions | C-01 #2 · C-02 #3 · C-03 #4 · C-04 #5 |
-| timeSeriesPreparation | opened at creation (A5): X-00a … X-18 |
+| timeSeriesPreparation | X-00a #1 (PR #2, merged) · X-00b #3 · X-01 #4 · X-02 #5 · X-03 #6 · X-04 #7 · X-05 #8 · X-06 #9 · X-07 #10 · X-08 #11 · X-09 #12 · X-10 #13 · X-11 #14 · X-12 #15 · X-13 #16 · X-14 #17 · X-15 #18 · X-16 #19 · X-17 #20 · X-18 #21 |
 | rangingPreparation | opened at creation (A5): L-00 … L-09 |
