@@ -12,7 +12,9 @@ restates:
 
 ## A. Status
 
-**Documents only.** X-00a (issue #1) delivered on its branch; merge pending.
+**Documents only.** X-00a merged (#2, `f26df8d`).
+
+**In progress: GUIDE A5 records.** Frozen scope: record the issues X-00b … X-18 (#3–#21); record A3 steps 6 and 7 as done on their branches; GUIDE rev 1.3 (the squash-merge exception for gracefoReading #15, a standing rule against pushing to a merged PR's branch, the issue numbers in Appendix A). Out of scope: any code.
 
 | item | state |
 |---|---|
