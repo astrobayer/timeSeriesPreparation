@@ -2,7 +2,7 @@
 
 **Revision 1.3 · 2026-09-18 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 merges gracefoReading #15 by squash and keeps its branch; new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -203,11 +203,10 @@ immutable)**
    - the Session removes `docs/timeSeriesPreparation/`;
    - O-13 points to the new repository;
    - the G-01…G-06 records stay;
-   - static audit, CI green, record, ready → **you merge with Squash and
-     merge** (the one exception to step 12: a merge commit would carry the
-     branch's input zips and concept drafts into the reader's history);
-   - **keep** the branch `claude/preproc-concept`: it is the concept's
-     archive before X-00a.
+   - static audit, CI green, record, ready → you merge. **Done 2026-09-18**
+     with a merge commit (`de87fbf`); the planned squash did not happen, so
+     the drafts and input zips are in gracefoReading's history (accepted;
+     HANDOVER F).
 7. **Then NonGravForces #57:** the Session updates the concept path in O-45;
    audit, CI green → **you merge**.
 
