@@ -2,7 +2,7 @@
 
 **Revision 1.3 · 2026-09-18 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.3: A3 step 6 merges gracefoReading #15 by squash and keeps its branch; new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 merges gracefoReading #15 by squash and keeps its branch; new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -45,7 +45,7 @@ does not apply, the PR body says why.
 | 8 | CI | automatic | Every required check of the repository (section 2) must be green on the **last** commit. |
 | 9 | Local gate | You or Session (tier A) | The repository's MATLAB gate command (section 2). The verdict goes into the PR body with the date and the MATLAB release. |
 | 10 | Record | Session | HANDOVER rows in **the same PR**: measured status, the verdict per tier, any debt with its reason, and the "next session" note. **No record, no merge.** |
-| 11 | Ready | Session | Mark the PR ready, citing both verdicts: CI run id and local gate. |
+| 11 | Ready | Session, then you | The Session posts both verdicts (CI run id, local gate) as a PR comment; **you** click *Ready for review*. The token cannot do it: `markPullRequestReadyForReview` returns FORBIDDEN for it (measured 2026-09-18). |
 | 12 | Merge | **You only** | Checklist in section 6. Method: **Create a merge commit**. Then delete the branch. |
 | 13 | Release | You + Session | Only when the WP completes a release (section 3): version bump in the PR before the merge; after the merge an annotated tag and a GitHub release; open the PRs that raise downstream minimum versions. |
 
