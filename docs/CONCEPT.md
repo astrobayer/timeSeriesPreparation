@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.13 (DRAFT) · 2026-09-18 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.14 (DRAFT) · 2026-09-18 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -34,7 +34,8 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.10 | Q15: improvements 11–20 adopted — output-epoch CRN, QC speed after an unchanged port, reading profiled, streaming accumulation, real-day defect catalogue, minimum-data gate, array conventions, data-handling rules, one help template and generator, executed documentation |
 | 0.11 | Q16: the deep-research findings of 2026-09-18 are distributed to the repositories (W-1…W-15 → G-04…G-06, X-17, X-18, N-11, N-12, L-07…L-09; ORC-12, ORC-13; V-13…V-16); research answers to V-1…V-11 recorded as expected values (9.2); the global order and all procedures move to `GUIDE.md` |
 | 0.12 | moved to the timeSeriesPreparation repository (X-00a); no design change |
-| **0.13** | **hosting paragraph corrected: gracefoReading #15 was merged with a merge commit, so the drafts and input zips are in gracefoReading's history** |
+| 0.13 | hosting paragraph corrected: gracefoReading #15 was merged with a merge commit, so the drafts and input zips are in gracefoReading's history |
+| **0.14** | **Stage C done: verification items closed from the registered documents and real bytes (9.3). The v2 CRN oracle is wrong — the ATBD raises each passband term to the power N_c, the port raised the sum; real ACT1A→ACT1B data give DC gain 1 + 6.4e-8, not 1.0004533. Section 8 and ORC-1/ORC-2 corrected** |
 
 **Read at**
 
@@ -275,7 +276,7 @@ no positional fallback.
 
 | # | stage | function | guarantee |
 |---|---|---|---|
-| 1 | mask | `mask` | qualflg layers via `decodeQualFlags`; THR1B windows (margins justified by the CRN span); eclipse transitions from a driver series; CRN edges; a user layer; **official event lists** (G-05) as layers and calibration windows |
+| 1 | mask | `mask` | qualflg layers via `decodeQualFlags`, including the **L1B fill flags**: ACC gaps ≤ 100 s and ranging gaps < 21 s are cubic-filled in L1B processing (R-2, PDF pp. 18, 20), and LRI1B bits 6/7 mark interpolated points > 5 s / ≤ 5 s from the CRN centre. Also the **ACC large-range-mode** bit 4 (R-2, PDF p. 32); THR1B windows (margins justified by the CRN span); eclipse transitions from a driver series; CRN edges; a user layer; **official event lists** (G-05) as layers and calibration windows |
 | 2 | QC | `qc` | residual-based outliers; impulses (matched filter on the CRN impulse response, THR1B priors); jumps (reported and turned into parameters, never masked); after X-16, a **labelled template bank** (twang, heater, magnetic-torquer and thruster spikes) with one mask layer per type (X-17) |
 | 3 | align | `align`, `checkAlignment` | reference moved onto the observation epochs; lag diagnostic over ±60 s that warns above 1 s and never shifts silently (v3 F2) |
 | 4 | consistency | `crnKernel`, `crnApply` | exact ATBD kernel normalised at f0, DC gain 1.0004533 kept; chunked per file day with half-span overlap, bit-identical to unchunked; NaN edges. **The convolution sum is evaluated only at the output epochs** (1 Hz for ACC1B from the 10 Hz grid): about 3.6e8 instead of 3.6e9 multiply-adds per day for 3 axes, pinned equal to full-rate convolution followed by sampling |
@@ -425,7 +426,7 @@ are estimated by `lsqvce.fit`.
 
 | rule | evidence |
 |---|---|
-| exact ATBD CRN kernel only; normalise at f0, keep DC gain 1.0004533 | approximate kernel −11.5 % scale; unit-DC renormalisation +453 ppm (v2 refval) |
+| exact ATBD CRN kernel **as printed**: H_k = Σ_m [sin(π(k−m)/N_c) / sin(π(k−m)/N_f)]^{N_c} — the power on **each term**; normalised at f0 | ATBD App. B (R-1, PDF p. 40, read from the page image). **Measured 2026-09-19:** GRACE-C 2020-01-02, mean(ACT1B_y)/mean(ACT1A_x) over 01:00–23:00 = **1.000000064** (the bias-dominated axis). The ATBD form gives DC gain 1 + 1.1e-7 (ACC), 1 + 1.1e-11 (KBR). The v2 port `refval/crn_atbd.py` raises the passband **sum** to N_c and gives 1.0004533 — refuted by the data. The v2 figures "−11.5 % scale" and "+453 ppm" were computed with that port and are void until re-derived (ORC-2) |
 | model and bias basis through the same kernel as the observation | an unfiltered comparison biases the scale to ≈ 0.49 (v2) |
 | observability gate before the fit; demean regressors | corr(bias, scale) = −1 on quiet arcs (v2) |
 | never co-estimate per-rev scale and 1/rev terms | r ≈ −0.7 (v2) |
@@ -436,11 +437,13 @@ are estimated by `lsqvce.fit`.
 | **ported code moves unchanged first** (sigtools, NonGravForces `qc`); conventions or speed change afterwards, in a separate WP gated by equality to the ported version | any numerical change must be attributable to a WP that says so |
 | CRN convolution evaluated only at output epochs | same numbers, a tenth of the work (item 11) |
 
-GRACE-FO CRN parameters are the GRACE ATBD ones and are unverified for
-GRACE-FO (V-1). `crnKernel` warns until a named constant cites the handbook.
-For classic GRACE the ATBD is the mission's own document, so the warning
-does not apply there; its numbers are still checked against the ATBD by
-ORC-1.
+**GRACE-FO ACC:** the handbook (R-2) states that the CRN filter is used but
+gives no numbers. The GRACE ATBD values (f_s 10 Hz, N_c 7, T_f 140.7 s,
+B 0.035 Hz, N_B = B·T_f = 5, f0 0.37 mHz) are consistent with the measured DC
+gain. The full frequency response is confirmed in X-12, by filtering ACT1A
+with the kernel and comparing to ACT1B epoch by epoch after the handbook's time
+corrections. Until then, `crnKernel` cites both documents and this
+measurement, and does not warn.
 
 ---
 
@@ -469,8 +472,8 @@ passed + failed + incomplete = total before every run.
 
 | id | oracle (nothing checks itself) | checks |
 |---|---|---|
-| ORC-1 | GRACE L1B ATBD App. B via Python `refval/crn_atbd.py` (v2 zip) | CRN taps, DC gain, derivatives |
-| ORC-2 | v2 keystone numbers regenerated in Python | 0.49, +453 ppm, 5–7× inflation, lag-1 ACF > 0.8 |
+| ORC-1 | GRACE L1B ATBD App. B **as printed** (R-1, PDF p. 40) re-implemented in Python; **not** the v2 `refval/crn_atbd.py`, whose exponent is misplaced. Real-data check: ACT1A → ACT1B (X-12) | CRN taps, DC gain, derivatives |
+| ORC-2 | v2 keystone numbers **re-derived with the corrected kernel** before any is used; +453 ppm is void, and −11.5 % and 0.49 depend on the kernel | 0.49, 5–7× inflation, lag-1 ACF > 0.8 (each re-measured) |
 | ORC-3 | real 2020-01-01 ACT1B/THR1B/GNV1B/SCA1B (C), KBR1B, LRI1B | dictionaries, masks, end-to-end smoke |
 | ORC-4 | ITSG `nonConservativeForces` 2020-01-01 | independent reference series (V-4) |
 | ORC-5 | numpy circular-orbit geometry | β′ and u (referenceSystem #25) |
@@ -542,7 +545,7 @@ would be a second authority.
   at the top of the dependency graph, so no toolbox's CI needs a toolbox
   above it; each toolbox's getting-started page links to it.
 
-### 9.2 Research answers of 2026-09-18 — expected values, not yet facts
+### 9.2 Research answers of 2026-09-18 — expected values, superseded by 9.3 wherever 9.3 has a row
 
 The deep-research report of 2026-09-18 answered most verification items from
 primary sources. These answers are **expected values**: each V-item closes
@@ -564,6 +567,35 @@ day), matching the filter outputs below.
 | V-10 | ACC thermal control permanently off from April 2011; GRACE-B accelerometer off 2016–2017, GRACE-A → B transplant | Tapley et al. 2015; Behzadpour et al. 2021 |
 | V-11 | external oracles: Klinger & Mayer-Gürr 2016 (daily bias/scale), Behzadpour et al. 2021, Harvey et al. 2022, Siemes et al. 2023 (density datasets with calibration) | the publications and their data sets |
 | release | GRACE-FO L1B RL04 is current; no L1B RL05 announced; the SDS reprocessed the accelerometer transplant (ACX → ACX2) for gravity RL06.3 (2024-11-07); RL07 in preparation | PO.DAAC release notes, GRACE-FO SDS newsletters |
+
+### 9.3 Verification results of 2026-09-19 — measured
+
+Evidence is a registered document (`docs/references/REFERENCES.md`) with its
+page, or real bytes with the file named.
+
+| item | status | result | evidence |
+|---|---|---|---|
+| V-1 | **closed at DC**; frequency response in X-12 | ACC CRN per ATBD: f_s 10 Hz, N_c 7, T_f 140.7 s, B ≈ 0.035 Hz, N_B = B·T_f, N_f = f_s·T_f odd, f0 0.37 mHz; the power applies to each passband term. GRACE-FO uses a CRN with unnumbered parameters. Measured DC gain 1 + 6.4e-8 | R-1 PDF pp. 16, 40; R-2 PDF p. 20; ACT1A/ACT1B C 2020-01-02 |
+| V-2 | **KBR closed; LRI open** | KBR: 7th order, 100 mHz, T_f 70.7 s, 5 s output. LRI: CRN with other parameters than KBR, 2 s output, but no numbers in R-2. The SYSU values stay unconfirmed, to be measured with the same mean-ratio test on LRI1A → LRI1B | R-1 PDF pp. 13, 40; R-2 PDF p. 18; LRI1B sampling 2 s (real file) |
+| V-3 | **closed** | LRI1B: 16 columns with KBR1B names. Col 5 `iono_corr` is the scale correction ε (scale = 1 + ε; 2.240125737628639e-06 on 2020-01-02). Cols 6–8 light-time correction, additive (m, m/s, m/s²). Cols 9–11 and 13, 15 "not defined" (zeros). Col 12/14 laser CNR C/D (dB-Hz). qualflg bit 0 phase break, bits 6/7 interpolation. **No LRI–KBR time offset column** (the research claim is refuted for this file). No ionospheric correction for LRI | `LRI1B_2020-01-02_Y_04.txt` header; R-2 PDF p. 18 |
+| V-4 | **closed** | ITSG `nonConservativeForces` is **calibrated accelerometer data**, not a model. Against ACT1B (GRACE-C, 2020-01-02, 8 640 epochs), a bias + scale fit gives correlation 0.984 / 0.973 / 0.955, scales 1.066 / 0.915 / 0.864 and residual rms 2.8 / 3.1 / 2.5e-9 m/s². The README says only "accelerations due to non-conservative forces, SRF, 10 s" | R-9; ITSG file vs ACT1B |
+| V-5 | **closed** | The ACT1B header does **not** say "transplant": source "Transformed Accelerometer data for GRACE D", input ACT1A. D uses the GRACE-C transplant on and after 2018-06-21, per R-3. So the D report derives transplant status from the date | R-3 PDF p. 2; `ACT1B_2020-01-02_D_04.txt` header |
+| V-8 | **partly closed** | Classic L1B: an ASCII header of 80-byte records ending "END OF HEADER"; `.dat` binary, `.asc` ASCII; KBR1B qualflg bit 0 threshold 0.2 cycle. RL02 holds the full set, RL03 only KBR1B/SCA1B. The binary record layouts are read in G-02 | R-4 PDF pp. 18, 34–35; real RL02/RL03 files |
+| V-9 | **closed** | GRACE macro model: R-5 §I.5.3.3 mass, §I.5.3.4 exterior dimensions, §I.5.3.5 surface properties (emissivity, absorptivity/reflectivity), §I.5.3.6 antenna locations | R-5 PDF pp. 20–23 |
+| V-11 | **closed** | ZARM (R-13) for GRACE A/B and C; TN-02 a-priori scales for GRACE (A: 0.9595 / 0.9797 / …, convention bias + scale·f) | R-13, R-10 PDF p. 1 |
+| V-13 | **closed** | AHK1B carries the accelerometer temperatures TSU Y+ / Y− / Z+ / Z−, TFEEU IF / REF / X / YZ and TICUN / TICUR. **Which columns are present per record is set by `prod_flag`**, so the reader must decode variable columns. The header has one malformed name ("TSU Z-" with a space). Units are not given (values ≈ 22 look like °C) | R-2 PDF pp. 31–32; `AHK1B_2020-01-02_C_04.txt` |
+| V-14 | **closed** | LHK1B carries LRI housekeeping (TM_RLU_TEMP, TMA_PMH_TEMP, …) but **no solar-array temperature**; RL04 L1B has none. AEI RTC1B provides the range thermal-coupling correction directly, so L-09 uses RTC1B | real LHK1B; D-6 |
+| V-15 | **closed** | PO.DAAC `GRACEFO_L1B_ASCII_GRAV_JPL_RL04`; ISDC daily archives `.noLRI` / `.LRI` / `.ACX`, each with an MD5 list; ITSG and ZARM publish no checksums | GUIDE Stage B runs |
+| V-16 | **closed** | ACX: AC0 thruster model, ACU transplant without thrusts (pitch offsets), ACS SRP/albedo correction, ACM drag and other forces; **ACH = ACU + ACS + ACM + AC0** (linear components), replacing ACT. Present every day of 2020-01 | R-7 (entry 2022-05-10); ISDC listing |
+
+**Further measured facts from Stage C**
+- **AF → SRF for GRACE-FO ACT (C):** x_SRF = z_AF, y_SRF = x_AF,
+  z_SRF = y_AF, all positive (the mean-ratio matrix of the same test).
+- **LRI phase-jump processing changed for products from 2020-06-27** (R-7). The
+  reference month 2020-01 uses the older deglitching, which matters for L-02 and
+  ORC-13.
+- **Still open:** V-2 (LRI numbers), V-6 (lsqvce), V-7 (sigtools smoother),
+  V-10 (classic thermal history, R-12/P-19), V-12 (defect days).
 
 ---
 
