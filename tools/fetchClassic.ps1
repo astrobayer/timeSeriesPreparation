@@ -30,7 +30,7 @@ function PlaceFile([IO.FileInfo]$f, [string]$dir) {
   } else { Move-Item -LiteralPath $f.FullName -Destination $t; $script:stats.extracted++ }
 }
 $archives = @()
-foreach ($m in ($Months -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })) {
+foreach ($m in ($Months -split '[,\s]+' | Where-Object { $_ -match '^\d{4}-\d{2}$' })) {
   $archives += @{ name = "grace_1B_${m}_03.tar.gz"; kind = 'month'; month = $m }
 }
 if ($Transplant) { $archives += @{ name = 'grace_ACC1B_transplant_2016-11-13_2017-06-29_03.tar.gz'; kind = 'transplant'; month = '' } }

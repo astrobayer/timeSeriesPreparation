@@ -20,4 +20,4 @@ jobs:
         shell: powershell
         env:
           READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}
-        run: ./tools/fetchClassic.ps1 -Months 2008-07,2012-01,2017-01 -Transplant
+        run: ./tools/fetchClassic.ps1 -Months '2008-07,2012-01,2017-01' -Transplant
