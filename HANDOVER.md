@@ -46,9 +46,9 @@ The four input files are unchanged, and their SHA-256 match
 | D-5 | present in NonGravForces' `data\` (space weather and CERES, 2019-09 … 2020-03) | inventory |
 | D-6 | **complete** for AEI: LRI1B and RTC1B v52, 2020 Q1 (Jan 31, Feb 29, Mar 31 days), release notes, Misfeldt et al. 2023; CC BY 3.0. SYSU/HUST not planned (owner named AEI) | same run; `GRACEFO\L1B\AEI_v52\SHA256SUMS_2020-Q1.txt` (186) |
 | D-7 | **complete**: the owner names ITSG attitude as D-7; it arrived with D-3 | — |
-| D-8 | waits for the owner | — |
+| D-8 | **complete** for 2008-07 (before April 2011), 2012-01 (thermal control off), 2017-01 (GRACE-B transplant): RL02 daily archives (full product set, 93 days, 5 190 files) and RL03 monthly archives (KBR1B and SCA1B only), plus the GRACE-B transplant archive (ACT1B B, 2016-11-13 … 2017-06-29, 169 files). Classic `.dat` records are **binary** (ASCII header `FILE FORMAT … : 0`) | fetch run 35466840120 (PR #29); `GRACE\L1B\JPL\RL03\SHA256SUMS_2026-09-19_222059.txt` (6 014); findings posted on gracefoReading#17 (G-02) |
 | D-9 | can start now (D-2 exists) | — |
-| D-10 | missing | — |
+| D-10 | **source found, not fetched** (waits for the owner's go): ZARM Bremen (Wöske et al. 2024, Adv. Space Res. 74:4517) publishes POD-based ACC calibration for the whole missions — GRACE-C 2018–2023 (constant scale, 3-hourly bias), GRACE A/B 2002–2016 (constant and monthly scale, 3-hourly bias), monthly scale factors. **Their convention is ACC_cal = s·(ACC + b)**, so their bias converts to this design's b = s·b_ZARM. No GRACE-D series (D is a transplant) | `https://www.zarm.uni-bremen.de/zarm_daten/` (`ACC/2002/`, `ACC/2018/`), headers read 2026-09-19 |
 
 **Finding from TN-01a (2026-09-19): GRACE-D safe mode inside the reference month.**
 - 2020-01-17: GRACE-D IPU reboot (spontaneous) at about 07:43.
