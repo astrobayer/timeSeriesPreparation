@@ -1,0 +1,23 @@
+# THROWAWAY: runs only on its own PR and is never merged (GUIDE Stage B, D-10 ZARM).
+# Writes into the owner's DATAPOOL (READING_DATA_POOL); never overwrites or deletes an existing file.
+name: fetch-zarm
+on:
+  pull_request:
+    paths: ['.github/workflows/fetch-zarm.yml', 'tools/fetchZarm.ps1']
+permissions:
+  contents: read
+concurrency:
+  group: fetch-pool-data
+  cancel-in-progress: false
+jobs:
+  fetch:
+    name: fetch D-10 (ZARM)
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Fetch (idempotent, no overwrite)
+        shell: powershell
+        env:
+          READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}
+        run: ./tools/fetchZarm.ps1 -Months '2020-01,2008-07,2012-01,2017-01'
