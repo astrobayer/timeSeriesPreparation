@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.12 (DRAFT) · 2026-09-18 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.13 (DRAFT) · 2026-09-18 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -10,9 +10,11 @@ truth for its own status, obligations and decisions and points here
 Nothing in this file is implemented yet.
 
 **Hosting (Q14, item 5).** Since X-00a (2026-09-18) this file lives in the
-timeSeriesPreparation repository, `docs/`. It came from gracefoReading branch
-`claude/preproc-concept` at `4c08cb7`, where its earlier history stays; the
-input zips never enter the reader's history. gracefoReading gains **no
+timeSeriesPreparation repository, `docs/`. It came from gracefoReading at
+`4c08cb7`; its earlier history is in gracefoReading's `main` history, because
+PR #15 was merged with a merge commit (`de87fbf`) rather than squashed. The
+input zips therefore entered the reader's history (~2.7 MB, accepted
+2026-09-18). gracefoReading gains **no
 preprocessing code**; its only items are reader obligations, G-01 … G-06.
 
 **History**
@@ -31,7 +33,8 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.9 | Q14: improvements 1–9 adopted — gpsns epoch authority (R-02), campaign mode (X-15, N-09), stage cache (X-14), regression baseline (N-10), concept moved now (X-00a), decisions recorded once, shared static audit (C-01), downstream contracts (C-02), X-02 later in the order |
 | 0.10 | Q15: improvements 11–20 adopted — output-epoch CRN, QC speed after an unchanged port, reading profiled, streaming accumulation, real-day defect catalogue, minimum-data gate, array conventions, data-handling rules, one help template and generator, executed documentation |
 | 0.11 | Q16: the deep-research findings of 2026-09-18 are distributed to the repositories (W-1…W-15 → G-04…G-06, X-17, X-18, N-11, N-12, L-07…L-09; ORC-12, ORC-13; V-13…V-16); research answers to V-1…V-11 recorded as expected values (9.2); the global order and all procedures move to `GUIDE.md` |
-| **0.12** | **moved to the timeSeriesPreparation repository (X-00a); no design change** |
+| 0.12 | moved to the timeSeriesPreparation repository (X-00a); no design change |
+| **0.13** | **hosting paragraph corrected: gracefoReading #15 was merged with a merge commit, so the drafts and input zips are in gracefoReading's history** |
 
 **Read at**
 
