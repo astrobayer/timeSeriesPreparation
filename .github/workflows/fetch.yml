@@ -1,0 +1,23 @@
+# THROWAWAY: runs only on its own PR and is never merged (GUIDE Stage B, D-2 and D-3 for 2020-01).
+# Writes into the owner's DATAPOOL (READING_DATA_POOL); never overwrites or deletes an existing file.
+name: fetch-pool-data
+on:
+  pull_request:
+    paths: ['.github/workflows/fetch.yml', 'tools/fetchPoolData.ps1']
+permissions:
+  contents: read
+concurrency:
+  group: fetch-pool-data
+  cancel-in-progress: false
+jobs:
+  fetch:
+    name: fetch D-2 and D-3 (2020-01)
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Fetch (idempotent, no overwrite)
+        shell: powershell
+        env:
+          READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}
+        run: ./tools/fetchPoolData.ps1 -Month 2020-01
