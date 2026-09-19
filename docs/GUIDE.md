@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.5 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.6 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -315,12 +315,18 @@ Rules:
 ## 6. Stage C — collect the references
 
 The single bibliography is the register `docs/references/REFERENCES.md` in
-timeSeriesPreparation, created in X-00b.
-- Each row: id, full citation, source URL, what it is needed for, whether a
-  local copy is allowed, status.
-- Local copies go in `docs/references/pdf/`, **only** for openly published
-  documents (JPL/NASA documents, open-access papers). Everything else is
-  registered by DOI only.
+timeSeriesPreparation (created 2026-09-19).
+- Each row: id, full citation, where the local copy lives, what it is needed
+  for.
+- **Local copies live in the DATAPOOL** (`GRACEFO\DOCUMENTS\…`,
+  `GRACE\DOCUMENTS\…`, with the ISDC folder names), not in the repository.
+  This is one pattern for everything downloaded, and it keeps binaries out of
+  git.
+- Papers are registered by DOI; a copy is added only when a WP needs its
+  equations and the paper is open access.
+- Fetch tool: branch `claude/fetch-docs` (PR #31), `tools/fetchReferenceDocs.ps1`.
+  It mirrors the Level-1-relevant ISDC documentation for both missions (AOD1B
+  descriptions and Level-2 documents skipped).
 - **A V-item closes only when its number is read from the registered
   document**, with page or table cited in the HANDOVER row. The research
   answers in `CONCEPT.md` 9.2 are expected values, not facts.
@@ -385,7 +391,7 @@ CHANGELOG: MINOR for new capability, PATCH for fixes.
 |---|---|---|
 | 0.1 | Stage A (A1–A6) | token reaches both new repositories; both exist with rulesets; X-00a merged; #15 and #57 merged |
 | 0.2 | Stage B, D-1 to D-7 (D-8 when you supply it, D-9 after D-2) | `MANIFEST.sha256` written; `sha256sum -c` passes |
-| 0.3 | Stage C; close the V-items that documents answer: V-1, V-2, V-3, V-5, V-8, V-13 to V-16 | one docs-only PR in timeSeriesPreparation per batch, each V row citing page or table |
+| 0.3 | Stage C; close the V-items that documents answer: V-1, V-2, V-3, V-5, V-8, V-13 to V-16 | **done 2026-09-19** (CONCEPT 9.3); open: V-2 LRI numbers, V-6, V-7, V-10, V-12 |
 | 0.4 | lsqvce#107: V-6 read from source, then release **lsqvce v6.1.0** (annotated) | tag read back |
 
 ### Phase 1 — foundations, four repositories in parallel

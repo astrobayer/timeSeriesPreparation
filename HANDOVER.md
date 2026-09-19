@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.5 · 2026-09-19 · no code yet**
+**Revision 0.6 · 2026-09-19 · no code yet**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -23,7 +23,9 @@ restates:
 | ruleset `Tag protection` | `~ALL`, no deletion, no force push |
 | content | `docs/CONCEPT.md` Rev 0.13, `docs/GUIDE.md` rev 1.3, `docs/inputs/` (4 files), this HANDOVER, README |
 | code, `Contents.m`, CI, audit | none (X-00b) |
-| `docs/GUIDE.md` | rev 1.4 (Stage B follows the real DATAPOOL layout) |
+| `docs/GUIDE.md` | rev 1.6 (Stage C done) |
+| `docs/CONCEPT.md` | Rev 0.14 (verification results 9.3; CRN correction) |
+| `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was
 identical to gracefoReading branch `claude/preproc-concept` at `4c08cb7`.
@@ -49,6 +51,21 @@ The four input files are unchanged, and their SHA-256 match
 | D-8 | **complete** for 2008-07 (before April 2011), 2012-01 (thermal control off), 2017-01 (GRACE-B transplant): RL02 daily archives (full product set, 93 days, 5 190 files) and RL03 monthly archives (KBR1B and SCA1B only), plus the GRACE-B transplant archive (ACT1B B, 2016-11-13 … 2017-06-29, 169 files). Classic `.dat` records are **binary** (ASCII header `FILE FORMAT … : 0`) | fetch run 35466840120 (PR #29); `GRACE\L1B\JPL\RL03\SHA256SUMS_2026-09-19_222059.txt` (6 014); findings posted on gracefoReading#17 (G-02) |
 | D-9 | can start now (D-2 exists) | — |
 | D-10 | **complete**: ZARM Bremen (Wöske et al. 2024): all ACC calibration files, i.e. GRACE A/B 2002–2016 (constant and monthly scale, 3-hourly bias, monthly scale factors) and GRACE-C 2018–2023. For the reference months also ZARM's GRACE-D transplant 2020-01 (24 days) and modelled radiation accelerations (GRACE-A 2008-07 and 2012-01; C 2020-01, 31 days; D 2020-01, 26 days; none published for 2017). **Convention ACC_cal = s·(ACC + b)**: their bias converts to this design's b = s·b_ZARM. No GRACE-D calibration series (D is a transplant) | fetch run 35467369081 (PR #30); `ZARM\SHA256SUMS_2026-09-19.txt` (95) |
+
+**Stage C (references), 2026-09-19.**
+- 220 ISDC documents were mirrored into the DATAPOOL by fetch run 35467953474
+  (PR #31), with manifest `GRACEFO\DOCUMENTS\SHA256SUMS_documents_2026-09-19.txt`.
+- Verification items were closed from the documents and from real files
+  (CONCEPT 9.3).
+
+**Finding: the v2 CRN oracle is wrong.**
+- The ATBD formula, read from the page image (R-1, PDF p. 40), raises **each**
+  passband term to the power N_c. The v2 port raised the **sum**.
+- **Real data decide it:** GRACE-C 2020-01-02, mean(ACT1B_y) / mean(ACT1A_x)
+  over 01:00–23:00 = **1.000000064**. The ATBD form predicts 1 + 1.1e-7; the
+  v2 port predicts 1.0004533.
+- Section 8 of the concept and ORC-1/ORC-2 are corrected. The v2 "+453 ppm" is
+  void, and every v2 number computed with that kernel is re-derived before use.
 
 **Finding from TN-01a (2026-09-19): GRACE-D safe mode inside the reference month.**
 - 2020-01-17: GRACE-D IPU reboot (spontaneous) at about 07:43.
@@ -82,6 +99,7 @@ Design decisions live in `docs/CONCEPT.md` section 11 only.
 
 | date | decision | reason |
 |---|---|---|
+| 2026-09-19 | Reference documents live in the DATAPOOL next to the data (register in `docs/references/`), not in the repository | one pattern for everything downloaded; binaries stay out of git. GUIDE Stage C amended |
 | 2026-09-19 | `READING_DATA_POOL` (organisation) is the DATAPOOL root; fixtures live below it in `RawData\tests\realdata`; new data follow the owner's existing layout | owner; one variable, one meaning. gracefoReading's repository-level value keeps the old meaning until G-07 (gracefoReading#23) |
 | 2026-09-19 | D-2 and D-3 fetched by a runner workflow on a throwaway PR (#25), never merged | owner-approved; anonymous sources; no overwrite, source MD5 verified |
 | 2026-09-18 | **Correction, measured:** gracefoReading #15 was merged with a merge commit (`de87fbf`), not squashed as planned, and its branch deleted; the concept drafts and the two input zips (~2.7 MB) are in gracefoReading's `main` history. Accepted; the concept's pre-move history is reachable there up to `4c08cb7` | rewriting gracefoReading's `main` is forbidden by its ruleset and not needed; the tree is as intended (gracefoReading#22 corrects its own record) |
