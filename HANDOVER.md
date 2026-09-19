@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.3 · 2026-09-18 · no code yet**
+**Revision 0.4 · 2026-09-19 · no code yet**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -23,6 +23,7 @@ restates:
 | ruleset `Tag protection` | `~ALL`, no deletion, no force push |
 | content | `docs/CONCEPT.md` Rev 0.13, `docs/GUIDE.md` rev 1.3, `docs/inputs/` (4 files), this HANDOVER, README |
 | code, `Contents.m`, CI, audit | none (X-00b) |
+| `docs/GUIDE.md` | rev 1.4 (Stage B follows the real DATAPOOL layout) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was
 identical to gracefoReading branch `claude/preproc-concept` at `4c08cb7`.
@@ -33,6 +34,20 @@ After the copy, only location text changed:
 
 The four input files are unchanged, and their SHA-256 match
 `docs/inputs/README.md`.
+
+**Data (GUIDE Stage B), measured on the runner 2026-09-19.**
+
+| id | state | evidence |
+|---|---|---|
+| D-1 | **complete** for 2020-01-01 (and 2025-01-01), all products of the three daily archives; no ACC1B exists in RL04 | inventory run 35464353649 (PR #24) |
+| D-2 | **complete**: 2020-01, 31 days × 3 archives = 93; 2 791 files extracted; **2 698 of 2 698** source MD5 verified; 0 mismatches, 0 conflicts | fetch run 35464757435 (PR #25), 12 min; `GRACEFO\L1B\RL04\2020\SHA256SUMS_2020-01.txt` (2 884 entries) |
+| D-3 | **complete as published**: 4 products × 2 satellites × **28** days, plus 2 READMEs. The server has no products for **2020-01-19 … 21** (both satellites, all products); reason unknown, to be checked against TN-01a (D-4) | same run; `ITSG\SHA256SUMS_2020-01.txt` (226) |
+| D-4 | **missing** | — |
+| D-5 | present in NonGravForces' `data\` (space weather and CERES, 2019-09 … 2020-03) | inventory |
+| D-6, D-7 | **missing** | — |
+| D-8 | waits for the owner | — |
+| D-9 | can start now (D-2 exists) | — |
+| D-10 | missing | — |
 
 **Verification available now:** none automated. X-00b brings the gate and
 the audit.
@@ -55,6 +70,8 @@ Design decisions live in `docs/CONCEPT.md` section 11 only.
 
 | date | decision | reason |
 |---|---|---|
+| 2026-09-19 | `READING_DATA_POOL` (organisation) is the DATAPOOL root; fixtures live below it in `RawData\tests\realdata`; new data follow the owner's existing layout | owner; one variable, one meaning. gracefoReading's repository-level value keeps the old meaning until G-07 (gracefoReading#23) |
+| 2026-09-19 | D-2 and D-3 fetched by a runner workflow on a throwaway PR (#25), never merged | owner-approved; anonymous sources; no overwrite, source MD5 verified |
 | 2026-09-18 | **Correction, measured:** gracefoReading #15 was merged with a merge commit (`de87fbf`), not squashed as planned, and its branch deleted; the concept drafts and the two input zips (~2.7 MB) are in gracefoReading's `main` history. Accepted; the concept's pre-move history is reachable there up to `4c08cb7` | rewriting gracefoReading's `main` is forbidden by its ruleset and not needed; the tree is as intended (gracefoReading#22 corrects its own record) |
 | 2026-09-18 | GUIDE A5: issues #3–#21 opened for X-00b … X-18 | the standard loop closes each through its PR |
 | 2026-09-18 | Concept, guide and inputs moved here from gracefoReading as X-00a; their earlier history is in gracefoReading's `main` history up to `4c08cb7` | CONCEPT Q14 item 5: the design lives where its code will, and the input zips never enter the reader's history |

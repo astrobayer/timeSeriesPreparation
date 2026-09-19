@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.3 · 2026-09-18 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.4 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -105,7 +105,7 @@ MATLAB)
 
 | repository | data pool | sibling checkouts |
 |---|---|---|
-| gracefoReading | variable `READING_DATA_POOL` | — |
+| gracefoReading | variable `READING_DATA_POOL`; its repository-level value (the fixture folder) overrides the organisation root until G-07 (#23) | — |
 | referenceSystem | variable `REF_DATA_POOL` | — |
 | NonGravForces | fetched by `setupNonGravForces` | `REFERENCE_READ_TOKEN`: referenceSystem, gracefoReading, odeSuite |
 | lsqvce | — | — |
@@ -168,7 +168,8 @@ immutable)**
 **A2 — Organisation settings.**
 - **Variable `READING_DATA_POOL`** at organisation level, visible to
   gracefoReading, timeSeriesPreparation and rangingPreparation. Its value is
-  the pool path on the runner machine. The existing repository variable keeps
+  the **DATAPOOL root** on the runner machine (owner decision 2026-09-19;
+  section 5). The existing repository variable keeps
   working; the organisation variable becomes the single authority for new
   repositories.
 - **Secret `REFERENCE_READ_TOKEN`** at organisation level: a separate
@@ -225,28 +226,42 @@ every repository.
 
 ## 5. Stage B — collect the data
 
-**Pool layout.** The pool at `READING_DATA_POOL` stays **flat for the
-existing day fixtures**: gracefoReading's tests look for original file names
-directly in the pool root. Everything else goes below `archive/`:
+**Pool layout — the owner's, measured on the runner 2026-09-19.**
+`READING_DATA_POOL` is the **DATAPOOL root**
+(`C:\Users\Matthias Weigelt\Documents\DATAPOOL`); test fixtures live
+**below it** (owner decision 2026-09-19). New data follow the existing
+layout; nothing is reorganised.
 
 ```
-<POOL>/                                        flat: 2020-01-01 fixtures (as today)
-<POOL>/archive/gracefo/L1B/RL04/<yyyy>/        daily L1B archives / files
-<POOL>/archive/gracefo/L1A/RL04/<yyyy>/        only if a WP needs L1A
-<POOL>/archive/gracefo/ACX/…                   hybrid transplant (V-16)
-<POOL>/archive/grace/L1B/…                     classic (D-8)
-<POOL>/archive/itsg/GRACEFO-1|2/<product>/
-<POOL>/archive/events/                         TN-01 SOE, TN-01a SCE, manoeuvres
-<POOL>/archive/alt/lri1b/{aei,sysu,hust}/
-<POOL>/archive/alt/attitude/
-<POOL>/MANIFEST.sha256                         every file, with source checksum where published
+<ROOT>\RawData\tests\realdata\                   flat day fixtures (2020-01-01, 2025-01-01, all products)
+<ROOT>\GRACEFO\L1B\RL04\<yyyy>\                   daily archives gracefo_1B_<date>_RL04.ascii.{noLRI,LRI,ACX}.tgz,
+                                                  SHA256SUMS_<yyyy-mm>.txt, SOURCE_<yyyy-mm>.txt
+<ROOT>\GRACEFO\L1B\RL04\<yyyy>\<yyyy-mm-dd>\      extracted day: *.txt, *.rpt, *.rnx, checksum.<kind>.md5
+<ROOT>\GRACEFO-1|2\<product>\<yyyy>\               ITSG operational products (TU Graz layout)
+<ROOT>\ITSG\                                      ITSG README files, SHA256SUMS_<yyyy-mm>.txt, SOURCE_<yyyy-mm>.txt
+<ROOT>\AOD\, GravityField\, Tides\, Ephemeris\, …    existing, not part of this plan
 ```
+
+gracefoReading's tests still read the fixture folder through its
+repository-level variable; G-07 (gracefoReading#23) moves them to
+`<ROOT>\RawData\tests\realdata` so the repository variable can go. Space
+weather and CERES (D-5) are not in the DATAPOOL: NonGravForces fetches them
+into its own `data\` folder.
+
+**Daily L1B archives (measured on the ISDC mirror).** Each day has three:
+- `noLRI`: ACT1B (C, D), AHK1B, CLK1B, GNI1B, GNV1B, GPS1B, IHK1B, IMU1B,
+  KBR1B, MAG1B, MAS1B, SCA1B, THR1B, TIM1B, TNK1B, USO1B;
+- `LRI`: LRI1B, LHK1B, LLK1B, LSM1B;
+- `ACX`: AC01B, ACH1B, ACM1B, ACS1B, ACU1B (D only).
+
+**ACC1B is not distributed in RL04.** Each archive carries an MD5 list, which
+is verified on extraction.
 
 **Data plan**
 
 | id | what | days | source | used by |
 |---|---|---|---|---|
-| D-1 | L1B RL04, satellites C and D: ACT1B, ACC1B, ACH1B (if published), SCA1B, GNV1B, KBR1B, LRI1B, THR1B, MAS1B, MAG1B, housekeeping (V-13, V-14) | 2020-01-01 | PO.DAAC collection `GRACEFO_L1B_ASCII_GRAV_JPL_RL04` (DOI 10.5067/GFL1B-ASJ04, CMR `C2036882118-POCLOUD`; daily granules `gracefo_1B_<date>_RL04.ascii.LRI` / `.noLRI`), mirror `https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/` | G-04, ORC-3, X-10 |
+| D-1 | L1B RL04, all products of the three daily archives (no ACC1B in RL04); housekeeping AHK1B / LHK1B are the V-13 / V-14 candidates | 2020-01-01 | PO.DAAC collection `GRACEFO_L1B_ASCII_GRAV_JPL_RL04` (DOI 10.5067/GFL1B-ASJ04, CMR `C2036882118-POCLOUD`; daily granules `gracefo_1B_<date>_RL04.ascii.LRI` / `.noLRI`), mirror `https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/` | G-04, ORC-3, X-10 |
 | D-2 | the same products | 2020-01 (31 days) | as D-1 | N-10, ORC-10, ORC-12, V-12 |
 | D-3 | ITSG operational products: kinematicOrbit, reducedDynamicOrbit, attitude, nonConservativeForces, and the server README files | 2020-01 | `https://ftp.tugraz.at/pub/ITSG/satelliteOrbitProducts/operational/` | V-4, ORC-4, N-12 |
 | D-4 | official event lists TN-01 SOE, TN-01a SCE, manoeuvre lists (both missions) | whole missions | ISDC `grace-fo/DOCUMENTS/`, PO.DAAC documentation (V-15) | G-05, X-05 |
@@ -257,21 +272,28 @@ directly in the pool root. Everything else goes below `archive/`:
 | D-9 | defect catalogue: one real day per defect class (V-12) | from D-2 | chosen by a Session and recorded in timeSeriesPreparation's HANDOVER (file, epoch range, expected verdict) | X-05, X-17, L-02, N-02 |
 | D-10 | external calibration series (V-11) | as available | the cited publications' data sets | ORC-10 |
 
-**Procedure (Linux or WSL; Earthdata login in `~/.netrc`).**
+**Procedure — runner tools** (branches kept in timeSeriesPreparation, run by
+reopening their throwaway PR; never merged):
+- `claude/inventory-runner-data` (PR #24): `tools/inventoryRunnerData.ps1`.
+  A read-only listing and classification of the DATAPOOL and the runner's
+  work folders.
+- `claude/fetch-2020-01` (PR #25): `tools/fetchPoolData.ps1 -Month <yyyy-mm>`.
+  - Fetches D-2 from the ISDC mirror (anonymous) and D-3 from TU Graz
+    (anonymous).
+  - Verifies the source MD5 of every extracted L1B file.
+  - Never overwrites or deletes; a differing file is reported as CONFLICT and
+    kept.
+  - Writes `SHA256SUMS_<yyyy-mm>.txt` and `SOURCE_<yyyy-mm>.txt` next to the
+    data.
+  - Idempotent: a re-run fills gaps only.
+  - For another month, change `-Month` in `.github/workflows/fetch.yml` on a
+    new branch.
 
-```bash
-pip install podaac-data-subscriber
-podaac-data-subscriber -c GRACEFO_L1B_ASCII_GRAV_JPL_RL04 -d "$POOL/archive/gracefo/L1B/RL04/2020" \
-    -sd 2020-01-01T00:00:00Z -ed 2020-01-31T23:59:59Z
-# unpack the daily archives; copy the 2020-01-01 files with their original names into $POOL (flat)
-cd "$POOL" && find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256
-```
-
+Rules:
 - **Never commit pool data** to any repository. The small trimmed fixtures
-  under a repository's `tests/realdata/` are the only exception, as
-  gracefoReading already does.
-- **Checkpoint:** G-06 verifies the pool against the manifest. Until G-06
-  exists, `sha256sum -c MANIFEST.sha256` does the same.
+  under a repository's `tests/realdata/` are the only exception.
+- **Checkpoint:** G-06 verifies the pool against the manifests. Until then,
+  the fetch tool's MD5 check and the SHA-256 manifests are the record.
 
 ---
 
