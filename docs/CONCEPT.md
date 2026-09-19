@@ -580,6 +580,7 @@ page, or real bytes with the file named.
 | V-3 | **closed** | LRI1B: 16 columns with KBR1B names. Col 5 `iono_corr` is the scale correction ε (scale = 1 + ε; 2.240125737628639e-06 on 2020-01-02). Cols 6–8 light-time correction, additive (m, m/s, m/s²). Cols 9–11 and 13, 15 "not defined" (zeros). Col 12/14 laser CNR C/D (dB-Hz). qualflg bit 0 phase break, bits 6/7 interpolation. **No LRI–KBR time offset column** (the research claim is refuted for this file). No ionospheric correction for LRI | `LRI1B_2020-01-02_Y_04.txt` header; R-2 PDF p. 18 |
 | V-4 | **closed** | ITSG `nonConservativeForces` is **calibrated accelerometer data**, not a model. Against ACT1B (GRACE-C, 2020-01-02, 8 640 epochs), a bias + scale fit gives correlation 0.984 / 0.973 / 0.955, scales 1.066 / 0.915 / 0.864 and residual rms 2.8 / 3.1 / 2.5e-9 m/s². The README says only "accelerations due to non-conservative forces, SRF, 10 s" | R-9; ITSG file vs ACT1B |
 | V-5 | **closed** | The ACT1B header does **not** say "transplant": source "Transformed Accelerometer data for GRACE D", input ACT1A. D uses the GRACE-C transplant on and after 2018-06-21, per R-3. So the D report derives transplant status from the date | R-3 PDF p. 2; `ACT1B_2020-01-02_D_04.txt` header |
+| V-6 | **closed** (lsqvce#108, §12.31) | One `lsqvce.fit` call on **kind A** (streaming) carries local parameters (arc/day/system, pre-eliminated), common and local priors, temporal laws per stream (`diag`, `acf`, `psd` via AR/ARMA/Toeplitz, `arma`, `var`, `custom`, with `Cep`) and robust IRLS (alone or inside `Estimate="noise"`). Not on kinds B/C (laws, VCE) or nonlinear `x0` (robust). **N-02 and L-03 therefore declare kind A.** Gap: no lsqvce test combines robust + priors + law + local parameters in one run; recommended before N-02 | lsqvce `fit`/`covModel`/`adjustRobust` help; `test_fit.m` `testRobustRunsOnTheStreamingKind` (local params + ARMA + Huber) |
 | V-8 | **partly closed** | Classic L1B: an ASCII header of 80-byte records ending "END OF HEADER"; `.dat` binary, `.asc` ASCII; KBR1B qualflg bit 0 threshold 0.2 cycle. RL02 holds the full set, RL03 only KBR1B/SCA1B. The binary record layouts are read in G-02 | R-4 PDF pp. 18, 34–35; real RL02/RL03 files |
 | V-9 | **closed** | GRACE macro model: R-5 §I.5.3.3 mass, §I.5.3.4 exterior dimensions, §I.5.3.5 surface properties (emissivity, absorptivity/reflectivity), §I.5.3.6 antenna locations | R-5 PDF pp. 20–23 |
 | V-11 | **closed** | ZARM (R-13) for GRACE A/B and C; TN-02 a-priori scales for GRACE (A: 0.9595 / 0.9797 / …, convention bias + scale·f) | R-13, R-10 PDF p. 1 |
@@ -594,8 +595,8 @@ page, or real bytes with the file named.
 - **LRI phase-jump processing changed for products from 2020-06-27** (R-7). The
   reference month 2020-01 uses the older deglitching, which matters for L-02 and
   ORC-13.
-- **Still open:** V-2 (LRI numbers), V-6 (lsqvce), V-7 (sigtools smoother),
-  V-10 (classic thermal history, R-12/P-19), V-12 (defect days).
+- **Still open:** V-2 (LRI numbers), V-7 (sigtools smoother), V-10
+  (classic thermal history, R-12/P-19), V-12 (defect days).
 
 ---
 
