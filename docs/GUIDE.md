@@ -2,7 +2,7 @@
 
 **Revision 1.5 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 source proposed; rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -243,6 +243,7 @@ layout; nothing is reorganised.
 <ROOT>\GRACEFO\L1B\AEI_v52\                        AEI quarterly zips, LRI1B|RTC1B\<yyyy-mm>\, release notes
 <ROOT>\GRACE\L1B\JPL\RL02\<yyyy>\<yyyy-mm-dd>\         classic daily archives and files (full product set; binary records)
 <ROOT>\GRACE\L1B\JPL\RL03\<yyyy>\<yyyy-mm-dd>\         classic RL03 (KBR1B, SCA1B only); ACT1B_transplant_2016-11-13_2017-06-29\
+<ROOT>\ZARM\ACC|AccTransplant|ModRadAcc\<yyyy>\          ZARM calibration (all), transplant and modelled radiation (reference months)
 <ROOT>\AOD\, GravityField\, Tides\, Ephemeris\, …    existing, not part of this plan
 ```
 
@@ -274,7 +275,7 @@ is verified on extraction.
 | D-7 | alternative attitude: ITSG attitude (owner) — comes with D-3 | 2020-01 | `https://ftp.tugraz.at/pub/ITSG/satelliteOrbitProducts/operational/GRACEFO-1/attitude/` (and GRACEFO-2) | N-12, L-07 |
 | D-8 | **classic GRACE A/B**, three months: 2008-07 (before April 2011), 2012-01 (thermal control off), 2017-01 (GRACE-A→B transplant), plus the transplant archive | 3 months | `https://isdc-data.gfz.de/grace/Level-1B/JPL/INSTRUMENT/RL02/` (full set) and `…/RL03/` (KBR1B, SCA1B, transplant) (owner) | G-02, X-13, N-08, L-06 |
 | D-9 | defect catalogue: one real day per defect class (V-12) | from D-2 | chosen by a Session and recorded in timeSeriesPreparation's HANDOVER (file, epoch range, expected verdict) | X-05, X-17, L-02, N-02 |
-| D-10 | external ACC calibration series (V-11): ZARM POD-based calibration, GRACE-C 2018–2023 and GRACE A/B 2002–2016 (convention ACC_cal = s·(ACC + b)) | whole missions | `https://www.zarm.uni-bremen.de/zarm_daten/` (Wöske et al. 2024) — proposed, waits for the owner | ORC-10 |
+| D-10 | external ACC calibration series (V-11): ZARM POD-based calibration, GRACE-C 2018–2023 and GRACE A/B 2002–2016 (convention ACC_cal = s·(ACC + b)); for the reference months also ZARM's GRACE-D transplant and modelled radiation accelerations | whole missions / reference months | `https://www.zarm.uni-bremen.de/zarm_daten/` (Wöske et al. 2024; owner-approved) | ORC-10, ORC-12, N-02 |
 
 **Procedure — runner tools** (branches kept in timeSeriesPreparation, run by
 reopening their throwaway PR; never merged):
@@ -299,6 +300,9 @@ reopening their throwaway PR; never merged):
   Classic RL03 monthly archives, RL02 daily archives, and the transplant
   archive. **Quote the month list**: unquoted, PowerShell binds it as an
   array (the first run failed on that).
+- `claude/fetch-d10-zarm` (PR #30): `tools/fetchZarm.ps1 -Months '…'`. Every
+  ZARM ACC calibration file; AccTransplant and ModRadAcc for the listed months
+  only.
 
 Rules:
 - **Never commit pool data** to any repository. The small trimmed fixtures
