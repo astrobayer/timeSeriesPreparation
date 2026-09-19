@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.4 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.5 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.5: D-4/D-6/D-7 sources named by the owner; rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -239,6 +239,8 @@ layout; nothing is reorganised.
 <ROOT>\GRACEFO\L1B\RL04\<yyyy>\<yyyy-mm-dd>\      extracted day: *.txt, *.rpt, *.rnx, checksum.<kind>.md5
 <ROOT>\GRACEFO-1|2\<product>\<yyyy>\               ITSG operational products (TU Graz layout)
 <ROOT>\ITSG\                                      ITSG README files, SHA256SUMS_<yyyy-mm>.txt, SOURCE_<yyyy-mm>.txt
+<ROOT>\GRACEFO\DOCUMENTS\TECHNICAL_NOTES\<date>\    TN-01 SOE, TN-01a SCE, TN-01b (one folder per server version)
+<ROOT>\GRACEFO\L1B\AEI_v52\                        AEI quarterly zips, LRI1B|RTC1B\<yyyy-mm>\, release notes
 <ROOT>\AOD\, GravityField\, Tides\, Ephemeris\, …    existing, not part of this plan
 ```
 
@@ -264,10 +266,10 @@ is verified on extraction.
 | D-1 | L1B RL04, all products of the three daily archives (no ACC1B in RL04); housekeeping AHK1B / LHK1B are the V-13 / V-14 candidates | 2020-01-01 | PO.DAAC collection `GRACEFO_L1B_ASCII_GRAV_JPL_RL04` (DOI 10.5067/GFL1B-ASJ04, CMR `C2036882118-POCLOUD`; daily granules `gracefo_1B_<date>_RL04.ascii.LRI` / `.noLRI`), mirror `https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/` | G-04, ORC-3, X-10 |
 | D-2 | the same products | 2020-01 (31 days) | as D-1 | N-10, ORC-10, ORC-12, V-12 |
 | D-3 | ITSG operational products: kinematicOrbit, reducedDynamicOrbit, attitude, nonConservativeForces, and the server README files | 2020-01 | `https://ftp.tugraz.at/pub/ITSG/satelliteOrbitProducts/operational/` | V-4, ORC-4, N-12 |
-| D-4 | official event lists TN-01 SOE, TN-01a SCE, manoeuvre lists (both missions) | whole missions | ISDC `grace-fo/DOCUMENTS/`, PO.DAAC documentation (V-15) | G-05, X-05 |
+| D-4 | official event lists TN-01 SOE, TN-01a SCE, TN-01b KBR/GPS statistics (living documents) | whole mission | `https://isdc-data.gfz.de/grace-fo/DOCUMENTS/TECHNICAL_NOTES/` (owner) | G-05, X-05 |
 | D-5 | space weather, CERES | as NonGravForces fetches them | `setupNonGravForces('FetchData', …)` (existing mechanism) | N-02, N-11 |
-| D-6 | alternative LRI1B products: AEI V50, SYSU, HUST | 2020-01 | the providers' pages (R-8) | ORC-13, L-09 |
-| D-7 | alternative attitude: SCA+IMU fusion product (e.g. HUGG-01), plus ITSG attitude (D-3) | 2020-01 | publications / providers | N-12, L-07 |
+| D-6 | alternative LRI1B: AEI LRI1B and RTC1B (range thermal coupling) v52 | 2020 Q1 | `https://data.uni-hannover.de/dataset/aei-lri1b-v52` (owner; CC BY 3.0) | ORC-13, L-09 |
+| D-7 | alternative attitude: ITSG attitude (owner) — comes with D-3 | 2020-01 | `https://ftp.tugraz.at/pub/ITSG/satelliteOrbitProducts/operational/GRACEFO-1/attitude/` (and GRACEFO-2) | N-12, L-07 |
 | D-8 | **classic GRACE A/B**, one file per product, three days: (a) before April 2011; (b) after April 2011, thermal control off; (c) during the GRACE-A→B transplant (2016–2017) | 3 days | **you supply** | G-02, X-13, N-08, L-06 |
 | D-9 | defect catalogue: one real day per defect class (V-12) | from D-2 | chosen by a Session and recorded in timeSeriesPreparation's HANDOVER (file, epoch range, expected verdict) | X-05, X-17, L-02, N-02 |
 | D-10 | external calibration series (V-11) | as available | the cited publications' data sets | ORC-10 |
@@ -288,6 +290,9 @@ reopening their throwaway PR; never merged):
   - Idempotent: a re-run fills gaps only.
   - For another month, change `-Month` in `.github/workflows/fetch.yml` on a
     new branch.
+- `claude/fetch-d4-d6` (PR #27): `tools/fetchDocsAlt.ps1`. Fetches D-4
+  (each technical-note version in a folder named after the server date) and
+  D-6 (sizes checked against the catalogue); same no-overwrite rules.
 
 Rules:
 - **Never commit pool data** to any repository. The small trimmed fixtures
@@ -475,4 +480,4 @@ next action as a command.
 | lsqvce | release v6.1.0 + V-6 #107 |
 | ci-actions | C-01 #2 · C-02 #3 · C-03 #4 · C-04 #5 |
 | timeSeriesPreparation | X-00a #1 (PR #2, merged) · X-00b #3 · X-01 #4 · X-02 #5 · X-03 #6 · X-04 #7 · X-05 #8 · X-06 #9 · X-07 #10 · X-08 #11 · X-09 #12 · X-10 #13 · X-11 #14 · X-12 #15 · X-13 #16 · X-14 #17 · X-15 #18 · X-16 #19 · X-17 #20 · X-18 #21 |
-| rangingPreparation | opened at creation (A5): L-00 … L-09 |
+| rangingPreparation | L-00 #1 · L-01 #2 · L-02 #3 · L-03 #4 · L-04 #5 · L-05 #6 · L-06 #7 · L-07 #8 · L-08 #9 · L-09 #10 |

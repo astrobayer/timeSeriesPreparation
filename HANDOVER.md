@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.4 · 2026-09-19 · no code yet**
+**Revision 0.5 · 2026-09-19 · no code yet**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -41,13 +41,24 @@ The four input files are unchanged, and their SHA-256 match
 |---|---|---|
 | D-1 | **complete** for 2020-01-01 (and 2025-01-01), all products of the three daily archives; no ACC1B exists in RL04 | inventory run 35464353649 (PR #24) |
 | D-2 | **complete**: 2020-01, 31 days × 3 archives = 93; 2 791 files extracted; **2 698 of 2 698** source MD5 verified; 0 mismatches, 0 conflicts | fetch run 35464757435 (PR #25), 12 min; `GRACEFO\L1B\RL04\2020\SHA256SUMS_2020-01.txt` (2 884 entries) |
-| D-3 | **complete as published**: 4 products × 2 satellites × **28** days, plus 2 READMEs. The server has no products for **2020-01-19 … 21** (both satellites, all products); reason unknown, to be checked against TN-01a (D-4) | same run; `ITSG\SHA256SUMS_2020-01.txt` (226) |
-| D-4 | **missing** | — |
+| D-3 | **complete as published**: 4 products × 2 satellites × **28** days, plus 2 READMEs. No products for **2020-01-19 … 21**: TN-01a explains it (next row) | same run; `ITSG\SHA256SUMS_2020-01.txt` (226) |
+| D-4 | **complete**: TN-01 SOE, TN-01a SCE, TN-01b KBR/GPS statistics, server version 2026-09-08, in `GRACEFO\DOCUMENTS\TECHNICAL_NOTES\2026-09-08\` | fetch run 35466032781 (PR #27) |
 | D-5 | present in NonGravForces' `data\` (space weather and CERES, 2019-09 … 2020-03) | inventory |
-| D-6, D-7 | **missing** | — |
+| D-6 | **complete** for AEI: LRI1B and RTC1B v52, 2020 Q1 (Jan 31, Feb 29, Mar 31 days), release notes, Misfeldt et al. 2023; CC BY 3.0. SYSU/HUST not planned (owner named AEI) | same run; `GRACEFO\L1B\AEI_v52\SHA256SUMS_2020-Q1.txt` (186) |
+| D-7 | **complete**: the owner names ITSG attitude as D-7; it arrived with D-3 | — |
 | D-8 | waits for the owner | — |
 | D-9 | can start now (D-2 exists) | — |
 | D-10 | missing | — |
+
+**Finding from TN-01a (2026-09-19): GRACE-D safe mode inside the reference month.**
+- 2020-01-17: GRACE-D IPU reboot (spontaneous) at about 07:43.
+- 2020-01-18: KBR and LRI link lost after GRACE-D switched to AOCS safe mode at 05:05.
+- 2020-01-19: GRACE-C IPU reboot (commanded).
+- 2020-01-21: GRACE-D IPU, MWA, LRI and star cameras off since 18 January.
+- 2020-01-22: back to nominal mode at 12:05.
+
+This explains the ITSG gap. It is the first real entry for the defect catalogue
+(V-12), and it bears on the regression baseline 2020-01 (ORC-10), see O-5.
 
 **Verification available now:** none automated. X-00b brings the gate and
 the audit.
@@ -61,6 +72,7 @@ the audit.
 | O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | open | session | ci-actions#2 (C-01) released |
 | O-2 | add the required checks `audit` and `matlab` to `Main Protection` once X-00b's first CI run has created them | open | owner | X-00b's first run |
 | O-4 | GUIDE A3 steps 6 and 7: gracefoReading #15 merged (`de87fbf`, merge commit, see F), NonGravForces #57 merged (`10c8504`) | **closed 2026-09-18** | owner | — |
+| O-5 | Regression month (CONCEPT ORC-10): keep 2020-01 and mask GRACE-D's safe mode 2020-01-18 05:05 … 2020-01-22 12:05 from the baseline (proposal; it then also tests event masking), or choose another month | open | owner | before N-10 |
 
 ---
 
