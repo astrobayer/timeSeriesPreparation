@@ -392,7 +392,7 @@ CHANGELOG: MINOR for new capability, PATCH for fixes.
 | 0.1 | Stage A (A1–A6) | token reaches both new repositories; both exist with rulesets; X-00a merged; #15 and #57 merged |
 | 0.2 | Stage B, D-1 to D-7 (D-8 when you supply it, D-9 after D-2) | `MANIFEST.sha256` written; `sha256sum -c` passes |
 | 0.3 | Stage C; close the V-items that documents answer: V-1, V-2, V-3, V-5, V-8, V-13 to V-16 | **done 2026-09-19** (CONCEPT 9.3); open: V-2 LRI numbers, V-6, V-7, V-10, V-12 |
-| 0.4 | lsqvce#107: V-6 read from source, then release **lsqvce v6.1.0** (annotated) | tag read back |
+| 0.4 | lsqvce#107: V-6 read from source, then release **lsqvce v6.1.0** (annotated) | V-6 closed (CONCEPT 9.3); release PR lsqvce#108; tag read back after its merge |
 
 ### Phase 1 — foundations, four repositories in parallel
 
