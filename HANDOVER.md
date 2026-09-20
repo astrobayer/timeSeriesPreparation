@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.6 · 2026-09-19 · no code yet**
+**Revision 0.7 · 2026-09-19 · no code yet**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -13,6 +13,14 @@ restates:
 ## A. Status
 
 **Documents only.** X-00a merged (#2, `f26df8d`).
+
+**Phase 0 complete (2026-09-19):**
+- Stage A: repositories, settings and issues.
+- Stage B: data D-1 … D-8 and D-10; D-9 pending.
+- Stage C: references and V-items (CONCEPT 9.3).
+- 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
+
+Next: Phase 1 (GUIDE §7) — C-01 (ci-actions#2) before X-00b (#3) here.
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).
 

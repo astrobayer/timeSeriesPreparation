@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.6 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.7 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.7: Phase 0 complete (lsqvce v6.1.0 released). Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -147,7 +147,7 @@ immutable)**
 | repository | anomaly | action at its next release |
 |---|---|---|
 | referenceSystem | `Contents.m` 2.1.244, while tags `v2.2.0` and **`V2.2.1`** (capital V) exist; all tags lightweight; the revision counter kept counting after VERSIONING.md | issue referenceSystem#27: release **2.3.0** (proposal), annotated |
-| lsqvce | `Contents.m` 6.1, newest tag `v5.2.1` | issue lsqvce#107: tag **v6.1.0** before any consumer declares lsqvce ≥ 6.1 |
+| lsqvce | `Contents.m` 6.1, newest tag `v5.2.1` | **resolved 2026-09-19:** `Contents.m` 6.1.0, annotated tag `v6.1.0` on `21e470d`, release published (lsqvce#108, #107 closed) |
 | NonGravForces | stray tag `v.0.10.0`; five lightweight tags | recorded in O-26; next tags annotated |
 | gracefoReading | `v1.0.0` and `v1.0.2` lightweight (`v1.0.1` annotated) | O-4; next tags annotated |
 | ci-actions | README says gracefoReading has no required contexts; the ruleset requires two | handled in C-01 (ci-actions#2) |
@@ -392,7 +392,7 @@ CHANGELOG: MINOR for new capability, PATCH for fixes.
 | 0.1 | Stage A (A1–A6) | token reaches both new repositories; both exist with rulesets; X-00a merged; #15 and #57 merged |
 | 0.2 | Stage B, D-1 to D-7 (D-8 when you supply it, D-9 after D-2) | `MANIFEST.sha256` written; `sha256sum -c` passes |
 | 0.3 | Stage C; close the V-items that documents answer: V-1, V-2, V-3, V-5, V-8, V-13 to V-16 | **done 2026-09-19** (CONCEPT 9.3); open: V-2 LRI numbers, V-6, V-7, V-10, V-12 |
-| 0.4 | lsqvce#107: V-6 read from source, then release **lsqvce v6.1.0** (annotated) | V-6 closed (CONCEPT 9.3); release PR lsqvce#108; tag read back after its merge |
+| 0.4 | lsqvce#107: V-6 read from source, then release **lsqvce v6.1.0** (annotated) | **done 2026-09-19**: V-6 closed (CONCEPT 9.3); `v6.1.0` tagged on `21e470d` and released |
 
 ### Phase 1 — foundations, four repositories in parallel
 
