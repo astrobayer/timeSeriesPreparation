@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.7 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.8 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.7: Phase 0 complete (lsqvce v6.1.0 released). Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.8: tier B defined correctly (MATLAB through CI); N-02 waits for lsqvce#110. Rev 1.7: Phase 0 complete (lsqvce v6.1.0 released). Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -35,7 +35,7 @@ does not apply, the PR body says why.
 
 | # | step | who | what exactly |
 |---|---|---|---|
-| 1 | Start | Session | `git fetch && git checkout main && git pull --ff-only`. Read the repository's HANDOVER, the WP row in `CONCEPT.md` 10.1, and the WP's issue. Declare the **tier** in the first line: A = MATLAB reachable (MCP bridge), B = no MATLAB. |
+| 1 | Start | Session | `git fetch && git checkout main && git pull --ff-only`. Read the repository's HANDOVER, the WP row in `CONCEPT.md` 10.1, and the WP's issue. Declare the **tier** in the first line: A = MATLAB reachable locally (MCP bridge); B = no local MATLAB, the MATLAB suite runs in CI on the self-hosted runner. **Both run MATLAB; either works for any WP.** B's feedback loop is slower (one CI run per push), and B cannot run anything CI does not run. |
 | 2 | Branch | Session | `git checkout -b claude/<wp-id>-<slug>` (for example `claude/g-01-multi-column`). Your own branches: `mw/<wp-id>-<slug>`. Always from a current `main`. |
 | 3 | Freeze the scope | Session | First commit on the branch: `record: freeze scope <WP-ID>` in the HANDOVER, stating what will be true afterwards and what is out of scope. |
 | 4 | Implement | Session | Code, help block (template: `CONCEPT.md` 9.1), tests in all seven categories, regenerated documentation — **in the same change**. Commit messages: `<type>: <summary>`, with type ∈ `feat` `fix` `docs` `test` `record` `chore` `ci` `security`. |
@@ -420,7 +420,7 @@ Downstream starts as soon as a release exists:
 
 | repository | sequence | release after |
 |---|---|---|
-| NonGravForces | N-02 (with N-06; needs timeSeriesPreparation v1.0.0, R-02, lsqvce v6.1.0) → N-03 → N-11 → N-12 → N-09 (needs timeSeriesPreparation v1.1.0) → N-10 → N-05 | `v0.13.0` after N-02/N-06; `v0.14.0` after N-05 |
+| NonGravForces | N-02 (with N-06; needs timeSeriesPreparation v1.0.0, R-02, lsqvce v6.1.0, **lsqvce#110** closed) → N-03 → N-11 → N-12 → N-09 (needs timeSeriesPreparation v1.1.0) → N-10 → N-05 | `v0.13.0` after N-02/N-06; `v0.14.0` after N-05 |
 | rangingPreparation | L-03 → L-05 → L-08 → L-07 (needs N-12) → L-09 | `v0.1.0` after L-05; `v0.2.0` after L-09 |
 
 ### Classic GRACE track — starts when D-8 arrives, in parallel
