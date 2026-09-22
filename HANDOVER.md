@@ -10,7 +10,58 @@ restates:
 
 ---
 
-## X-00b — scope frozen 2026-09-22 (issue #3)
+## X-01 + X-03 — scope frozen 2026-09-22 (issues #4, #6), one batch PR
+
+Owner decision 2026-09-22: X-01 and X-03 as **one batch PR**, one commit per
+WP (GUIDE §1 standing rules). Tier B. Help footer wording set by the owner:
+`… | Matthias Weigelt with the help of Claude Code (Anthropic)` (applied to
+every footer, Q5).
+
+**X-01 — sigtools v1.3.1 import, unchanged** (CONCEPT 3.2, 12.9). True after
+the merge:
+- `spectral/` (10) → `+timeSeriesPreparation/+spectral/`, `tsmodels/` (15) →
+  `+timeSeriesPreparation/+tsmodels/`, `sigtoolsDemo` and the 6 demo scripts →
+  `demos/`, the 15 class suites and the legacy `runAllTests` →
+  `tests/sigtools/`.
+- The **only** code change is the one a namespace forces: calls between
+  sigtools functions, and from its tests and demos, are qualified
+  (`timeSeriesPreparation.tsmodels.tsFitArima`). Numerics are byte-identical,
+  which a `reference` test checks against the archived zip on every run:
+  every imported file equals its original once the qualifiers are removed.
+- The imported suite runs in the gate and is counted: 180 class-based tests
+  plus the 29 legacy cases, one test each (209, as sigtools' HANDOFF states).
+- Not imported, each replaced: `sigtools_setup` (by
+  `setupTimeSeriesPreparation`, which now also adds `demos/`),
+  `runSigtoolsTests` (by the gate), `Contents.m` (by one per subpackage),
+  hand-made `doc/html` (by C-03 output at X-02). README and HANDOFF stay in the
+  zip.
+- Conventions stay as imported (help style, unprefixed identifiers, no
+  `arguments` blocks, plotting inside functions): that is X-02. The audit
+  gives the imported files their own profile, and the tag policy exempts
+  `tests/sigtools/`, each with that reason, until X-02.
+
+**X-03 — `Arc`, `Config` skeleton** (CONCEPT 5, 5.2). True after the merge:
+- `timeSeriesPreparation.Arc(t, obs, aux)`: value class built from
+  gracefoReading's triple by field names, calling no gracefoReading function;
+  int64 gpsns time only (`Arc:timeFormat`); columns selected by name, never by
+  position; `weights`, `layers` (true = remove), `filled`, append-only
+  `provenance`.
+- **Release in the metadata and the one-release rule (5.2):** the L1B release
+  is read from each file name (header `product_version` as fallback), stored
+  in `Arc.release` and in provenance; more than one release in an arc, or
+  across a campaign (`Arc.requireOneRelease`), refuses unless asked for.
+- `timeSeriesPreparation.Config`: the nine sections of CONCEPT 5, a schema
+  per section (unknown field → error), `Config(arc)` records the product; no
+  product preset yet (presets arrive with their stages, X-04 on).
+- `contract` tests pin the `aux` fields `Arc` reads, on gracefoReading's real
+  fixtures (`readL1b`, `readL1bMulti`, a classic binary file).
+
+Out of scope: X-02 conventions, presets and product dictionaries (X-04,
+X-10, X-13), campaign storage (X-15), any stage.
+
+---
+
+## X-00b — merged 2026-09-22 (PR #36, issue #3)
 
 Tier B: no local MATLAB; the MATLAB suite runs in CI on the self-hosted runner.
 Branch `claude/grace-timeseries-issues-28g3a4` (named by the session
@@ -72,9 +123,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 **Debt, with its reason.**
 - Tier A: no local MATLAB in this session; the MATLAB verdict is CI's (tier B).
-- Help footers name "Claude Code (Anthropic)", not a model version: the
-  session environment forbids model identifiers in pushed files. Q5 asks for
-  the model; owner to confirm or name the wording (open question in the PR).
+- ~~Help footer wording~~ — settled by the owner 2026-09-22 (see X-01 + X-03).
 - ci-actions `matlab-audit/examples/timeSeriesPreparation.json` and
   `matlab-docs/examples/timeSeriesPreparation.json` still hold the untested
   proposal; the measured configuration is `.github/*.json` here. Updating the
