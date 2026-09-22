@@ -10,6 +10,38 @@ restates:
 
 ---
 
+## X-00b — scope frozen 2026-09-22 (issue #3)
+
+Tier B: no local MATLAB; the MATLAB suite runs in CI on the self-hosted runner.
+Branch `claude/grace-timeseries-issues-28g3a4` (named by the session
+environment, not by GUIDE step 2's pattern).
+
+True after the merge:
+- **Skeleton**: `+timeSeriesPreparation/Contents.m` at version **0.0.0**
+  (unreleased; X-04 makes 0.1.0), `setupTimeSeriesPreparation.m`,
+  `timeSeriesPreparationCiGate.m` (the gate command of GUIDE §2), `tests/`.
+- **CI** `.github/workflows/ci.yml`: job `audit` (ci-actions `matlab-audit` and
+  `matlab-docs` in check mode) and job `matlab` (`matlab-probe`, optional
+  gracefoReading checkout, the gate), actions pinned to ci-actions `v1.3.2`.
+- **Documentation pipeline**: `.github/matlab-audit.json`,
+  `.github/matlab-docs.json` (adjusted from ci-actions' untested proposals),
+  generated `html/`, `info.xml`, `docs/errorIdentifiers.md`,
+  `tests/TestHelpExamples.m`.
+- **Test tags**: the seven categories of CONCEPT 9 are the only allowed tags;
+  every test carries at least one (`TestTagPolicy`, fault-injected).
+- **Layering test**: CONCEPT 3.2 checked mechanically (`TestLayering`,
+  fault-injected): calls go downward or sideways, never upward; L0 never calls
+  gracefoReading; no package code calls lsqvce.
+- **Optional gracefoReading**: `timeSeriesPreparation.internal.requirePackage`
+  raises `timeSeriesPreparation:<fn>:depMissing` (CONCEPT 3.1); the layering
+  test demands it in every file that references gracefoReading.
+
+Out of scope: sigtools (X-01), any public function (X-03 on), the release
+workflow (first release is X-04), lsqvce checkout (tests only, from X-07), the
+data pool (first real-data test), required checks (O-2, owner).
+
+---
+
 ## A. Status
 
 **Documents only.** X-00a merged (#2, `f26df8d`).
