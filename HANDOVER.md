@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.8 · 2026-09-22 · skeleton (X-00b), no public function**
+**Revision 0.9 · 2026-09-22 · X-01 + X-03 in review; unreleased 0.0.0**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -58,6 +58,41 @@ the merge:
 
 Out of scope: X-02 conventions, presets and product dictionaries (X-04,
 X-10, X-13), campaign storage (X-15), any stage.
+
+**Measured before the push (2026-09-22, ci-actions `v1.3.2`):**
+- Import rewrite: 6 + 13 qualified calls in the package (the call graph of
+  the 25 functions, read beforehand), 52 in demos, 296 in tests, plus one
+  `evalc` string by hand. With the qualifiers and the `sigtools_setup` →
+  `setupTimeSeriesPreparation` rename undone, **every imported file is
+  byte-identical to the archive** (checked here with `cmp`; in CI by
+  `TestSigtoolsImport`).
+- `matlab-audit`: 68 files, **clean**; `matlab-docs --check`: 10 files,
+  **in sync**.
+
+**Prediction** (before any run; the 180 is sigtools' HANDOFF count, not
+re-counted here): **280 + 0 + 0 = 280** with the gracefoReading checkout;
+without it, TestArcContract's 7 and `gracefoReadingResolvesWhenCheckedOut`
+are incomplete: 272 + 0 + 8.
+
+| class | contract | reference | precision | robustness | metamorphic | vectorisation | untagged | total |
+|---|---|---|---|---|---|---|---|---|
+| sigtools suites (15, tests/sigtools, exempt) | | | | | | | 180 | 180 |
+| TestSigtoolsLegacy | 1 | 29 | | | | | | 30 |
+| TestSigtoolsImport | | 2 | | 3 | | | | 5 |
+| TestSigtoolsDemos | 7 | | | | | | | 7 |
+| TestArc | 7 | | 1 | 10 | 1 | 1 | | 20 |
+| TestArcContract | 4 | 2 | | | 1 | | | 7 |
+| TestConfig | 3 | | | 2 | | | | 5 |
+| TestHelpExamples (generated) | 4 | | | | | | | 4 |
+| TestCiGate | 1 | | | 2 | | | | 3 |
+| TestLayering | 1 | | | 6 | | | | 7 |
+| TestRequirePackage | 4 | | | 2 | | | | 6 |
+| TestTagPolicy | 1 | | | 5 | | | | 6 |
+| **sum** | **33** | **33** | **1** | **30** | **2** | **1** | **180** | **280** |
+
+**Debt, with its reason.** Tier A (no local MATLAB in this session). The
+imported files keep sigtools' conventions and are exempt from the help
+template and the tag policy until X-02, by design (CONCEPT 12.9).
 
 ---
 
@@ -133,8 +168,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**Skeleton (X-00b, issue #3) on branch `claude/grace-timeseries-issues-28g3a4`,
-CI green (run 35771631191, 22 + 0 + 0 = 22), awaiting review.** X-00a merged (#2, `f26df8d`).
+**X-01 (#4) + X-03 (#6) on branch `claude/grace-timeseries-issues-28g3a4`, in
+review.** X-00b merged (PR #36, `2ecf543`); X-00a merged (#2, `f26df8d`).
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
@@ -143,7 +178,7 @@ CI green (run 35771631191, 22 + 0 + 0 = 22), awaiting review.** X-00a merged (#2
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
 C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
-`v1.3.2`), which unblocked X-00b. Next after X-00b: X-01 (#4).
+`v1.3.2`). Next after X-01 + X-03: X-04 (#7, `crnKernel`, release 0.1.0).
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).
 
@@ -153,8 +188,8 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | ruleset `Main Protection` | no deletion, no force push; **no required checks yet** (see O-2) |
 | ruleset `Tag protection` | `~ALL`, no deletion, no force push |
 | content | `docs/CONCEPT.md` Rev 0.14, `docs/GUIDE.md` rev 1.9, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
-| code, `Contents.m`, CI, audit | X-00b: `Contents.m` 0.0.0, setup, gate, 5 test classes, `ci.yml` (`audit`, `matlab`), shared audit and generator configured |
-| `docs/GUIDE.md` | rev 1.9 (X-00b: audit command and CI contexts, section 2) |
+| code, `Contents.m`, CI, audit | X-00b: `Contents.m` 0.0.0, setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config` |
+| `docs/GUIDE.md` | rev 1.10 (X-01 + X-03 batched) |
 | `docs/CONCEPT.md` | Rev 0.14 (verification results 9.3; CRN correction) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
@@ -217,7 +252,7 @@ This explains the ITSG gap. It is the first real entry for the defect catalogue
 
 | id | obligation | status | owner | re-entry |
 |---|---|---|---|---|
-| O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | **in review** (PR #36, CI green) | owner | merge of PR #36 |
+| O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | **closed 2026-09-22** (PR #36 merged, `2ecf543`) | — | — |
 | O-2 | add the required checks `audit` and `matlab` to `Main Protection`; both contexts exist since run 35771631191 (2026-09-22) | open | owner | now |
 | O-4 | GUIDE A3 steps 6 and 7: gracefoReading #15 merged (`de87fbf`, merge commit, see F), NonGravForces #57 merged (`10c8504`) | **closed 2026-09-18** | owner | — |
 | O-5 | Regression month (CONCEPT ORC-10): keep 2020-01 and mask GRACE-D's safe mode 2020-01-18 05:05 … 2020-01-22 12:05 from the baseline (proposal; it then also tests event masking), or choose another month | open | owner | before N-10 |
@@ -241,9 +276,10 @@ Design decisions live in `docs/CONCEPT.md` section 11 only.
 
 ## G. What a next session would be wrong for not reading
 
-1. There is no public function yet. X-00b built the skeleton; the next WP
-   is X-01 (#4, sigtools import, unchanged). A new unit must be added to the
-   layer map in `tests/TestLayering.m`, or the layering test fails.
+1. A new unit must be added to the layer map in `tests/TestLayering.m`, or
+   the layering test fails. sigtools lives in `+spectral`/`+tsmodels`
+   **unchanged**: any edit there beyond a namespace qualifier fails
+   `TestSigtoolsImport` until X-02 changes that test with the conventions.
 2. `Main Protection` requires no checks until O-2 is done. The X-00a PR was the
    only merge meant to happen without CI.
 3. Never unpack the zips in `docs/inputs/`.
