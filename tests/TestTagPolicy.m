@@ -9,11 +9,15 @@ classdef TestTagPolicy < matlab.unittest.TestCase
 %     category count; a misspelt tag ("vectorization") is a category nobody
 %     counts. Both are findings. The check is fault-injected: planted classes
 %     in a temporary folder must fire it, a healthy one must not.
+%     Exempt, with its reason: tests/sigtools/, the suites sigtools v1.3.1
+%     brought in unchanged at X-01. They carry no tags, and tagging them is a
+%     convention change, which is X-02's (CONCEPT 12.9).
 %
 %   COVERAGE
 %     contract    - the repository's own tests/ has no finding.
 %     robustness  - an untagged test, a misspelt tag and an unknown tag each
-%                   fire; a correctly tagged class stays silent.
+%                   fire; a correctly tagged class stays silent; an untagged
+%                   test in an exempt folder stays silent.
 %
 %   ---------------------------------------------------------------------
 %   timeSeriesPreparation v0.0.0 | 2026-09-22 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
@@ -21,14 +25,17 @@ classdef TestTagPolicy < matlab.unittest.TestCase
     properties (Constant)
         Allowed = ["contract" "reference" "precision" "speed" ...
                    "robustness" "vectorisation" "metamorphic"]
+        % Folders exempt until X-02, relative to tests/.
+        Exempt = "sigtools"
     end
 
     methods (Test, TestTags = {'contract'})
         function repositoryTestsFollowPolicy(testCase)
             folder = fileparts(mfilename("fullpath"));
-            suite = matlab.unittest.TestSuite.fromFolder(folder);
+            suite = matlab.unittest.TestSuite.fromFolder(folder, "IncludingSubfolders", true);
             testCase.verifyNotEmpty(suite);
-            testCase.verifyEmpty(tagFindings(suite, testCase.Allowed), ...
+            testCase.verifyEmpty(tagFindings(suite, testCase.Allowed, ...
+                fullfile(folder, testCase.Exempt)), ...
                 "Tests in tests/ violate the tag policy of CONCEPT 9.");
         end
     end
@@ -36,30 +43,40 @@ classdef TestTagPolicy < matlab.unittest.TestCase
     methods (Test, TestTags = {'robustness'})
         function untaggedTestFires(testCase)
             suite = plantedSuite(testCase, "TspPlantedUntagged", "");
-            testCase.verifyEqual(numel(tagFindings(suite, testCase.Allowed)), 1);
+            testCase.verifyEqual(numel(tagFindings(suite, testCase.Allowed, strings(0, 1))), 1);
         end
 
         function misspeltTagFires(testCase)
             suite = plantedSuite(testCase, "TspPlantedMisspelt", "'vectorization'");
-            testCase.verifyEqual(numel(tagFindings(suite, testCase.Allowed)), 1);
+            testCase.verifyEqual(numel(tagFindings(suite, testCase.Allowed, strings(0, 1))), 1);
         end
 
         function unknownTagBesideValidOneFires(testCase)
             suite = plantedSuite(testCase, "TspPlantedUnknown", "'contract','smoke'");
-            testCase.verifyEqual(numel(tagFindings(suite, testCase.Allowed)), 1);
+            testCase.verifyEqual(numel(tagFindings(suite, testCase.Allowed, strings(0, 1))), 1);
+        end
+
+        function exemptFolderIsSilent(testCase)
+            suite = plantedSuite(testCase, "TspPlantedExempt", "");
+            folder = string(suite(1).BaseFolder);
+            testCase.verifyEmpty(tagFindings(suite, testCase.Allowed, folder));
         end
 
         function healthyClassIsSilent(testCase)
             suite = plantedSuite(testCase, "TspPlantedHealthy", "'contract','metamorphic'");
-            testCase.verifyEmpty(tagFindings(suite, testCase.Allowed));
+            testCase.verifyEmpty(tagFindings(suite, testCase.Allowed, strings(0, 1)));
         end
     end
 end
 
-function findings = tagFindings(suite, allowed)
-% One string per test that has no tag or a tag outside the allowed set.
+function findings = tagFindings(suite, allowed, exempt)
+% One string per test that has no tag or a tag outside the allowed set,
+% skipping tests whose folder is one of EXEMPT.
     findings = strings(0, 1);
     for k = 1:numel(suite)
+        if any(strcmpi(string(suite(k).BaseFolder), string(exempt)))
+            continue
+        end
         tags = string(suite(k).Tags);
         if isempty(tags)
             findings(end+1, 1) = suite(k).Name + ": no tag"; %#ok<AGROW>

@@ -6,8 +6,8 @@ function info = setupTimeSeriesPreparation(options)
 %     info = setupTimeSeriesPreparation(GracefoReading = folder)
 %
 %   DESCRIPTION
-%     Adds the repository root (the folder holding +timeSeriesPreparation) to
-%     the MATLAB path and reports whether the optional dependency
+%     Adds the repository root (the folder holding +timeSeriesPreparation)
+%     and demos/ to the MATLAB path and reports whether the optional dependency
 %     gracefoReading resolves (CONCEPT 3.1). With GracefoReading, that folder
 %     is added first; it must hold +gracefoReading. Nothing else is changed,
 %     and calling it twice is harmless.
@@ -62,7 +62,7 @@ function info = setupTimeSeriesPreparation(options)
         end
         addpath(char(options.GracefoReading));
     end
-    addpath(char(root));
+    addpath(char(root), char(fullfile(root, "demos")));
 
     head = regexp(fileread(fullfile(root, "+timeSeriesPreparation", "Contents.m")), ...
         "% Version (\d+\.\d+\.\d+)", "tokens", "once");
