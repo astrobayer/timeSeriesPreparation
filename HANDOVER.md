@@ -61,6 +61,15 @@ incomplete).
 | TestTagPolicy | 1 | 4 | 5 |
 | **sum** | **8** | **14** | **22** |
 
+**Measured in CI, run 35771631191 on `1be3033` (2026-09-22), MATLAB R2026a
+Update 5, self-hosted Windows:** `audit` green; `matlab` green with
+gracefoReading `v1.1.0` resolving from `deps/`: **22 + 0 + 0 = 22**
+(contract 8, robustness 14), every class as predicted. The search database
+was built by the generated `html/buildSearchDatabase.m`, and the
+`TestHelpExamples` class that ci-actions generates ran in MATLAB for the first time.
+This clears the ci-actions debts "neither `action.yml` loaded by a runner"
+(for `matlab-audit`, `matlab-docs`) and "`TestHelpExamples` never executed".
+
 **Debt, with its reason.**
 - Tier A: no local MATLAB in this session; the MATLAB verdict is CI's (tier B).
 - Help footers name "Claude Code (Anthropic)", not a model version: the
@@ -76,7 +85,7 @@ incomplete).
 ## A. Status
 
 **Skeleton (X-00b, issue #3) on branch `claude/grace-timeseries-issues-28g3a4`,
-awaiting CI and review.** X-00a merged (#2, `f26df8d`).
+CI green (run 35771631191, 22 + 0 + 0 = 22), awaiting review.** X-00a merged (#2, `f26df8d`).
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
@@ -159,8 +168,8 @@ This explains the ITSG gap. It is the first real entry for the defect catalogue
 
 | id | obligation | status | owner | re-entry |
 |---|---|---|---|---|
-| O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | **in review** (PR for #3) | session | CI green on the PR |
-| O-2 | add the required checks `audit` and `matlab` to `Main Protection` once X-00b's first CI run has created them | open | owner | X-00b's first run |
+| O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | **in review** (PR #36, CI green) | owner | merge of PR #36 |
+| O-2 | add the required checks `audit` and `matlab` to `Main Protection`; both contexts exist since run 35771631191 (2026-09-22) | open | owner | now |
 | O-4 | GUIDE A3 steps 6 and 7: gracefoReading #15 merged (`de87fbf`, merge commit, see F), NonGravForces #57 merged (`10c8504`) | **closed 2026-09-18** | owner | — |
 | O-5 | Regression month (CONCEPT ORC-10): keep 2020-01 and mask GRACE-D's safe mode 2020-01-18 05:05 … 2020-01-22 12:05 from the baseline (proposal; it then also tests event masking), or choose another month | open | owner | before N-10 |
 
