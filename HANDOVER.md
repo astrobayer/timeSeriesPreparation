@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.7 · 2026-09-19 · no code yet**
+**Revision 0.8 · 2026-09-22 · skeleton (X-00b), no public function**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -40,11 +40,43 @@ Out of scope: sigtools (X-01), any public function (X-03 on), the release
 workflow (first release is X-04), lsqvce checkout (tests only, from X-07), the
 data pool (first real-data test), required checks (O-2, owner).
 
+**Measured before the push (2026-09-22, Python 3.11, ci-actions `v1.3.2`):**
+- `matlab-audit`: 9 files at version 0.0.0, **clean**; `matlab-docs --check`:
+  7 generated files, **in sync**.
+- Adopted configuration fault-injected by hand, each restored afterwards: a
+  missing ACCURACY fires A2, a footer at 0.0.1 fires A3, an undocumented
+  raised identifier fires A6, a file without help fires A1, an edited EXAMPLE
+  fires D1 (docs out of date).
+
+**Prediction** (before any run): 22 + 0 + 0 = 22 with the gracefoReading
+checkout; 21 + 0 + 1 = 22 without it (`gracefoReadingResolvesWhenCheckedOut`
+incomplete).
+
+| class | contract | robustness | total |
+|---|---|---|---|
+| TestCiGate | 1 | 2 | 3 |
+| TestHelpExamples (generated) | 1 | 0 | 1 |
+| TestLayering | 1 | 6 | 7 |
+| TestRequirePackage | 4 | 2 | 6 |
+| TestTagPolicy | 1 | 4 | 5 |
+| **sum** | **8** | **14** | **22** |
+
+**Debt, with its reason.**
+- Tier A: no local MATLAB in this session; the MATLAB verdict is CI's (tier B).
+- Help footers name "Claude Code (Anthropic)", not a model version: the
+  session environment forbids model identifiers in pushed files. Q5 asks for
+  the model; owner to confirm or name the wording (open question in the PR).
+- ci-actions `matlab-audit/examples/timeSeriesPreparation.json` and
+  `matlab-docs/examples/timeSeriesPreparation.json` still hold the untested
+  proposal; the measured configuration is `.github/*.json` here. Updating the
+  examples is a ci-actions PR (one repository per PR).
+
 ---
 
 ## A. Status
 
-**Documents only.** X-00a merged (#2, `f26df8d`).
+**Skeleton (X-00b, issue #3) on branch `claude/grace-timeseries-issues-28g3a4`,
+awaiting CI and review.** X-00a merged (#2, `f26df8d`).
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
@@ -52,7 +84,8 @@ data pool (first real-data test), required checks (O-2, owner).
 - Stage C: references and V-items (CONCEPT 9.3).
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
-Next: Phase 1 (GUIDE §7) — C-01 (ci-actions#2) before X-00b (#3) here.
+C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
+`v1.3.2`), which unblocked X-00b. Next after X-00b: X-01 (#4).
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).
 
@@ -61,9 +94,9 @@ Next: Phase 1 (GUIDE §7) — C-01 (ci-actions#2) before X-00b (#3) here.
 | repository | private, `main`; auto-delete head branches on; MIT licence (owner, 2026-09-18) |
 | ruleset `Main Protection` | no deletion, no force push; **no required checks yet** (see O-2) |
 | ruleset `Tag protection` | `~ALL`, no deletion, no force push |
-| content | `docs/CONCEPT.md` Rev 0.13, `docs/GUIDE.md` rev 1.3, `docs/inputs/` (4 files), this HANDOVER, README |
-| code, `Contents.m`, CI, audit | none (X-00b) |
-| `docs/GUIDE.md` | rev 1.6 (Stage C done) |
+| content | `docs/CONCEPT.md` Rev 0.14, `docs/GUIDE.md` rev 1.9, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
+| code, `Contents.m`, CI, audit | X-00b: `Contents.m` 0.0.0, setup, gate, 5 test classes, `ci.yml` (`audit`, `matlab`), shared audit and generator configured |
+| `docs/GUIDE.md` | rev 1.9 (X-00b: audit command and CI contexts, section 2) |
 | `docs/CONCEPT.md` | Rev 0.14 (verification results 9.3; CRN correction) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
@@ -117,8 +150,8 @@ The four input files are unchanged, and their SHA-256 match
 This explains the ITSG gap. It is the first real entry for the defect catalogue
 (V-12), and it bears on the regression baseline 2020-01 (ORC-10), see O-5.
 
-**Verification available now:** none automated. X-00b brings the gate and
-the audit.
+**Verification available now (X-00b):** static audit and docs check (job
+`audit`), MATLAB gate `timeSeriesPreparationCiGate` (job `matlab`).
 
 ---
 
@@ -126,7 +159,7 @@ the audit.
 
 | id | obligation | status | owner | re-entry |
 |---|---|---|---|---|
-| O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | open | session | ci-actions#2 (C-01) released |
+| O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | **in review** (PR for #3) | session | CI green on the PR |
 | O-2 | add the required checks `audit` and `matlab` to `Main Protection` once X-00b's first CI run has created them | open | owner | X-00b's first run |
 | O-4 | GUIDE A3 steps 6 and 7: gracefoReading #15 merged (`de87fbf`, merge commit, see F), NonGravForces #57 merged (`10c8504`) | **closed 2026-09-18** | owner | — |
 | O-5 | Regression month (CONCEPT ORC-10): keep 2020-01 and mask GRACE-D's safe mode 2020-01-18 05:05 … 2020-01-22 12:05 from the baseline (proposal; it then also tests event masking), or choose another month | open | owner | before N-10 |
@@ -150,8 +183,9 @@ Design decisions live in `docs/CONCEPT.md` section 11 only.
 
 ## G. What a next session would be wrong for not reading
 
-1. There is no code. The next WP here is X-00b, and it waits for C-01
-   (ci-actions#2).
+1. There is no public function yet. X-00b built the skeleton; the next WP
+   is X-01 (#4, sigtools import, unchanged). A new unit must be added to the
+   layer map in `tests/TestLayering.m`, or the layering test fails.
 2. `Main Protection` requires no checks until O-2 is done. The X-00a PR was the
    only merge meant to happen without CI.
 3. Never unpack the zips in `docs/inputs/`.
