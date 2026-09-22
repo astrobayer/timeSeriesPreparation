@@ -1,0 +1,19 @@
+{
+  "toolbox": "timeSeriesPreparation",
+  "summary": "Physics-free preparation and analysis of GRACE and GRACE-FO time series.",
+  "version": {
+    "file": "+timeSeriesPreparation/Contents.m",
+    "pattern": "^% Version (\\d+\\.\\d+\\.\\d+)"
+  },
+  "sources": ["+timeSeriesPreparation"],
+  "exclude": ["**/Contents.m"],
+  "entries": "template",
+  "output": "html",
+  "infoXml": "info.xml",
+  "matlabRelease": "R2024b",
+  "testClass": {
+    "path": "tests/TestHelpExamples.m",
+    "tags": ["contract"]
+  },
+  "exampleExclude": []
+}

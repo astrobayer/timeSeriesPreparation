@@ -1,0 +1,103 @@
+# Continuous integration for timeSeriesPreparation (X-00b).
+#
+# TWO JOBS, AND THEIR NAMES ARE THE REQUIRED CONTEXTS
+#   `audit` and `matlab` are the contexts GUIDE section 2 names for this
+#   repository. O-2 (HANDOVER) adds them to the `Main Protection` ruleset
+#   once this workflow has run once and created them. Renaming a job renames
+#   its context, so the names are fixed from here on.
+#
+# audit - ubuntu-latest, no MATLAB
+#   The shared static audit (ci-actions C-01) and the shared documentation
+#   generator in check mode (C-03). Both read .github/*.json. Runs first and
+#   needs nothing installed, so a broken help block never consumes the single
+#   self-hosted runner.
+#
+# matlab - the self-hosted Windows runner
+#   Probe, then the gate (timeSeriesPreparationCiGate). gracefoReading is an
+#   OPTIONAL dependency (CONCEPT 3.1): it is checked out into
+#   deps/gracefoReading at its release tag when REFERENCE_READ_TOKEN is
+#   visible, so the "present" branch of the resolution is exercised; without
+#   the secret the step is skipped and the one test that needs it is counted
+#   incomplete, never silently passed.
+#
+# PINS
+#   ci-actions by immutable tag (its README: a moving tag would change this
+#   CI with nothing in this diff to explain it); third-party actions by
+#   commit SHA with the tag beside it, the SHAs gracefoReading's ci.yml runs.
+#
+# Created: 2026-09-22
+# Author:  Developed by Matthias Weigelt with the help of Anthropic
+#          Claude Code, 2026-09-22
+
+name: ci
+
+on:
+  # push limited to main: an unrestricted push next to pull_request fires
+  # both events for every commit on a branch with an open PR (measured in
+  # gracefoReading), and the second run queues behind the first on the one
+  # self-hosted runner.
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: astrobayer/ci-actions/matlab-audit@v1.3.2
+        with:
+          config: .github/matlab-audit.json
+
+      - uses: astrobayer/ci-actions/matlab-docs@v1.3.2
+        with:
+          config: .github/matlab-docs.json
+
+  matlab:
+    name: matlab
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 30
+    env:
+      # A secret cannot be tested in a step's `if:` directly; its presence can.
+      HAVE_REFERENCE_TOKEN: ${{ secrets.REFERENCE_READ_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      # timeout-minutes sits here, not in the action: the composite schema
+      # rejects the key on a step (ci-actions README, measured).
+      - uses: astrobayer/ci-actions/matlab-probe@v1.3.2
+        timeout-minutes: 2
+
+      # Pinned to a release tag: the minimum version this repository is
+      # tested against moves in the PR that needs a newer one (GUIDE 3).
+      - name: Check out gracefoReading (optional dependency)
+        if: ${{ env.HAVE_REFERENCE_TOKEN == 'true' }}
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: astrobayer/gracefoReading
+          ref: v1.1.0
+          token: ${{ secrets.REFERENCE_READ_TOKEN }}
+          path: deps/gracefoReading
+
+      - name: MATLAB gate
+        uses: matlab-actions/run-command@bfa857648f4895aa98a446fe41c85e0788421ed5 # v3
+        with:
+          command: timeSeriesPreparationCiGate
+
+      - name: Publish test report and coverage
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: testresults-self-hosted-windows
+          path: artifacts/
