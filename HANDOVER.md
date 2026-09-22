@@ -101,6 +101,11 @@ behind the assumption; MAS1B's prod_flag NaN compared with `isequaln`.
 Every other class ran as predicted (sigtools' 180 confirmed; demos 7/7;
 import identity 5/5; legacy 30/30). Gate time 953 s.
 
+**Verdict, CI run 35777061630 on `0fda5fb`, MATLAB R2026a, gracefoReading
+`v1.1.0`:** `audit` green; `matlab` green, **280 + 0 + 0 = 280**, every
+class and every tag as predicted (TestArcContract 7/7 on MAS1B and classic
+ACC1B). Gate time 960 s.
+
 **Debt, with its reason.** Tier A (no local MATLAB in this session). The
 imported files keep sigtools' conventions and are exempt from the help
 template and the tag policy until X-02, by design (CONCEPT 12.9).
@@ -179,8 +184,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-01 (#4) + X-03 (#6) on branch `claude/grace-timeseries-issues-28g3a4`, in
-review.** X-00b merged (PR #36, `2ecf543`); X-00a merged (#2, `f26df8d`).
+**X-01 (#4) + X-03 (#6) on branch `claude/grace-timeseries-issues-28g3a4`: CI
+green (run 35777061630, 280 + 0 + 0), awaiting review.** X-00b merged (PR #36, `2ecf543`); X-00a merged (#2, `f26df8d`).
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
