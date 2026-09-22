@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.Arc</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.Arc</h1>
+<p>One instrument time series on int64 GPS-ns epochs, with weights, layers and provenance.</p>
+<h2>Syntax</h2>
+<pre><code>arc = timeSeriesPreparation.Arc(t, obs, aux)
+arc = timeSeriesPreparation.Arc(t, obs, aux, Columns = names, Frame = frame)
+arc = addLayer(arc, name, remove)
+arc = appendProvenance(arc, stage, detail)
+timeSeriesPreparation.Arc.requireOneRelease(arcs)</code></pre>
+<h2>Description</h2>
+<p>The container every stage of this toolbox reads and returns (CONCEPT 5). It is built from gracefoReading&#x27;s triple [t, obs, aux] by FIELD NAMES - aux.obsNames, variableNames, variableFieldNames, variableUnits and fileName/product (readL1b) or fileNames/products (readL1bMulti) - and calls no gracefoReading function, so it works without the reader installed. Time must be int64 GPS nanoseconds (&#x27;TimeFormat&#x27; &quot;gpsns&quot;): a double cannot hold 2020-era GPS nanoseconds (about 6.3e17 &gt; 2^53) without rounding. Columns are selected by name; there is no positional fallback.</p>
+<p>Release rule (CONCEPT 5.2): the L1B release of every file is read from its name (&lt;PRODUCT&gt;_&lt;date&gt;_&lt;sat&gt;_&lt;RR&gt;), or from the header line &quot;product_version:&quot; when the name does not carry it, and stored in release and provenance. An arc whose files come from more than one release refuses unless AllowMixedRelease is true; requireOneRelease applies the same rule to a campaign (an array of arcs).</p>
+<p>Weights and layers: a layer is a named N x 1 logical, true = remove. Layers are additive and can only remove: addLayer refuses to replace a layer, and weights = min over all layers (1 kept, 0 removed). filled is set by the gap stage (X-08) and is all false here. provenance is append-only, one entry per stage: stage, toolbox version, UTC time, detail.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>t</code></td><td>N,1</td><td><code>int64</code></td><td>&mdash;</td><td>- GPS nanoseconds past 2000-01-01 12:00:00, strictly increasing.</td></tr>
+<tr><td><code>obs</code></td><td>N,M</td><td><code>double</code></td><td>&mdash;</td><td>- Observations, column j named aux.obsNames{j}. Real double; NaN is the only missing value, Inf refuses.</td></tr>
+<tr><td><code>aux</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- gracefoReading&#x27;s metadata; the fields named in DESCRIPTION are required.</td></tr>
+<tr><td><code>name</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- Layer name, a valid MATLAB field name.</td></tr>
+<tr><td><code>remove</code></td><td>N,1</td><td><code>logical</code></td><td>&mdash;</td><td>- Layer mask, true = sample removed.</td></tr>
+<tr><td><code>stage</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- Name of the stage writing provenance.</td></tr>
+<tr><td><code>detail</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Stage-specific provenance detail.</td></tr>
+<tr><td><code>arcs</code></td><td>1,:</td><td><code>Arc</code></td><td>&mdash;</td><td>- A campaign: an array of arcs.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Columns</code></td><td>1,:</td><td><code>string</code></td><td>all</td><td>Observation names to keep, in this order.</td></tr>
+<tr><td><code>Frame</code></td><td>1,1</td><td><code>string</code></td><td>&quot;&quot;</td><td>Frame of obs, stated by the caller; &quot;&quot; = not stated.</td></tr>
+<tr><td><code>AllowMixedRelease</code></td><td>1,1</td><td><code>logical</code></td><td>false</td><td>Accept files from more than one L1B release.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Properties: t, obs, names, units, mission, product, satellite, release, files, frame, frameSource, weights, layers, filled, provenance.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact: t and obs are stored as given, bit for bit, and selecting columns copies them without arithmetic. Weights are exactly 0 or 1.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:Arc:timeFormat</code></td><td>Time</td><td>t is not an int64 column vector (read with &#x27;TimeFormat&#x27;, &quot;gpsns&quot;).</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:timeNotIncreasing</code></td><td>Time</td><td>t is not strictly increasing.</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:sizeMismatch</code></td><td>Observations</td><td>obs is not a real double, or its rows differ from numel(t) or its columns from numel(aux.obsNames).</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:notFinite</code></td><td>Observations</td><td>obs holds Inf (NaN is allowed).</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:unknownColumn</code></td><td>Observations</td><td>Columns names an observation the file does not have, or names one twice.</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:auxField</code></td><td>Metadata</td><td>aux lacks a required field.</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:mixedProduct</code></td><td>Metadata</td><td>the files hold different products or satellites.</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:mixedRelease</code></td><td>Metadata</td><td>the files, or the arcs of a campaign, come from more than one L1B release.</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:badLayer</code></td><td>Layers</td><td>the layer is not N x 1 logical, its name is not a field name, or a layer of that name exists.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A ten-sample ACT1B-like arc from a hand-made aux struct.</p>
+<pre><code>t = int64(0:9)&#x27; * int64(1e9);
+aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;gps_time&#x27;, &#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;gps_time&#x27;, &#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACT1B_2020-01-01_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+arc = timeSeriesPreparation.Arc(t, zeros(10, 1), aux);
+arc = addLayer(arc, &quot;demo&quot;, (1:10)&#x27; &gt; 8);</code></pre>
+<h2>Limitations</h2>
+<p>The frame is never inferred: it stays &quot;&quot; unless Frame states it, and a stage that needs a frame refuses (v3 F5). The release is read from the file name or header only; a file stating neither gets release &quot;&quot;.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md sections 5, 5.1, 5.2; gracefoReading.readL1b help (the aux fields).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.Config</code>, <code>gracefoReading.readL1b</code>, <code>gracefoReading.readL1bMulti</code></p>
+<p class="footer">timeSeriesPreparation v0.0.0 - generated from the help block of +timeSeriesPreparation/Arc.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

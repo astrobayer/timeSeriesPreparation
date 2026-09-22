@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.Config</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.Config</h1>
+<p>Instrument settings in nine sections, strict about field names (skeleton).</p>
+<h2>Syntax</h2>
+<pre><code>cfg = timeSeriesPreparation.Config()
+cfg = timeSeriesPreparation.Config(arc)
+cfg = set(cfg, section, field, value)
+s   = toStruct(cfg)</code></pre>
+<h2>Description</h2>
+<p>The settings of every stage, in the sections of CONCEPT 5: mask, qc, crn, align, fill, noise, unc, drivers, run. Each section has a schema, the list of fields it knows; set refuses a section or a field outside it, so a misspelt option fails instead of being silently ignored. Config(arc) records the arc&#x27;s mission and product and returns the preset for that product (CONCEPT 5).</p>
+<p>Skeleton (X-03): every schema is empty and no product has a preset yet. Each stage adds its fields, defaults and presets in its own work package (crn at X-04, mask and qc at X-05, ...). An option whose default would be an assumption defaults to empty (R5). Applications take a Config as &#x27;Preproc&#x27; and hash it with their own options; toStruct gives them a plain struct to hash.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- The arc whose product selects the preset.</td></tr>
+<tr><td><code>section</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- One of Config.Sections.</td></tr>
+<tr><td><code>field</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- A field of that section&#x27;s schema.</td></tr>
+<tr><td><code>value</code></td><td>1,1</td><td><code>any</code></td><td>&mdash;</td><td>- The setting.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>cfg</code></td><td>1,1</td><td><code>Config</code></td><td>&mdash;</td><td>- Properties: mission, product, and one struct per section.</td></tr>
+<tr><td><code>s</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- mission, product and the nine sections.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Not applicable, because the class computes no number; values are stored as given.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:Config:unknownSection</code></td><td>Settings</td><td>section is not one of the nine sections.</td></tr>
+<tr><td><code>timeSeriesPreparation:Config:unknownField</code></td><td>Settings</td><td>field is not in the section&#x27;s schema.</td></tr>
+</table>
+<h2>Example</h2>
+<p>The empty skeleton as a plain struct, e.g. for hashing.</p>
+<pre><code>cfg = timeSeriesPreparation.Config();
+s = toStruct(cfg);</code></pre>
+<h2>Limitations</h2>
+<p>No schema field and no preset exist yet; set therefore refuses every field until the stages define theirs.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.Arc</code></p>
+<p class="footer">timeSeriesPreparation v0.0.0 - generated from the help block of +timeSeriesPreparation/Config.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

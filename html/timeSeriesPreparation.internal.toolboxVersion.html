@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.internal.toolboxVersion</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.internal.toolboxVersion</h1>
+<p>The toolbox version, read from its one authority, Contents.m.</p>
+<h2>Syntax</h2>
+<pre><code>v = timeSeriesPreparation.internal.toolboxVersion()</code></pre>
+<h2>Description</h2>
+<p>Returns the version stated in +timeSeriesPreparation/Contents.m, the single version source of GUIDE section 3, which the shared audit also checks every help footer against. Provenance records (Arc) cite it, so a result names the release that produced it without a second literal that could drift.</p>
+<h2>Inputs</h2>
+<p>(none)</p>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>v</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- Version as MAJOR.MINOR.PATCH, e.g. &quot;0.0.0&quot;.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Not applicable, because the function computes no number; it returns the text of the Version line verbatim.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:toolboxVersion:noVersion</code></td><td>Version source</td><td>Contents.m holds no &quot;% Version x.y.z&quot; line.</td></tr>
+</table>
+<h2>Example</h2>
+<p>The version this checkout reports.</p>
+<pre><code>v = timeSeriesPreparation.internal.toolboxVersion();</code></pre>
+<h2>Limitations</h2>
+<p>Reads the file on every call; callers that need it per sample should read it once.</p>
+<h2>References</h2>
+<p>docs/GUIDE.md section 3 (one version source).</p>
+<h2>See also</h2>
+<p><code>setupTimeSeriesPreparation</code>, <code>timeSeriesPreparation.Arc</code></p>
+<p class="footer">timeSeriesPreparation v0.0.0 - generated from the help block of +timeSeriesPreparation/+internal/toolboxVersion.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>
