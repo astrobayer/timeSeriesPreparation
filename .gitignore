@@ -1,0 +1,6 @@
+# Written by the gate (timeSeriesPreparationCiGate): reports and the help
+# search database, rebuilt on every run and never committed.
+artifacts/
+html/helpsearch-v*/
+# CI checks optional dependencies out here (gracefoReading); never committed.
+deps/

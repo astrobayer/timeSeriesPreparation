@@ -1,0 +1,58 @@
+{
+  "toolbox": "timeSeriesPreparation",
+  "version": {
+    "file": "+timeSeriesPreparation/Contents.m",
+    "pattern": "^% Version (\\d+\\.\\d+\\.\\d+)"
+  },
+  "sources": ["+timeSeriesPreparation", "tests",
+              "setupTimeSeriesPreparation.m", "timeSeriesPreparationCiGate.m"],
+  "identifierPrefix": "timeSeriesPreparation",
+  "catalogue": "docs/errorIdentifiers.md",
+  "profiles": [
+    {
+      "name": "contents",
+      "match": ["**/Contents.m"],
+      "skip": true
+    },
+    {
+      "name": "generated",
+      "match": ["tests/TestHelpExamples.m"],
+      "sections": ["DESCRIPTION", "COVERAGE"],
+      "optionsSection": null,
+      "entries": "off",
+      "footer": "off",
+      "identifiers": false,
+      "seeAlso": false
+    },
+    {
+      "name": "public",
+      "match": [
+        "+timeSeriesPreparation/*.m",
+        "+timeSeriesPreparation/+spectral/*.m",
+        "+timeSeriesPreparation/+tsmodels/*.m",
+        "+timeSeriesPreparation/+internal/*.m",
+        "setupTimeSeriesPreparation.m",
+        "timeSeriesPreparationCiGate.m"
+      ],
+      "sections": ["SYNTAX", "DESCRIPTION", "INPUTS", "OUTPUTS", "ACCURACY",
+                   "ERRORS", "EXAMPLE", "LIMITATIONS", "REFERENCES"],
+      "optionsSection": "OPTIONS",
+      "entries": "template",
+      "footer": "provenance",
+      "errorGroups": true,
+      "identifiers": true,
+      "warnings": false,
+      "seeAlso": true
+    },
+    {
+      "name": "tests",
+      "match": ["tests/*.m"],
+      "sections": ["DESCRIPTION", "COVERAGE"],
+      "optionsSection": null,
+      "entries": "off",
+      "footer": "provenance",
+      "identifiers": false,
+      "seeAlso": false
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.internal.requirePackage</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.internal.requirePackage</h1>
+<p>Refuse at the point of use when an optional dependency is missing.</p>
+<h2>Syntax</h2>
+<pre><code>timeSeriesPreparation.internal.requirePackage(name, caller)</code></pre>
+<h2>Description</h2>
+<p>gracefoReading is an optional dependency (CONCEPT 3.1): only the L1B-specific functions call it, and the sigtools half runs in base MATLAB. A function that needs it calls this first, so a missing reader fails by name at the point of use, not as &quot;Unable to resolve the name&quot; somewhere deeper. The layering test (tests/TestLayering.m) demands this call in every package file that references gracefoReading.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>name</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- Namespace that must resolve, for example &quot;gracefoReading&quot;.</td></tr>
+<tr><td><code>caller</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- Name of the calling function, without the package prefix; it becomes the middle part of the identifier.</td></tr>
+</table>
+<h2>Outputs</h2>
+<p>(none)</p>
+<h2>Accuracy</h2>
+<p>Not applicable, because the function computes no number. It decides presence only: a namespace resolves when meta.package.fromName finds it on the current path. It does not check a minimum version.</p>
+<h2>Errors</h2>
+<p>None of its own. When name does not resolve it raises timeSeriesPreparation:&lt;caller&gt;:depMissing on the caller&#x27;s behalf, and the caller documents that identifier under its own ERRORS, where a user looks it up. An invalid name or caller is refused by the arguments block with a MATLAB: identifier.</p>
+<h2>Example</h2>
+<p>The toolbox itself always resolves, so this passes silently.</p>
+<pre><code>timeSeriesPreparation.internal.requirePackage(&quot;timeSeriesPreparation&quot;, &quot;example&quot;);</code></pre>
+<h2>Limitations</h2>
+<p>Presence only. A dependency present in a version too old for the caller passes here and fails later; minimum versions are the release&#x27;s dependency table (GUIDE section 3).</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md section 3.1 (optional dependency, depMissing).</p>
+<h2>See also</h2>
+<p><code>meta.package.fromName</code></p>
+<p class="footer">timeSeriesPreparation v0.0.0 - generated from the help block of +timeSeriesPreparation/+internal/requirePackage.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

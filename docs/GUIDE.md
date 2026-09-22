@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.8 · 2026-09-19 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.9 · 2026-09-22 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.8: tier B defined correctly (MATLAB through CI); N-02 waits for lsqvce#110. Rev 1.7: Phase 0 complete (lsqvce v6.1.0 released). Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.9: timeSeriesPreparation's static audit command and CI contexts measured at X-00b (section 2). Rev 1.8: tier B defined correctly (MATLAB through CI); N-02 waits for lsqvce#110. Rev 1.7: Phase 0 complete (lsqvce v6.1.0 released). Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -98,7 +98,7 @@ MATLAB)
 | NonGravForces | `python3 auditPackage.py` | `matlab -batch ciGate` | `matlab`, `audit` |
 | lsqvce | `python3 dev/docs_src/audit_tree.py && python3 dev/docs_src/audit_selftest.py` | `matlab -batch "cd('dev/tests'); ci_gate"` | `audit`, `matlab` |
 | ci-actions | — | — | none; a PR is required |
-| timeSeriesPreparation | shared audit (C-01) | `matlab -batch timeSeriesPreparationCiGate` (X-00b) | `audit`, `matlab` (set after the first CI run) |
+| timeSeriesPreparation | shared audit (C-01) and generator (C-03), from a ci-actions `v1.3.2` checkout: `python3 <ci-actions>/matlab-audit/audit.py --config .github/matlab-audit.json && python3 <ci-actions>/matlab-docs/generate.py --config .github/matlab-docs.json` | `matlab -batch timeSeriesPreparationCiGate` | `audit`, `matlab` (set after the first CI run, O-2) |
 | rangingPreparation | shared audit (C-01) | `matlab -batch rangingPreparationCiGate` (L-00) | `audit`, `matlab` (set after the first CI run) |
 
 **What CI needs besides the code**
