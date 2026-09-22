@@ -11,8 +11,11 @@ classdef TestArcContract < matlab.unittest.TestCase
 %     consumer pins what it reads. Every test assumes gracefoReading is on
 %     the path and is incomplete, not passed, where it is not.
 %
-%     Files: ACH1B_2020-01-01_D_04.txt (GRACE-FO, YAML header, RL04) and
-%     ACC1B_2008-01-01_A_02.dat (classic GRACE, binary, RL02).
+%     Files: MAS1B_2020-01-01_C_04.txt (GRACE-FO, YAML header, RL04) and
+%     ACC1B_2008-01-01_A_02.dat (classic GRACE, binary, RL02), both present
+%     in gracefoReading v1.1.0, the version CI checks out. Only the absence
+%     of gracefoReading makes these tests incomplete; gracefoReading present
+%     without these files is a failure, since the pinned version has them.
 %
 %   COVERAGE
 %     contract   - readL1b and readL1bMulti return the aux fields Arc reads,
@@ -37,14 +40,16 @@ classdef TestArcContract < matlab.unittest.TestCase
                 "gracefoReading is not on the path; the aux contract cannot be read.");
             root = fileparts(fileparts(which("gracefoReading.readL1b")));
             testCase.Fixtures = string(fullfile(root, "tests", "realdata"));
-            testCase.assumeTrue(isfile(fullfile(testCase.Fixtures, "ACH1B_2020-01-01_D_04.txt")), ...
-                "gracefoReading's tests/realdata is not present.");
+            for f = ["MAS1B_2020-01-01_C_04.txt" "ACC1B_2008-01-01_A_02.dat"]
+                testCase.assertTrue(isfile(fullfile(testCase.Fixtures, f)), ...
+                    "gracefoReading resolves, but its tests/realdata lacks " + f + ".");
+            end
         end
     end
 
     methods (Test, TestTags = {'contract'})
         function readL1bAuxFields(testCase)
-            [t, ~, aux] = gracefoReading.readL1b(testCase.file("ACH1B_2020-01-01_D_04.txt"), ...
+            [t, ~, aux] = gracefoReading.readL1b(testCase.file("MAS1B_2020-01-01_C_04.txt"), ...
                 "TimeFormat", "gpsns");
             testCase.verifyClass(t, "int64");
             testCase.verifyTrue(iscolumn(t));
@@ -52,20 +57,19 @@ classdef TestArcContract < matlab.unittest.TestCase
         end
 
         function readL1bMultiAuxFields(testCase)
-            [t, ~, aux] = gracefoReading.readL1bMulti(testCase.file("ACH1B_2020-01-01_D_04.txt"), ...
+            [t, ~, aux] = gracefoReading.readL1bMulti(testCase.file("MAS1B_2020-01-01_C_04.txt"), ...
                 "TimeFormat", "gpsns");
             testCase.verifyClass(t, "int64");
             testCase.verifyAuxFields(aux, ["fileNames" "products" "headers"]);
         end
 
         function arcFromYamlProduct(testCase)
-            [t, obs, aux] = gracefoReading.readL1b(testCase.file("ACH1B_2020-01-01_D_04.txt"), ...
+            [t, obs, aux] = gracefoReading.readL1b(testCase.file("MAS1B_2020-01-01_C_04.txt"), ...
                 "TimeFormat", "gpsns");
-            arc = timeSeriesPreparation.Arc(t, obs, aux, ...
-                Columns = ["lin_accl_x" "lin_accl_y" "lin_accl_z"]);
+            arc = timeSeriesPreparation.Arc(t, obs, aux, Columns = ["mass_thr" "mass_tnk"]);
             testCase.verifyEqual([arc.product arc.satellite arc.mission arc.release], ...
-                ["ACH1B" "D" "GRACE-FO" "04"]);
-            testCase.verifyEqual(arc.units, ["m/s2" "m/s2" "m/s2"]);
+                ["MAS1B" "C" "GRACE-FO" "04"]);
+            testCase.verifyEqual(arc.units, ["kg" "kg"]);
         end
 
         function arcFromClassicBinary(testCase)
@@ -80,19 +84,19 @@ classdef TestArcContract < matlab.unittest.TestCase
 
     methods (Test, TestTags = {'reference'})
         function releaseAgreesWithHeader(testCase)
-            [~, ~, aux] = gracefoReading.readL1b(testCase.file("ACH1B_2020-01-01_D_04.txt"), ...
+            [~, ~, aux] = gracefoReading.readL1b(testCase.file("MAS1B_2020-01-01_C_04.txt"), ...
                 "TimeFormat", "gpsns");
             v = regexp(strjoin(string(aux.header(:))', newline), ...
                 "product_version:\s*(\d+)", "tokens", "once");
             testCase.assertNotEmpty(v, "The header states no product_version.");
-            [t, obs] = gracefoReading.readL1b(testCase.file("ACH1B_2020-01-01_D_04.txt"), ...
+            [t, obs] = gracefoReading.readL1b(testCase.file("MAS1B_2020-01-01_C_04.txt"), ...
                 "TimeFormat", "gpsns");
             arc = timeSeriesPreparation.Arc(t, obs, aux);
             testCase.verifyEqual(arc.release, string(v{1}));
         end
 
         function obsCopiedBitForBit(testCase)
-            [t, obs, aux] = gracefoReading.readL1b(testCase.file("ACH1B_2020-01-01_D_04.txt"), ...
+            [t, obs, aux] = gracefoReading.readL1b(testCase.file("MAS1B_2020-01-01_C_04.txt"), ...
                 "TimeFormat", "gpsns");
             arc = timeSeriesPreparation.Arc(t, obs, aux);
             testCase.verifyTrue(isequal(typecast(arc.obs(:), "uint64"), typecast(obs(:), "uint64")));
@@ -102,13 +106,13 @@ classdef TestArcContract < matlab.unittest.TestCase
 
     methods (Test, TestTags = {'metamorphic'})
         function multiOfOneEqualsSingle(testCase)
-            f = testCase.file("ACH1B_2020-01-01_D_04.txt");
+            f = testCase.file("MAS1B_2020-01-01_C_04.txt");
             [t1, o1, a1] = gracefoReading.readL1b(f, "TimeFormat", "gpsns");
             [t2, o2, a2] = gracefoReading.readL1bMulti(f, "TimeFormat", "gpsns");
             s = timeSeriesPreparation.Arc(t1, o1, a1);
             m = timeSeriesPreparation.Arc(t2, o2, a2);
             testCase.verifyEqual(m.t, s.t);
-            testCase.verifyEqual(m.obs, s.obs);
+            testCase.verifyTrue(isequaln(m.obs, s.obs), "obs differ (NaN = absent by prod_flag)");
             testCase.verifyEqual([m.names m.units m.product m.satellite m.release], ...
                 [s.names s.units s.product s.satellite s.release]);
         end

@@ -90,6 +90,17 @@ are incomplete: 272 + 0 + 8.
 | TestTagPolicy | 1 | | | 5 | | | | 6 |
 | **sum** | **33** | **33** | **1** | **30** | **2** | **1** | **180** | **280** |
 
+**First CI run, 35774284097 on `ba16a96`, MATLAB R2026a:** green, but
+**273 + 0 + 7** against the predicted 280 + 0 + 0. All 7 of TestArcContract
+were filtered by an assumption although gracefoReading resolved. Cause,
+measured: the ACH1B fixture entered gracefoReading's `tests/realdata` after
+`v1.1.0` (its PR #28, untagged), and CI checks out `v1.1.0`. Fix: the YAML
+fixture is now `MAS1B_2020-01-01_C_04.txt` (present at `v1.1.0`), and a
+missing fixture **fails** once gracefoReading resolves, instead of hiding
+behind the assumption; MAS1B's prod_flag NaN compared with `isequaln`.
+Every other class ran as predicted (sigtools' 180 confirmed; demos 7/7;
+import identity 5/5; legacy 30/30). Gate time 953 s.
+
 **Debt, with its reason.** Tier A (no local MATLAB in this session). The
 imported files keep sigtools' conventions and are exempt from the help
 template and the tag policy until X-02, by design (CONCEPT 12.9).
