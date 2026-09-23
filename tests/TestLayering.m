@@ -7,7 +7,7 @@ classdef TestLayering < matlab.unittest.TestCase
 %       L2  mask qc align crnApply noise fill observability bootstrap
 %           crossval drivers correlate report, and checkAlignment (stage 3
 %           of CONCEPT 6.1 with align)
-%       L1  Arc Config crnKernel
+%       L1  Arc Config crnKernel noiseReference
 %       L0  +spectral +tsmodels (sigtools), and +internal helpers
 %     and says calls go downward only. Calls within one layer are allowed
 %     (sigtools functions call each other, Config reads an Arc); a call to a
@@ -101,9 +101,9 @@ function layers = layerMap()
         ["run", ...
          "mask" "qc" "align" "checkAlignment" "crnApply" "fill" "observability" ...
          "bootstrap" "crossval" "drivers" "correlate" "report" "noise", ...
-         "Arc" "Config" "crnKernel", ...
+         "Arc" "Config" "crnKernel" "noiseReference", ...
          "spectral" "tsmodels" "internal"], ...
-        [3, 2 2 2 2 2 2 2 2 2 2 2 2 2, 1 1 1, 0 0 0]);
+        [3, 2 2 2 2 2 2 2 2 2 2 2 2 2, 1 1 1 1, 0 0 0]);
 end
 
 function findings = layerFindings(root)
