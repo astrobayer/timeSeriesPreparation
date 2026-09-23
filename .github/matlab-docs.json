@@ -5,15 +5,23 @@
     "file": "+timeSeriesPreparation/Contents.m",
     "pattern": "^% Version (\\d+\\.\\d+\\.\\d+)"
   },
-  "sources": ["+timeSeriesPreparation"],
-  "exclude": ["**/Contents.m"],
+  "sources": [
+    "+timeSeriesPreparation"
+  ],
+  "exclude": [
+    "**/Contents.m",
+    "+timeSeriesPreparation/+spectral/*.m",
+    "+timeSeriesPreparation/+tsmodels/*.m"
+  ],
   "entries": "template",
   "output": "html",
   "infoXml": "info.xml",
   "matlabRelease": "R2024b",
   "testClass": {
     "path": "tests/TestHelpExamples.m",
-    "tags": ["contract"]
+    "tags": [
+      "contract"
+    ]
   },
   "exampleExclude": []
 }

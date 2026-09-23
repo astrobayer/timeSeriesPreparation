@@ -18,10 +18,47 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_requirePackage_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.internal.requirePackage did not run cleanly.");
         end
+
+        function timeSeriesPreparation_internal_toolboxVersion_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.internal.toolboxVersion: The version this checkout reports.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_toolboxVersion_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.internal.toolboxVersion did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_Arc_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.Arc: A ten-sample ACT1B-like arc from a hand-made aux struct.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_Arc_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.Arc did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_Config_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.Config: The empty skeleton as a plain struct, e.g. for hashing.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_Config_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.Config did not run cleanly.");
+        end
     end
 end
 
 function example_timeSeriesPreparation_internal_requirePackage_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.internal.requirePackage, verbatim from its help block.
     timeSeriesPreparation.internal.requirePackage("timeSeriesPreparation", "example");
+end
+
+function example_timeSeriesPreparation_internal_toolboxVersion_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.internal.toolboxVersion, verbatim from its help block.
+    v = timeSeriesPreparation.internal.toolboxVersion();
+end
+
+function example_timeSeriesPreparation_Arc_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.Arc, verbatim from its help block.
+    t = int64(0:9)' * int64(1e9);
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'gps_time', 'lin_accl_x'}}, "variableFieldNames", {{'gps_time', 'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-01_C_04.txt", "product", "ACT1B");
+    arc = timeSeriesPreparation.Arc(t, zeros(10, 1), aux);
+    arc = addLayer(arc, "demo", (1:10)' > 8);
+end
+
+function example_timeSeriesPreparation_Config_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.Config, verbatim from its help block.
+    cfg = timeSeriesPreparation.Config();
+    s = toStruct(cfg);
 end

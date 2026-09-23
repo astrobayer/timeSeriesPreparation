@@ -4,20 +4,32 @@
     "file": "+timeSeriesPreparation/Contents.m",
     "pattern": "^% Version (\\d+\\.\\d+\\.\\d+)"
   },
-  "sources": ["+timeSeriesPreparation", "tests",
-              "setupTimeSeriesPreparation.m", "timeSeriesPreparationCiGate.m"],
+  "sources": [
+    "+timeSeriesPreparation",
+    "tests",
+    "demos",
+    "setupTimeSeriesPreparation.m",
+    "timeSeriesPreparationCiGate.m"
+  ],
   "identifierPrefix": "timeSeriesPreparation",
   "catalogue": "docs/errorIdentifiers.md",
   "profiles": [
     {
       "name": "contents",
-      "match": ["**/Contents.m"],
+      "match": [
+        "**/Contents.m"
+      ],
       "skip": true
     },
     {
       "name": "generated",
-      "match": ["tests/TestHelpExamples.m"],
-      "sections": ["DESCRIPTION", "COVERAGE"],
+      "match": [
+        "tests/TestHelpExamples.m"
+      ],
+      "sections": [
+        "DESCRIPTION",
+        "COVERAGE"
+      ],
       "optionsSection": null,
       "entries": "off",
       "footer": "off",
@@ -25,17 +37,41 @@
       "seeAlso": false
     },
     {
+      "name": "sigtools-imported",
+      "reason": "sigtools v1.3.1 moved in unchanged at X-01 (CONCEPT 12.9); its help style, unprefixed identifiers and missing footer are brought to this template at X-02. Only the presence of a help block is checked until then.",
+      "match": [
+        "+timeSeriesPreparation/+spectral/*.m",
+        "+timeSeriesPreparation/+tsmodels/*.m",
+        "tests/sigtools/*.m",
+        "demos/*.m"
+      ],
+      "sections": [],
+      "optionsSection": null,
+      "entries": "off",
+      "footer": "off",
+      "errorGroups": false,
+      "identifiers": false,
+      "seeAlso": false
+    },
+    {
       "name": "public",
       "match": [
         "+timeSeriesPreparation/*.m",
-        "+timeSeriesPreparation/+spectral/*.m",
-        "+timeSeriesPreparation/+tsmodels/*.m",
         "+timeSeriesPreparation/+internal/*.m",
         "setupTimeSeriesPreparation.m",
         "timeSeriesPreparationCiGate.m"
       ],
-      "sections": ["SYNTAX", "DESCRIPTION", "INPUTS", "OUTPUTS", "ACCURACY",
-                   "ERRORS", "EXAMPLE", "LIMITATIONS", "REFERENCES"],
+      "sections": [
+        "SYNTAX",
+        "DESCRIPTION",
+        "INPUTS",
+        "OUTPUTS",
+        "ACCURACY",
+        "ERRORS",
+        "EXAMPLE",
+        "LIMITATIONS",
+        "REFERENCES"
+      ],
       "optionsSection": "OPTIONS",
       "entries": "template",
       "footer": "provenance",
@@ -46,8 +82,13 @@
     },
     {
       "name": "tests",
-      "match": ["tests/*.m"],
-      "sections": ["DESCRIPTION", "COVERAGE"],
+      "match": [
+        "tests/*.m"
+      ],
+      "sections": [
+        "DESCRIPTION",
+        "COVERAGE"
+      ],
       "optionsSection": null,
       "entries": "off",
       "footer": "provenance",

@@ -6,8 +6,20 @@ this file and the help blocks disagree.
 
 | identifier | documented in | cause | condition |
 |---|---|---|---|
+| `timeSeriesPreparation:Arc:auxField` | `+timeSeriesPreparation/Arc.m` | Metadata | aux lacks a required field. |
+| `timeSeriesPreparation:Arc:badLayer` | `+timeSeriesPreparation/Arc.m` | Layers | the layer is not N x 1 logical, its name is not a field name, or a layer of that name exists. |
+| `timeSeriesPreparation:Arc:mixedProduct` | `+timeSeriesPreparation/Arc.m` | Metadata | the files hold different products or satellites. |
+| `timeSeriesPreparation:Arc:mixedRelease` | `+timeSeriesPreparation/Arc.m` | Metadata | the files, or the arcs of a campaign, come from more than one L1B release. |
+| `timeSeriesPreparation:Arc:notFinite` | `+timeSeriesPreparation/Arc.m` | Observations | obs holds Inf (NaN is allowed). |
+| `timeSeriesPreparation:Arc:sizeMismatch` | `+timeSeriesPreparation/Arc.m` | Observations | obs is not a real double, or its rows differ from numel(t) or its columns from numel(aux.obsNames). |
+| `timeSeriesPreparation:Arc:timeFormat` | `+timeSeriesPreparation/Arc.m` | Time | t is not an int64 column vector (read with 'TimeFormat', "gpsns"). |
+| `timeSeriesPreparation:Arc:timeNotIncreasing` | `+timeSeriesPreparation/Arc.m` | Time | t is not strictly increasing. |
+| `timeSeriesPreparation:Arc:unknownColumn` | `+timeSeriesPreparation/Arc.m` | Observations | Columns names an observation the file does not have, or names one twice. |
+| `timeSeriesPreparation:Config:unknownField` | `+timeSeriesPreparation/Config.m` | Settings | field is not in the section's schema. |
+| `timeSeriesPreparation:Config:unknownSection` | `+timeSeriesPreparation/Config.m` | Settings | section is not one of the nine sections. |
 | `timeSeriesPreparation:setupTimeSeriesPreparation:noGracefoReading` | `setupTimeSeriesPreparation.m` | Input domain | GracefoReading names a folder that does not hold +gracefoReading. |
 | `timeSeriesPreparation:timeSeriesPreparationCiGate:empty` | `timeSeriesPreparationCiGate.m` | Gate verdict | the tests folder yields no test. |
 | `timeSeriesPreparation:timeSeriesPreparationCiGate:failed` | `timeSeriesPreparationCiGate.m` | Gate verdict | at least one test failed. |
+| `timeSeriesPreparation:toolboxVersion:noVersion` | `+timeSeriesPreparation/+internal/toolboxVersion.m` | Version source | Contents.m holds no "% Version x.y.z" line. |
 
-3 identifier(s).
+15 identifier(s).

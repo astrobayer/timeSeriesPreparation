@@ -8,7 +8,7 @@ function results = timeSeriesPreparationCiGate(options)
 %   DESCRIPTION
 %     The gate command of GUIDE section 2. Puts the toolbox on the path
 %     (and gracefoReading, when a checkout sits in deps/gracefoReading, as CI
-%     provides it), runs every test class in tests/, writes JUnit XML and
+%     provides it), runs every test class in tests/ and its subfolders, writes JUnit XML and
 %     Cobertura coverage of the package to artifacts/, and prints the verdict
 %     as passed + failed + incomplete = total, overall and per test tag, so the
 %     measured run can be compared with the prediction in the PR body (GUIDE
@@ -62,7 +62,7 @@ function results = timeSeriesPreparationCiGate(options)
 %   See also setupTimeSeriesPreparation, runtests, matlab.unittest.TestRunner.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.0.0 | 2026-09-22 21:00 (CEST, UTC+02:00) | Claude Code (Anthropic)
+%   timeSeriesPreparation v0.0.0 | 2026-09-22 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         options.TestsFolder (1,1) string = ""
@@ -92,7 +92,7 @@ function results = timeSeriesPreparationCiGate(options)
     if outDir == "", outDir = fullfile(root, "artifacts"); end
     if ~isfolder(outDir), mkdir(outDir); end
 
-    suite = TestSuite.fromFolder(char(testsFolder));
+    suite = TestSuite.fromFolder(char(testsFolder), "IncludingSubfolders", true);
     if isempty(suite)
         error("timeSeriesPreparation:timeSeriesPreparationCiGate:empty", ...
             "No test found in %s.", testsFolder);
