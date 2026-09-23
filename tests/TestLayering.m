@@ -4,9 +4,9 @@ classdef TestLayering < matlab.unittest.TestCase
 %   DESCRIPTION
 %     CONCEPT 3.2 assigns every unit of +timeSeriesPreparation to a layer:
 %       L3  run
-%       L2  mask qc align crnApply fill observability bootstrap crossval
-%           drivers correlate report, and checkAlignment (stage 3 of
-%           CONCEPT 6.1 with align)
+%       L2  mask qc align crnApply noise fill observability bootstrap
+%           crossval drivers correlate report, and checkAlignment (stage 3
+%           of CONCEPT 6.1 with align)
 %       L1  Arc Config crnKernel
 %       L0  +spectral +tsmodels (sigtools), and +internal helpers
 %     and says calls go downward only. Calls within one layer are allowed
@@ -29,7 +29,7 @@ classdef TestLayering < matlab.unittest.TestCase
 %                   the healthy tree is silent.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 20:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function repositoryPackageIsLayered(testCase)
@@ -100,10 +100,10 @@ function layers = layerMap()
     layers = dictionary( ...
         ["run", ...
          "mask" "qc" "align" "checkAlignment" "crnApply" "fill" "observability" ...
-         "bootstrap" "crossval" "drivers" "correlate" "report", ...
+         "bootstrap" "crossval" "drivers" "correlate" "report" "noise", ...
          "Arc" "Config" "crnKernel", ...
          "spectral" "tsmodels" "internal"], ...
-        [3, 2 2 2 2 2 2 2 2 2 2 2 2, 1 1 1, 0 0 0]);
+        [3, 2 2 2 2 2 2 2 2 2 2 2 2 2, 1 1 1, 0 0 0]);
 end
 
 function findings = layerFindings(root)
