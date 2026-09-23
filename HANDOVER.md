@@ -10,7 +10,44 @@ restates:
 
 ---
 
-## X-01 + X-03 — scope frozen 2026-09-22 (issues #4, #6), one batch PR
+## X-04 — scope frozen 2026-09-23 (issue #7), release 0.1.0
+
+Tier B. R-1 (ATBD) read from the copy the owner supplied in this session
+(SHA-256 `166778a94553f43ad9cd7f6be45528e7fb4e978e334a22f1a92bd565510b5a8d`,
+54 pages), Appendix B, printed p. 39 = PDF p. 40, from the page image. The
+exponent N_c stands on **each** passband term, as CONCEPT 8 records.
+
+**One printing inconsistency, resolved by measurement.** F^Norm is printed as
+Σ_i cos(2πf0 i/fs) Σ_k H_k cos(2πkn/N_f): the inner cosine carries n inside a
+sum over i. Read as n → i, F^Norm makes the response at f0 exactly 1, and the
+kernel reproduces every number CONCEPT 8 recorded from the 2026-09-19 reading:
+DC gain 1 + 1.115e-7 (ACC), 1 + 1.10e-11 (KBR); the misplaced exponent gives
+1.0004533. The derivative formulas (PDF p. 41) carry the same i/n swap in the
+summation index and are read the same way.
+
+True after the merge:
+- `timeSeriesPreparation.crnKernel(preset)`: taps F_n and the derivative
+  kernels of ATBD App. B, presets `"ACC"` (T_f 140.7 s, B 0.035 Hz) and `"KBR"`
+  (70.7 s, 0.1 Hz), f_s 10 Hz, N_c 7, f0 0.37 mHz; explicit parameters by name.
+  `"LRI"` refuses (V-2 LRI numbers open). No warning for GRACE-FO ACC (CONCEPT 8).
+- `timeSeriesPreparation.crnApply(arc, kernel)`: convolution evaluated only at
+  the output epochs (item 11), bit-identical to full rate then sampling and to
+  chunked evaluation; NaN wherever the window is incomplete (edges, gaps, NaN
+  or removed samples), recorded as layer `crnWindow`; derivative 0/1/2.
+- `Arc.derive`: an arc on new epochs carrying the metadata and provenance.
+- ORC-1: `tests/oracles/crn_atbd_asprinted.py` (NumPy, from the page) and the
+  taps it generated, pinned in `TestCrnKernel`.
+- CONCEPT 6.1 row 4 corrected (it still said "DC gain 1.0004533 kept", which
+  section 8 voided at Rev 0.14).
+- Release **0.1.0**: `Contents.m`, every footer, `CHANGELOG.md`.
+
+Out of scope: LRI preset (V-2), the ACT1A → ACT1B frequency-response check
+(X-12, needs L1A data), time-tag corrections, lifting a model to 10 Hz (the
+application's), the release workflow (a `.github/` change stands alone).
+
+---
+
+## X-01 + X-03 — merged 2026-09-23 (PR #37); scope was frozen 2026-09-22 (issues #4, #6), one batch PR
 
 Owner decision 2026-09-22: X-01 and X-03 as **one batch PR**, one commit per
 WP (GUIDE §1 standing rules). Tier B. Help footer wording set by the owner:
