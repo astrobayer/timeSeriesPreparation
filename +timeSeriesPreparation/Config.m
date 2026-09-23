@@ -26,6 +26,11 @@ classdef Config
 %     "KBR" for KBR1B (R-1 App. B; R-2 PDF p. 20). Any other product leaves
 %     it "" (not known, so not assumed).
 %
+%     align (X-06): fields method ("pchip"), maxGap ([] = 1.5 x the median
+%     reference step), maxLag (60 s) and threshold (1 s), the options of
+%     align and checkAlignment (CONCEPT 6.1, row 3). maxLag and threshold
+%     are CONCEPT's numbers; pchip is v2's measured choice (see align).
+%
 %   INPUTS
 %     arc      (1,1) Arc      -   The arc whose product selects the preset.
 %     section  (1,1) string   -   One of Config.Sections.
@@ -54,17 +59,17 @@ classdef Config
 %     s = toStruct(cfg);
 %
 %   LIMITATIONS
-%     Only crn.preset exists so far; set refuses every other field until the
-%     stages define theirs.
+%     Only crn and align have fields so far; set refuses every other field
+%     until the stages define theirs.
 %
 %   REFERENCES
 %     docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults). R-1: GRACE
 %     L1B ATBD, JPL D-27672, App. B. R-2: GRACE-FO L1 Handbook, JPL D-56935.
 %
-%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel.
+%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
@@ -76,7 +81,7 @@ classdef Config
         mask = struct()
         qc = struct()
         crn = struct("preset", "")
-        align = struct()
+        align = struct("method", "pchip", "maxGap", [], "maxLag", 60, "threshold", 1)
         fill = struct()
         noise = struct()
         unc = struct()
@@ -142,6 +147,8 @@ function known = schema(section)
     switch section
         case "crn"
             known = "preset";
+        case "align"
+            known = ["method" "maxGap" "maxLag" "threshold"];
         otherwise
             known = strings(1, 0);
     end

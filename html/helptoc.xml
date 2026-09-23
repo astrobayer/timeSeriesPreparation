@@ -3,9 +3,12 @@
     <tocitem target="index.html">timeSeriesPreparation Toolbox
         <tocitem target="timeSeriesPreparation.Arc.html">timeSeriesPreparation.Arc</tocitem>
         <tocitem target="timeSeriesPreparation.Config.html">timeSeriesPreparation.Config</tocitem>
+        <tocitem target="timeSeriesPreparation.align.html">timeSeriesPreparation.align</tocitem>
+        <tocitem target="timeSeriesPreparation.checkAlignment.html">timeSeriesPreparation.checkAlignment</tocitem>
         <tocitem target="timeSeriesPreparation.crnApply.html">timeSeriesPreparation.crnApply</tocitem>
         <tocitem target="timeSeriesPreparation.crnKernel.html">timeSeriesPreparation.crnKernel</tocitem>
         <tocitem target="timeSeriesPreparation.internal.requirePackage.html">timeSeriesPreparation.internal.requirePackage</tocitem>
+        <tocitem target="timeSeriesPreparation.internal.resampleOnto.html">timeSeriesPreparation.internal.resampleOnto</tocitem>
         <tocitem target="timeSeriesPreparation.internal.toolboxVersion.html">timeSeriesPreparation.internal.toolboxVersion</tocitem>
         <tocitem target="errorIdentifiers.html">Error identifiers</tocitem>
     </tocitem>

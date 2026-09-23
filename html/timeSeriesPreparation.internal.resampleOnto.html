@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.internal.resampleOnto</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.internal.resampleOnto</h1>
+<p>Interpolate a series onto new epochs, never across a hole.</p>
+<h2>Syntax</h2>
+<pre><code>[yq, info] = timeSeriesPreparation.internal.resampleOnto(t, y, valid, tq, method, maxGap)</code></pre>
+<h2>Description</h2>
+<p>The one resampling rule of align and checkAlignment (CONCEPT 6.1, row 3). The usable samples (valid) split into stretches: a stretch ends at an unusable sample and wherever two usable samples lie more than maxGap apart. Interpolation runs inside each stretch on its own, so no value is made from samples on both sides of a hole and nothing is extrapolated. An epoch equal to a usable epoch takes that sample bit for bit. Every other epoch gets NaN.</p>
+<p>Splitting the series makes the result independent of what interp1 does with NaN. v2 records that R2026a&#x27;s interp1 drops NaN points and interpolates across them. Its remedy, a finiteness mask interpolated linearly, covers only the two intervals next to a NaN, but pchip&#x27;s slopes reach one interval further, so a pchip value there still uses the far side of the hole.</p>
+<p>Times become double seconds from t(1), once per call (CONCEPT 5.1): the resolution is about 6e-10 s over a month.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>t</code></td><td>N,1</td><td><code>int64</code></td><td>&mdash;</td><td>ns Sample epochs, strictly increasing.</td></tr>
+<tr><td><code>y</code></td><td>N,M</td><td><code>double</code></td><td>&mdash;</td><td>- Samples; rows of unusable samples are ignored.</td></tr>
+<tr><td><code>valid</code></td><td>N,1</td><td><code>logical</code></td><td>&mdash;</td><td>- true = usable sample.</td></tr>
+<tr><td><code>tq</code></td><td>K,1</td><td><code>int64</code></td><td>&mdash;</td><td>ns Query epochs, strictly increasing.</td></tr>
+<tr><td><code>method</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- interp1 method: &quot;pchip&quot;, &quot;makima&quot;, &quot;spline&quot; or &quot;linear&quot;.</td></tr>
+<tr><td><code>maxGap</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>s Widest spacing interpolated across; [] = 1.5 x the median step of t.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>yq</code></td><td>K,M</td><td><code>double</code></td><td>&mdash;</td><td>- Values on tq; NaN rows where no stretch covers the epoch.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- maxGap (s, as applied), exact (K,1) logical (taken bit for bit), stretches (number of stretches with at least two samples).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact at coinciding epochs. Elsewhere the method&#x27;s interpolation error. pchip at 5 s spacing, evaluated at 1 s, errs by 3.8e-6 of the amplitude on a 1/rev plus 2/rev signal (orbit 5640 s). A NumPy transcription of MATLAB&#x27;s pchip measured this on 2026-09-23.</p>
+<h2>Errors</h2>
+<p>(none)</p>
+<h2>Example</h2>
+<p>A 5 s series with one NaN, resampled at 1 s; the hole stays NaN.</p>
+<pre><code>t = int64(0:5:60)&#x27; * int64(1e9);
+y = sin((0:5:60)&#x27; / 20); y(7) = NaN;
+tq = int64(0:60)&#x27; * int64(1e9);
+yq = timeSeriesPreparation.internal.resampleOnto(t, y, isfinite(y), tq, &quot;pchip&quot;, []);</code></pre>
+<h2>Limitations</h2>
+<p>A stretch of one sample yields only its own epoch. The rows are joint: a caller that wants per-column validity calls once per column.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md sections 5.1, 6.1; v3 WP-11 item 1 (docs/inputs/HANDOVER_AccelCal_v3.md); v2 alignAccelSeries.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.align</code>, <code>timeSeriesPreparation.checkAlignment</code>, <code>interp1</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+internal/resampleOnto.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

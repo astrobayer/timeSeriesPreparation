@@ -10,8 +10,12 @@
 %     crnKernel  - The CRN-class digital filter of the GRACE L1B ATBD, as printed.
 %
 %   Stages (L2)
-%     crnApply   - Apply a CRN kernel to an arc, evaluated only at the output
-%                  epochs.
+%     align           - Move a reference series onto the epochs of an
+%                       observation, units checked.
+%     checkAlignment  - Report a time lag between observation and reference;
+%                       never shift.
+%     crnApply        - Apply a CRN kernel to an arc, evaluated only at the
+%                       output epochs.
 %
 %   Spectra and time-series models (L0, sigtools v1.3.1, imported at X-01)
 %     spectral   - help timeSeriesPreparation.spectral
@@ -20,6 +24,8 @@
 %   Internal
 %     internal.requirePackage  - Refuse at the point of use when an optional
 %                                dependency is not on the path.
+%     internal.resampleOnto    - Interpolate a series onto new epochs, never
+%                                across a hole.
 %     internal.toolboxVersion  - The version stated in this file.
 %
 %   Demos: demos/sigtoolsDemo lists the sigtools demos.
