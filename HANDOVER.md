@@ -112,6 +112,15 @@ gracefoReading checkout (without it: 384 + 0 + 8).
 (The first row is the X-06 total, 353, less the untagged sigtools 180,
 TestSigtoolsImport 5 and TestHelpExamples 9 = 159.)
 
+**Verdict, CI run 35836240391 on `0d9f62c` (2026-09-23), MATLAB R2026a,
+gracefoReading `v1.1.0`:**
+- `audit` green.
+- `matlab` green on the first run: **392 + 0 + 0 = 392**, every tag as
+  predicted.
+- All 40 equivalence cases are bit-identical to the v1.3.1 archive (ORC-8
+  met).
+- Gate time 1017 s.
+
 **Debt.**
 - Tier A: there is no local MATLAB, and nothing here ran before CI. The
   converted functions' EXAMPLEs run only once the `.github/` PR includes
@@ -476,8 +485,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-02 (#5) on branch `claude/grace-timeseries-issues-28g3a4`: implemented,
-CI pending.** X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
+**X-02 (#5) on branch `claude/grace-timeseries-issues-28g3a4` (PR #40):
+CI green (run 35836240391, 392 + 0 + 0), awaiting review.** X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
 `f969ecb`, release 0.1.0). The annotated tag `v0.1.0` on `f969ecb` is the
 owner's: the session's push of it was refused (HTTP 403, 2026-09-23). The
 GitHub release follows the tag. X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b merged
