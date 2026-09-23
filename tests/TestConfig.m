@@ -2,30 +2,32 @@ classdef TestConfig < matlab.unittest.TestCase
 %TESTCONFIG  timeSeriesPreparation.Config: sections, strict fields, product, crn preset.
 %
 %   DESCRIPTION
-%     The nine sections of CONCEPT 5 exist; crn holds preset (X-04), the
-%     rest are empty. Config(arc) records mission and product and takes the
+%     The nine sections of CONCEPT 5 exist; crn holds preset (X-04), align
+%     its four options (X-06), the rest are empty. Config(arc) records mission and product and takes the
 %     crn preset from the product. set refuses an unknown section or field;
 %     fault injection of the refusal is the refusal itself: a misspelt
 %     section and a field no schema lists must both fire.
 %
 %   COVERAGE
-%     contract       - the nine sections, empty but crn.preset; mission,
+%     contract       - the nine sections, empty but crn and align; align's
+%                      defaults (pchip, [], 60 s, 1 s) and setting them; mission,
 %                      product and crn.preset taken from the arc (ACC1B/ACT1B
 %                      ACC, KBR1B KBR, others ""); crn.preset settable;
 %                      toStruct carries all of them.
-%     robustness     - unknown section and unknown field are refused.
+%     robustness     - unknown section and unknown field are refused, also
+%                      a misspelt align field.
 %     precision, reference, speed, vectorisation, metamorphic - exempt: Config
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function nineEmptySections(testCase)
             cfg = timeSeriesPreparation.Config();
             testCase.verifyEqual(cfg.Sections, ...
                 ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]);
-            for sec = setdiff(cfg.Sections, "crn", "stable")
+            for sec = setdiff(cfg.Sections, ["crn" "align"], "stable")
                 testCase.verifyEqual(cfg.(sec), struct(), sec);
             end
             testCase.verifyEqual(cfg.crn, struct("preset", ""));
@@ -55,6 +57,14 @@ classdef TestConfig < matlab.unittest.TestCase
             end
         end
 
+        function alignDefaultsAndSet(testCase)
+            cfg = timeSeriesPreparation.Config();
+            testCase.verifyEqual(cfg.align, struct("method", "pchip", ...
+                "maxGap", [], "maxLag", 60, "threshold", 1));
+            cfg = set(set(cfg, "align", "maxLag", 30), "align", "maxGap", 15);
+            testCase.verifyEqual([cfg.align.maxLag cfg.align.maxGap], [30 15]);
+        end
+
         function crnPresetCanBeSet(testCase)
             cfg = set(timeSeriesPreparation.Config(), "crn", "preset", "KBR");
             testCase.verifyEqual(cfg.crn.preset, "KBR");
@@ -71,6 +81,11 @@ classdef TestConfig < matlab.unittest.TestCase
         function unknownSectionRefused(testCase)
             testCase.verifyError(@() set(timeSeriesPreparation.Config(), "qcc", "window", 5), ...
                 "timeSeriesPreparation:Config:unknownSection");
+        end
+
+        function misspeltAlignFieldRefused(testCase)
+            testCase.verifyError(@() set(timeSeriesPreparation.Config(), "align", "maxlag", 30), ...
+                "timeSeriesPreparation:Config:unknownField");
         end
 
         function unknownFieldRefused(testCase)

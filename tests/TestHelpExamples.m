@@ -19,6 +19,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.internal.requirePackage did not run cleanly.");
         end
 
+        function timeSeriesPreparation_internal_resampleOnto_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.internal.resampleOnto: A 5 s series with one NaN, resampled at 1 s; the hole stays NaN.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_resampleOnto_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.internal.resampleOnto did not run cleanly.");
+        end
+
         function timeSeriesPreparation_internal_toolboxVersion_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.internal.toolboxVersion: The version this checkout reports.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_toolboxVersion_1(), ...
@@ -35,6 +41,18 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.Config: The empty skeleton as a plain struct, e.g. for hashing.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_Config_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.Config did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_align_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.align: A 5 s model onto 1 s observation epochs.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_align_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.align did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_checkAlignment_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.checkAlignment: Two identical 1 Hz series: lag 0, verdict "aligned", no warning.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_checkAlignment_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.checkAlignment did not run cleanly.");
         end
 
         function timeSeriesPreparation_crnApply_example1(testCase)
@@ -56,6 +74,14 @@ function example_timeSeriesPreparation_internal_requirePackage_1()  %#ok<DEFNU>
     timeSeriesPreparation.internal.requirePackage("timeSeriesPreparation", "example");
 end
 
+function example_timeSeriesPreparation_internal_resampleOnto_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.internal.resampleOnto, verbatim from its help block.
+    t = int64(0:5:60)' * int64(1e9);
+    y = sin((0:5:60)' / 20); y(7) = NaN;
+    tq = int64(0:60)' * int64(1e9);
+    yq = timeSeriesPreparation.internal.resampleOnto(t, y, isfinite(y), tq, "pchip", []);
+end
+
 function example_timeSeriesPreparation_internal_toolboxVersion_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.internal.toolboxVersion, verbatim from its help block.
     v = timeSeriesPreparation.internal.toolboxVersion();
@@ -73,6 +99,24 @@ function example_timeSeriesPreparation_Config_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.Config, verbatim from its help block.
     cfg = timeSeriesPreparation.Config();
     s = toStruct(cfg);
+end
+
+function example_timeSeriesPreparation_align_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.align, verbatim from its help block.
+    aux = @(p) struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", p + "_2020-01-01_C_04.txt", "product", p);
+    tObs = int64(0:599)' * int64(1e9);
+    tRef = int64(0:5:600)' * int64(1e9);
+    obs = timeSeriesPreparation.Arc(tObs, sin(double(tObs) * 1e-9 / 100), aux("ACT1B"));
+    ref = timeSeriesPreparation.Arc(tRef, sin(double(tRef) * 1e-9 / 100), aux("MOD1B"));
+    out = timeSeriesPreparation.align(obs, ref);
+end
+
+function example_timeSeriesPreparation_checkAlignment_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.checkAlignment, verbatim from its help block.
+    aux = @(p) struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", p + "_2020-01-01_C_04.txt", "product", p);
+    t = int64(0:3599)' * int64(1e9);
+    x = sin(double(t) * 1e-9 / 30) + cos(double(t) * 1e-9 / 7);
+    report = timeSeriesPreparation.checkAlignment(timeSeriesPreparation.Arc(t, x, aux("ACT1B")), timeSeriesPreparation.Arc(t, x, aux("MOD1B")));
 end
 
 function example_timeSeriesPreparation_crnApply_1()  %#ok<DEFNU>

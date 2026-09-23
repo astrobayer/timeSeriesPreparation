@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.checkAlignment</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.checkAlignment</h1>
+<p>Report a time lag between observation and reference; never shift.</p>
+<h2>Syntax</h2>
+<pre><code>report = timeSeriesPreparation.checkAlignment(obs, ref)
+report = timeSeriesPreparation.checkAlignment(obs, ref, MaxLag = 60, Threshold = 1)</code></pre>
+<h2>Description</h2>
+<p>A diagnostic for timing between two series (CONCEPT 6.1, row 3; v3 F2). v2 searched the lag over a full revolution and silently shifted the model by it. Near-periodic 1/rev signals can lock that search onto the wrong lobe, and a real physical lag (the thermosphere responding late to its driver) was absorbed instead of reported. Here the search is bounded to +/- MaxLag (60 s, far below one revolution), and the result is a report only. No series is shifted; correcting a timing error is the caller&#x27;s explicit decision, for example by fixing the time system.</p>
+<p>Both series are resampled onto one uniform grid of spacing Step, anchored at the first observation epoch over the common span. The rule is the one align uses: no interpolation across a hole. Each column is AC-coupled (its mean over the common valid rows removed). For every lag L = -K..K (K = MaxLag/Step) the normalised cross-correlation is taken over the valid pairs:</p>
+<p>r(L) = sum a_i b_(i-L) / sqrt(sum a_i^2 * sum b_(i-L)^2)</p>
+<p>A parabola through the peak and its two neighbours refines the lag below the grid step. A positive lag means that the observation lags the reference: obs(t) matches ref(t - lag).</p>
+<p>Verdict per column: &quot;aligned&quot;       |lag| &lt;= Threshold (1 s). &quot;offset&quot;        Threshold &lt; |lag| &lt;= MaxLag/2; warns. &quot;gross&quot;         |lag| &gt; MaxLag/2, or the peak lies on the edge of the search; warns. Fix the time systems. &quot;undetermined&quot;  no positive peak, or fewer valid pairs than lags searched (e.g. no common span); warns.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>obs</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Observation.</td></tr>
+<tr><td><code>ref</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Reference with as many columns as obs, in the same order.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>MaxLag</code></td><td>1,1</td><td><code>double</code></td><td>60</td><td>Search bound in s, a whole multiple of Step.</td></tr>
+<tr><td><code>Threshold</code></td><td>1,1</td><td><code>double</code></td><td>1</td><td>Largest lag in s reported as aligned.</td></tr>
+<tr><td><code>Step</code></td><td>1,1</td><td><code>double</code></td><td>1</td><td>Grid spacing in s, a whole number of nanoseconds.</td></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;pchip&quot;</td><td>Interpolation onto the grid.</td></tr>
+<tr><td><code>MaxGap</code></td><td>1,1</td><td><code>double</code></td><td>auto</td><td>Widest spacing in s interpolated across, both series; [] (auto) = 1.5 x each series&#x27; median step.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>report</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: lag (1,M) double s: refined lag per column, NaN if undetermined; peak (1,M) double: r at the grid peak; verdict (1,M) string; names (1,M) string: obs column names; lags (2K+1,1) double s: the lags searched; corr (2K+1,M) double: r(L); pairs (2K+1,1) double: valid pairs per lag; maxLag, threshold, step (1,1) double s.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>On one day at 1 s with a 1/rev signal plus 40 broadband tones, a NumPy transcription of this estimator recovers an injected lag of 7.0 s to 4e-6 s and one of 7.3 s to 1e-3 s. The parabola&#x27;s bias grows towards half a step (measured 2026-09-23). TestCheckAlignment holds the 7.0 s case to 0.05 s and the 7.3 s case to 0.01 s. Each correlation is a sum over one lag&#x27;s valid pairs, and each column is summed on its own, so a batched call equals the per-column calls bit for bit.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:checkAlignment:columnMismatch</code></td><td>Input</td><td>obs and ref have different numbers of columns.</td></tr>
+<tr><td><code>timeSeriesPreparation:checkAlignment:badGrid</code></td><td>Input</td><td>Step is not a whole number of nanoseconds, or MaxLag is not a whole multiple of Step. Options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Warnings</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:checkAlignment:offset</code></td><td>Verdict</td><td>a column lags by more than Threshold.</td></tr>
+<tr><td><code>timeSeriesPreparation:checkAlignment:grossOffset</code></td><td>Verdict</td><td>a column lags by more than MaxLag/2, or its peak lies on the search edge.</td></tr>
+<tr><td><code>timeSeriesPreparation:checkAlignment:undetermined</code></td><td>Verdict</td><td>a column has no positive peak or too few valid pairs.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Two identical 1 Hz series: lag 0, verdict &quot;aligned&quot;, no warning.</p>
+<pre><code>aux = @(p) struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, p + &quot;_2020-01-01_C_04.txt&quot;, &quot;product&quot;, p);
+t = int64(0:3599)&#x27; * int64(1e9);
+x = sin(double(t) * 1e-9 / 30) + cos(double(t) * 1e-9 / 7);
+report = timeSeriesPreparation.checkAlignment(timeSeriesPreparation.Arc(t, x, aux(&quot;ACT1B&quot;)), timeSeriesPreparation.Arc(t, x, aux(&quot;MOD1B&quot;)));</code></pre>
+<h2>Limitations</h2>
+<p>A lag beyond MaxLag cannot be measured. With a smooth signal the peak then sits on the search edge (&quot;gross&quot;). With broadband content a side lobe inside the window can be reported instead: a 90 s lag of the 1/rev plus 40-tone test signal shows as 7.27 s with peak 0.50, where a true lag peaks at 0.9999 (NumPy, 2026-09-23). A low peak is the sign. One constant lag per column over the whole arc; a drifting clock shows as a broadened peak, not as a drift. Columns pair by position. Units are not compared, because the correlation is scale-free; align compares them.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md section 6.1 (row 3); v3 F2 and WP-02 item 3 (docs/inputs/HANDOVER_AccelCal_v3.md); v2 crossCorrLag.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.align</code>, <code>timeSeriesPreparation.internal.resampleOnto</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/checkAlignment.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

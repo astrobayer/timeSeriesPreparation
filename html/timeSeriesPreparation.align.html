@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.align</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.align</h1>
+<p>Move a reference series onto the epochs of an observation, units checked.</p>
+<h2>Syntax</h2>
+<pre><code>out = timeSeriesPreparation.align(obs, ref)
+out = timeSeriesPreparation.align(obs, ref, Method = &quot;pchip&quot;, MaxGap = 15)</code></pre>
+<h2>Description</h2>
+<p>Returns the reference (a model, a second instrument) on the epochs of the observation, so that the two can be compared sample by sample (CONCEPT 6.1, row 3). Where an observation epoch coincides with a reference epoch, the reference value is taken bit for bit. Elsewhere it is interpolated, by default with pchip. Linear chords attenuate the amplitude, and a fitted scale absorbs that loss (v2). On a 1/rev signal sampled at 5 s and evaluated at 1 s, linear errs by 1.2e-5 of the amplitude and pchip by 3.8e-6. Evaluating the model at the observation epochs directly avoids interpolation altogether.</p>
+<p>Interpolation never bridges a hole. The usable reference samples (finite in every column, weight &gt; 0) split into stretches at every unusable sample and wherever two usable samples lie more than MaxGap apart. Each stretch is interpolated on its own, and nothing is extrapolated. An observation epoch that no stretch covers gets NaN in every column. Those epochs form the layer &quot;alignGap&quot; of the result, so a fit weights them zero. The default MaxGap, 1.5 times the median reference step, lets no missing sample be bridged.</p>
+<p>Units are checked (CONCEPT 5.2): the columns of obs and ref pair by position, and each pair must state the same unit. Units are compared after removing blanks and &quot;^&quot;, so &quot;m/s^2&quot; equals &quot;m/s2&quot;. A mismatch refuses, and so does a unit that either side leaves unstated (&quot;&quot;). An unstated unit cannot be checked, and assuming one is what R5 forbids.</p>
+<p>The result is the reference (names, units, product, provenance) on obs.t, with the stage &quot;align&quot; appended (Arc.derive). Time lags are not looked for here: checkAlignment reports them and never shifts.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>obs</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Observation; only its epochs and units are used.</td></tr>
+<tr><td><code>ref</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Reference with as many columns as obs, in the same order.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;pchip&quot;</td><td>interp1 method: &quot;pchip&quot;, &quot;makima&quot;, &quot;spline&quot; or &quot;linear&quot;.</td></tr>
+<tr><td><code>MaxGap</code></td><td>1,1</td><td><code>double</code></td><td>auto</td><td>Widest reference spacing in s interpolated across; [] (auto) = 1.5 x the median reference step.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>out</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- The reference on obs.t; obs (N,M) double, NaN rows where no stretch covers the epoch; layer alignGap (N,1) logical.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact at coinciding epochs. Elsewhere it is the interpolation error of Method on the reference. With pchip at 5 s spacing, evaluated at 1 s, the error on a 1/rev plus 2/rev signal is 3.8e-6 of the amplitude (measured with a NumPy transcription of MATLAB&#x27;s pchip, 2026-09-23); TestAlign holds it below 1e-5. Times are double seconds from the first reference epoch, with a resolution of about 6e-10 s over a month.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:align:columnMismatch</code></td><td>Units</td><td>obs and ref have different numbers of columns.</td></tr>
+<tr><td><code>timeSeriesPreparation:align:unitMismatch</code></td><td>Units</td><td>a column pair states different units.</td></tr>
+<tr><td><code>timeSeriesPreparation:align:unitUnknown</code></td><td>Units</td><td>a column of obs or ref states no unit.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A 5 s model onto 1 s observation epochs.</p>
+<pre><code>aux = @(p) struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, p + &quot;_2020-01-01_C_04.txt&quot;, &quot;product&quot;, p);
+tObs = int64(0:599)&#x27; * int64(1e9);
+tRef = int64(0:5:600)&#x27; * int64(1e9);
+obs = timeSeriesPreparation.Arc(tObs, sin(double(tObs) * 1e-9 / 100), aux(&quot;ACT1B&quot;));
+ref = timeSeriesPreparation.Arc(tRef, sin(double(tRef) * 1e-9 / 100), aux(&quot;MOD1B&quot;));
+out = timeSeriesPreparation.align(obs, ref);</code></pre>
+<h2>Limitations</h2>
+<p>Columns pair by position, not by name, because a model rarely shares the file&#x27;s column names. No frame check (the frame is the caller&#x27;s, v3 F5) and no time-system conversion: both arcs are GPS ns already. Validity is joint over the columns, because weights are per row.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md sections 5.2 (units), 6.1 (row 3); v3 WP-11 item 1 and F2 (docs/inputs/HANDOVER_AccelCal_v3.md); v2 alignAccelSeries.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.checkAlignment</code>, <code>timeSeriesPreparation.Arc</code>, <code>timeSeriesPreparation.internal.resampleOnto</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/align.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

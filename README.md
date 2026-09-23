@@ -13,7 +13,8 @@ rangingPreparation (LRI/KBR):
 
 **Status: release 0.1.0 (X-04).** Skeleton and CI (X-00b), sigtools v1.3.1
 as `+spectral` / `+tsmodels` (X-01), `Arc` and `Config` (X-03), the exact ATBD
-CRN kernel and its output-epoch application (X-04). Changes: `CHANGELOG.md`.
+CRN kernel and its output-epoch application (X-04). Unreleased: alignment
+with the unit check and the lag diagnostic (X-06). Changes: `CHANGELOG.md`.
 
 ```matlab
 setupTimeSeriesPreparation();              % toolbox and demos on the path; reports gracefoReading
@@ -21,6 +22,8 @@ setupTimeSeriesPreparation();              % toolbox and demos on the path; repo
 arc = timeSeriesPreparation.Arc(t, a, aux, Columns = ["lin_accl_x" "lin_accl_y" "lin_accl_z"]);
 k = timeSeriesPreparation.crnKernel("ACC");             % ATBD App. B, as printed
 acc = timeSeriesPreparation.crnApply(arc10Hz, k, OutputEpochs = t1Hz);  % only at output epochs
+mod = timeSeriesPreparation.align(acc, model);          % model onto the epochs, units checked
+rep = timeSeriesPreparation.checkAlignment(acc, model); % lag over +/-60 s, reported, never shifted
 timeSeriesPreparation.spectral.plotPowerSpectrum({1, arc.obs(:, 1)});  % sigtools, 1 Hz
 sigtoolsDemo                               % the sigtools demos
 timeSeriesPreparationCiGate();             % the MATLAB gate, as CI runs it

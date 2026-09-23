@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.10 · 2026-09-23 · X-04 in review; release 0.1.0 prepared**
+**Revision 0.11 · 2026-09-23 · X-04 merged (0.1.0); X-06 in review**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,110 @@ restates:
 
 ---
 
-## X-04 — scope frozen 2026-09-23 (issue #7), release 0.1.0
+## X-06 — scope frozen 2026-09-23 (issue #9)
+
+Tier B (no local MATLAB; the MATLAB verdict is CI's). Design: CONCEPT 5.2
+(unit check), 6.1 row 3, 10.1 row X-06; v3 WP-02 item 3 and WP-11 item 1
+(`docs/inputs/HANDOVER_AccelCal_v3.md`), v3 F2. No release (GUIDE §7: next
+release is X-05, v0.2.0); the version stays 0.1.0.
+
+True after the merge:
+- `timeSeriesPreparation.align(obs, ref)`: the reference moved onto the
+  observation epochs.
+  - Interpolation (default pchip, the v2 choice: linear chords attenuate
+    amplitude, which the scale absorbs) runs only inside contiguous stretches
+    of the reference. A stretch ends at a NaN, at a removed sample (weight 0)
+    and at a spacing wider than `MaxGap`. The default `MaxGap` is 1.5 times the
+    median reference step, so every missing sample breaks a stretch. There is
+    no extrapolation and no interpolation across a hole. This replaces v2's
+    finiteness-mask trick, whose linear mask does not cover pchip's wider
+    stencil once R2026a's `interp1` drops NaN points.
+  - An epoch that coincides with a reference epoch takes its value bit for
+    bit.
+  - Validity is joint over columns, because weights are per row. Epochs that
+    get no value are NaN and form the layer `alignGap`. The result keeps
+    metadata and provenance (`Arc.derive`).
+  - **Unit check (5.2):** columns are paired by position. Equal counts and
+    equal units are required, compared after whitespace and `^` are removed
+    (`m/s^2` = `m/s2`). A mismatch refuses, and so does a unit that is not
+    stated (`""`, R5).
+- `timeSeriesPreparation.checkAlignment(obs, ref)`: the lag diagnostic.
+  - Both series go onto one uniform grid (1 s) by the same rules and are
+    AC-coupled. The normalised cross-correlation is computed over ±`MaxLag`
+    (60 s) only, and the peak is refined by a parabola.
+  - The result is per column: lag, peak and a verdict. The verdicts are
+    "aligned" (|lag| ≤ 1 s), "offset" (warns), "gross" (> MaxLag/2 or at the
+    search edge; warns) and "undetermined" (warns).
+  - It **never shifts** a series (v3 F2): the result is a report only.
+- `Config.align`: the fields `method`, `maxGap`, `maxLag` and `threshold`,
+  with the defaults above.
+
+Out of scope: time-system conversion (v3 WP-02 items 1–2, `toGps` and leap
+seconds; the arcs are GPS ns already), frame checks, consistency filtering
+(the application's, with `crnApply`), `run`, and any automatic shift.
+
+**Added during implementation** (within the frozen scope):
+- `timeSeriesPreparation.internal.resampleOnto` holds the one resampling
+  rule both functions share.
+- `checkAlignment` in the layer map of `TestLayering` as L2, next to `align`
+  (CONCEPT 6.1 row 3 names both).
+
+**Measured before the push (2026-09-23, ci-actions `v1.3.2`, NumPy
+prototype of both estimators):**
+- pchip, 5 s → 1 s, on 1/rev + 2/rev (orbit 5640 s): error 3.8e-6 of the
+  amplitude (linear 1.2e-5); the test requires 1e-5.
+- Lag, one day at 1 s, 1/rev + 2/rev + 40 fixed tones (2–50 mHz):
+  - 7.0 s is recovered to 1.1e-5 s, 7.3 s to 1.0e-3 s and 45 s to
+    1.1e-5 s;
+  - 7.0 s with gaps of 3000 s and 2000 s is recovered to 3.2e-5 s.
+
+  The tests require 0.05 s, 0.01 s, 0.05 s and 0.05 s.
+- **Limit found:** a lag beyond the window (90 s) is not always on the edge.
+  With broadband tones a side lobe at 7.27 s wins, with peak 0.50 against
+  0.9999 for a true lag; a smooth 1/rev signal peaks on the edge ("gross").
+  This is documented in `checkAlignment` LIMITATIONS; a low peak is the sign.
+- `matlab-audit`: 77 files at 0.1.0, **clean**; catalogue 28 identifiers
+  (+5). `matlab-docs --check`: 15 files, **in sync** (+3 pages, +3 help
+  examples).
+
+**Prediction** (before any run): **353 + 0 + 0 = 353** with the
+gracefoReading checkout (without it: 345 + 0 + 8).
+
+| class | contract | reference | precision | robustness | metamorphic | vectorisation | speed | untagged | total |
+|---|---|---|---|---|---|---|---|---|---|
+| unchanged from X-04 | 31 | 39 | 5 | 37 | 6 | 3 | 1 | 180 | 302 |
+| TestConfig (+2: align) | 6 | | | 3 | | | | | 9 |
+| TestHelpExamples (+3) | 9 | | | | | | | | 9 |
+| TestAlign (new) | 1 | 2 | 1 | 8 | 2 | 1 | 1 | | 16 |
+| TestCheckAlignment (new) | 2 | 3 | 1 | 7 | 2 | 1 | 1 | | 17 |
+| **sum** | **49** | **44** | **7** | **55** | **10** | **5** | **3** | **180** | **353** |
+
+(The first row is the X-04 total, 315, less TestConfig 7 and
+TestHelpExamples 6 = 302, whose new counts are listed separately.)
+
+**CI run 35829306740 on `b9fc10b` (2026-09-23): 351 + 2 + 2 = 353**, all
+other tags as predicted. `constantUndetermined` and
+`disjointSpansUndetermined` both errored (counted failed and incomplete)
+with `MATLAB:string:MissingNotSupported`: the undetermined warning built its
+message with `string(NaN)`, which is `<missing>`, and `warning` refuses
+it. Fixed by formatting the lag with `compose("%.4g", …)`. The two tests
+were the fault injection that found it.
+
+**Verdict, CI run 35831044729 on `d44d9b7` (2026-09-23), MATLAB R2026a,
+gracefoReading `v1.1.0`:** `audit` green; `matlab` green, **353 + 0 + 0 =
+353**, as predicted. Gate time 949 s.
+
+**Debt.**
+- Tier A: there is no local MATLAB, so the MATLAB verdict is CI's.
+- **Warning identifiers are not audited.** The profile `public` in
+  `.github/matlab-audit.json` has `"warnings": false`, so the three
+  `checkAlignment` warnings are documented in its WARNINGS section but are
+  neither checked (A5/A6) nor catalogued. Switching it on is a `.github/`
+  change and stands alone (GUIDE §1).
+
+---
+
+## X-04 — merged 2026-09-23 (PR #38, issue #7), release 0.1.0; scope was frozen 2026-09-23
 
 Tier B. R-1 (ATBD) read from the copy the owner supplied in this session
 (SHA-256 `166778a94553f43ad9cd7f6be45528e7fb4e978e334a22f1a92bd565510b5a8d`,
@@ -257,9 +360,11 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-04 (#7, release 0.1.0) on branch `claude/grace-timeseries-issues-28g3a4`:
-CI green (run 35824079077, 315 + 0 + 0), awaiting review.** X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b merged (PR #36,
-`2ecf543`); X-00a merged (#2, `f26df8d`).
+**X-06 (#9) on branch `claude/grace-timeseries-issues-28g3a4` (PR #39):
+CI green (run 35831044729, 353 + 0 + 0), awaiting review.** X-04 merged (PR #38, `f969ecb`, release 0.1.0; the annotated tag
+`v0.1.0` and its GitHub release are pending, GUIDE §3). X-01 + X-03 merged
+(PR #37, `1b5c4ae`); X-00b merged (PR #36, `2ecf543`); X-00a merged (#2,
+`f26df8d`).
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
@@ -268,7 +373,7 @@ CI green (run 35824079077, 315 + 0 + 0), awaiting review.** X-01 + X-03 merged (
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
 C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
-`v1.3.2`). Next after X-04: X-06 (#9), then X-02 (#5, CONCEPT 12.4); X-05
+`v1.3.2`). Next after X-06: X-02 (#5, CONCEPT 12.4); X-05
 (#8) also waits on V-12 (defect catalogue, D-9).
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).
@@ -278,10 +383,10 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | repository | private, `main`; auto-delete head branches on; MIT licence (owner, 2026-09-18) |
 | ruleset `Main Protection` | no deletion, no force push; **no required checks yet** (see O-2) |
 | ruleset `Tag protection` | `~ALL`, no deletion, no force push |
-| content | `docs/CONCEPT.md` Rev 0.14, `docs/GUIDE.md` rev 1.9, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
-| code, `Contents.m`, CI, audit | X-00b: `Contents.m` 0.0.0, setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config` |
+| content | `docs/CONCEPT.md` Rev 0.15, `docs/GUIDE.md` rev 1.10, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
+| code, `Contents.m`, CI, audit | X-00b: setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config`. X-04: `crnKernel`, `crnApply`, `Contents.m` 0.1.0 |
 | `docs/GUIDE.md` | rev 1.10 (X-01 + X-03 batched) |
-| `docs/CONCEPT.md` | Rev 0.14 (verification results 9.3; CRN correction) |
+| `docs/CONCEPT.md` | Rev 0.15 (6.1 row 4 consistent with section 8) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was

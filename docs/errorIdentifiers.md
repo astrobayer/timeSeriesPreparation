@@ -17,6 +17,11 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:Arc:unknownColumn` | `+timeSeriesPreparation/Arc.m` | Observations | Columns names an observation the file does not have, or names one twice. |
 | `timeSeriesPreparation:Config:unknownField` | `+timeSeriesPreparation/Config.m` | Settings | field is not in the section's schema. |
 | `timeSeriesPreparation:Config:unknownSection` | `+timeSeriesPreparation/Config.m` | Settings | section is not one of the nine sections. |
+| `timeSeriesPreparation:align:columnMismatch` | `+timeSeriesPreparation/align.m` | Units | obs and ref have different numbers of columns. |
+| `timeSeriesPreparation:align:unitMismatch` | `+timeSeriesPreparation/align.m` | Units | a column pair states different units. |
+| `timeSeriesPreparation:align:unitUnknown` | `+timeSeriesPreparation/align.m` | Units | a column of obs or ref states no unit. |
+| `timeSeriesPreparation:checkAlignment:badGrid` | `+timeSeriesPreparation/checkAlignment.m` | Input | Step is not a whole number of nanoseconds, or MaxLag is not a whole multiple of Step. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:checkAlignment:columnMismatch` | `+timeSeriesPreparation/checkAlignment.m` | Input | obs and ref have different numbers of columns. |
 | `timeSeriesPreparation:crnApply:badKernel` | `+timeSeriesPreparation/crnApply.m` | Kernel | kernel lacks a field of crnKernel's output, or its taps are not Nf x 1. |
 | `timeSeriesPreparation:crnApply:emptyArc` | `+timeSeriesPreparation/crnApply.m` | Input | the arc holds no samples. An OutputEpochs that is not int64 is refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:crnApply:epochNotOnGrid` | `+timeSeriesPreparation/crnApply.m` | Grid | an output epoch is not on the input grid, or OutputEpochs is not strictly increasing. |
@@ -30,4 +35,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:timeSeriesPreparationCiGate:failed` | `timeSeriesPreparationCiGate.m` | Gate verdict | at least one test failed. |
 | `timeSeriesPreparation:toolboxVersion:noVersion` | `+timeSeriesPreparation/+internal/toolboxVersion.m` | Version source | Contents.m holds no "% Version x.y.z" line. |
 
-23 identifier(s).
+28 identifier(s).
