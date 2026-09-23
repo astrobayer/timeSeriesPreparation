@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.noise</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.noise</h1>
+<p>Residual noise model per axis: ARMA by exact ML with gaps, or PSD -&gt; ARMA.</p>
+<h2>Syntax</h2>
+<pre><code>nm = timeSeriesPreparation.noise(arc, order)
+nm = timeSeriesPreparation.noise(arc, order, Method = &quot;exact&quot;, MaxLag = 100, Lags = 20, WelchAverages = 32, Seed = 0, Stage = &quot;noise&quot;)</code></pre>
+<h2>Description</h2>
+<p>The noise stage (CONCEPT 6.1, row 5): an ARMA(p,q) model of each column of arc, for the gap stage and for the covariance of the applications&#x27; lsqvce fit. The numerics are the sigtools functions, unchanged; this function applies them to an Arc, one axis at a time: - rows with weight 0 or filled are set to NaN (CONCEPT 5); - Method &quot;exact&quot;: tsmodels.tsFitArima(x, p, 0, q), exact Gaussian ML by a Kalman filter that skips the NaN rows; - Method &quot;psd&quot;: a Welch spectrum of WelchAverages Hann segments (spectral.powerSpectrum, 50 % overlap) and spectral.psd2arma with Order [p q]. psd2arma sets the gain by a log least-squares fit, which on a raw periodogram (chi-square, 2 degrees of freedom) biases sigma2 low by exp(-0.577) = 0.56; averaging makes that bias about -1/dof (dof about 2 WelchAverages). An axis with missing rows would need an unaveraged Lomb-Scargle periodogram, so &quot;psd&quot; refuses it; use &quot;exact&quot; there; - the autocovariance of the model, spectral.arma2acv (exact, Lyapunov), at lags 0..MaxLag samples; - the Ljung-Box test of the model&#x27;s residuals over Lags lags, tsmodels.tsLjungBox with p + q fitted parameters. The model is x_t - mu = filter(b, a, e), e white of variance sigma2, b(1) = a(1) = 1: a = [1, -phi], b = [1, theta] in tsFitArima&#x27;s terms.</p>
+<p>The order is the caller&#x27;s choice; no default is assumed (R5). tsFitArima perturbs its starting points with randn. Every axis therefore starts from the same state of an mrg32k3a stream seeded by internal.stageSeed(Stage, Seed) (CONCEPT 8): an axis is fitted identically alone and in a batched call, and reruns are identical. The caller&#x27;s global stream is restored afterwards.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Residuals on a uniform grid; missing rows are NaN, weight 0 or filled.</td></tr>
+<tr><td><code>order</code></td><td>1,2</td><td><code>double</code></td><td>&mdash;</td><td>- [p q], AR and MA orders, integers &gt;= 0.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;exact&quot;</td><td>&quot;exact&quot; (tsFitArima) or &quot;psd&quot; (powerSpectrum, psd2arma).</td></tr>
+<tr><td><code>MaxLag</code></td><td>1,1</td><td><code>double</code></td><td>100</td><td>Largest autocovariance lag in samples, integer &gt;= 0.</td></tr>
+<tr><td><code>Lags</code></td><td>1,1</td><td><code>double</code></td><td>20</td><td>Ljung-Box lags, integer &gt;= 1.</td></tr>
+<tr><td><code>WelchAverages</code></td><td>1,1</td><td><code>double</code></td><td>32</td><td>Welch segments of &quot;psd&quot;, integer &gt;= 1.</td></tr>
+<tr><td><code>Seed</code></td><td>1,1</td><td><code>double</code></td><td>0</td><td>Caller&#x27;s seed, integer &gt;= 0.</td></tr>
+<tr><td><code>Stage</code></td><td>1,1</td><td><code>string</code></td><td>&quot;noise&quot;</td><td>Stage name the seed derives from.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>nm</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: axes (1,M) string; method; order (1,2); dt (1,1) s, the grid step; a (M,p+1), b (M,q+1); sigma2, mu (1,M); acv (MaxLag+1,M), unit^2; lags (MaxLag+1,1) s; ljungBoxQ, ljungBoxP (1,M); nObs (1,M) samples used; seed.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>That of the functions applied (see their help). &quot;exact&quot; is maximum-likelihood efficient; for an AR(1) the standard error of phi is sqrt((1 - phi^2)/n). &quot;psd&quot; inherits the scatter of the spectrum estimate and psd2arma&#x27;s fit error; it is the fast route for long arcs. acv is exact for the fitted model.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:noise:irregularGrid</code></td><td>Input</td><td>the epochs are not uniformly spaced; resample first (align) and mark missing rows NaN.</td></tr>
+<tr><td><code>timeSeriesPreparation:noise:tooFewSamples</code></td><td>Input</td><td>an axis has fewer than 10 (p + q + 1) usable samples.</td></tr>
+<tr><td><code>timeSeriesPreparation:noise:gapsInPsd</code></td><td>Input</td><td>Method &quot;psd&quot; on an axis with missing rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>An AR(1) at 1 Hz with a gap: phi near 0.7, residuals white.</p>
+<pre><code>aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACT1B_2020-01-01_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+x = filter(1, [1 -0.7], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 5), 1500, 1));
+x(400:450) = NaN;
+nm = timeSeriesPreparation.noise(timeSeriesPreparation.Arc(int64(0:1499)&#x27; * int64(1e9), x, aux), [1 0], MaxLag = 10);</code></pre>
+<h2>Limitations</h2>
+<p>Stationary ARMA only; differencing and seasonal terms are the caller&#x27;s (tsmodels.tsFitSarima). &quot;psd&quot; needs gap-free axes; its residuals are formed by inverse filtering. Allan deviation (spectral.allanVariance) needs a gap-free stretch and is not computed here.</p>
+<h2>References</h2>
+<p>Box, G. E. P., Jenkins, G. M., Reinsel, G. C., Ljung, G. M. (2015). Time Series Analysis: Forecasting and Control, 5th ed. Wiley, ch. 7. Jones, R. H. (1980). Maximum likelihood fitting of ARMA models to time series with missing observations. Technometrics 22(3), 389-395. docs/CONCEPT.md sections 5, 6.1 (row 5) and 8.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsFitArima</code>, <code>timeSeriesPreparation.spectral.psd2arma</code>, <code>timeSeriesPreparation.spectral.arma2acv</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/noise.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

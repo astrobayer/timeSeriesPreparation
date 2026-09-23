@@ -28,13 +28,19 @@ th { background: #f0f0f0; }
 <tr><td><a href="timeSeriesPreparation.Arc.html"><code>timeSeriesPreparation.Arc</code></a></td><td>One instrument time series on int64 GPS-ns epochs, with weights, layers and provenance.</td></tr>
 <tr><td><a href="timeSeriesPreparation.Config.html"><code>timeSeriesPreparation.Config</code></a></td><td>Instrument settings in nine sections, strict about field names.</td></tr>
 <tr><td><a href="timeSeriesPreparation.align.html"><code>timeSeriesPreparation.align</code></a></td><td>Move a reference series onto the epochs of an observation, units checked.</td></tr>
+<tr><td><a href="timeSeriesPreparation.bootstrap.html"><code>timeSeriesPreparation.bootstrap</code></a></td><td>Moving-block bootstrap of a statistic, one RNG substream per replicate.</td></tr>
 <tr><td><a href="timeSeriesPreparation.checkAlignment.html"><code>timeSeriesPreparation.checkAlignment</code></a></td><td>Report a time lag between observation and reference; never shift.</td></tr>
 <tr><td><a href="timeSeriesPreparation.crnApply.html"><code>timeSeriesPreparation.crnApply</code></a></td><td>Apply a CRN kernel to an arc, evaluated only at the output epochs.</td></tr>
 <tr><td><a href="timeSeriesPreparation.crnKernel.html"><code>timeSeriesPreparation.crnKernel</code></a></td><td>The CRN-class digital filter of the GRACE L1B ATBD, as printed.</td></tr>
+<tr><td><a href="timeSeriesPreparation.crossval.html"><code>timeSeriesPreparation.crossval</code></a></td><td>Blocked cross-validation with a buffer, for serially correlated rows.</td></tr>
+<tr><td><a href="timeSeriesPreparation.internal.blockLength.html"><code>timeSeriesPreparation.internal.blockLength</code></a></td><td>Automatic block length for block resampling (Politis-White, Patton correction).</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.dlyap.html"><code>timeSeriesPreparation.internal.dlyap</code></a></td><td>Stationary covariance P = T P T&#x27; + Q, the one Lyapunov solver of the toolbox.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.requirePackage.html"><code>timeSeriesPreparation.internal.requirePackage</code></a></td><td>Refuse at the point of use when an optional dependency is missing.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.resampleOnto.html"><code>timeSeriesPreparation.internal.resampleOnto</code></a></td><td>Interpolate a series onto new epochs, never across a hole.</td></tr>
+<tr><td><a href="timeSeriesPreparation.internal.stageSeed.html"><code>timeSeriesPreparation.internal.stageSeed</code></a></td><td>RNG seed of a stage: its name hashed, plus the caller&#x27;s seed.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.toolboxVersion.html"><code>timeSeriesPreparation.internal.toolboxVersion</code></a></td><td>The toolbox version, read from its one authority, Contents.m.</td></tr>
+<tr><td><a href="timeSeriesPreparation.noise.html"><code>timeSeriesPreparation.noise</code></a></td><td>Residual noise model per axis: ARMA by exact ML with gaps, or PSD -&gt; ARMA.</td></tr>
+<tr><td><a href="timeSeriesPreparation.observability.html"><code>timeSeriesPreparation.observability</code></a></td><td>Identifiability metrics of a design before the fit, and the minimum-data gate.</td></tr>
 <tr><td><a href="timeSeriesPreparation.spectral.allanVariance.html"><code>timeSeriesPreparation.spectral.allanVariance</code></a></td><td>Overlapping Allan variance and deviation, with confidence bounds and slopes.</td></tr>
 <tr><td><a href="timeSeriesPreparation.spectral.arma2acv.html"><code>timeSeriesPreparation.spectral.arma2acv</code></a></td><td>Exact auto-covariance / -correlation of a discrete-time ARMA process.</td></tr>
 <tr><td><a href="timeSeriesPreparation.spectral.arma2psd.html"><code>timeSeriesPreparation.spectral.arma2psd</code></a></td><td>One-sided PSD (or ASD) of a discrete-time ARMA process.</td></tr>

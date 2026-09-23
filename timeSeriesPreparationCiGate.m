@@ -8,7 +8,8 @@ function results = timeSeriesPreparationCiGate(options)
 %   DESCRIPTION
 %     The gate command of GUIDE section 2. Puts the toolbox on the path
 %     (and gracefoReading, when a checkout sits in deps/gracefoReading, as CI
-%     provides it), runs every test class in tests/ and its subfolders, writes JUnit XML and
+%     provides it; lsqvce, a test-only dependency for the Q12 agreement test,
+%     likewise from deps/lsqvce), runs every test class in tests/ and its subfolders, writes JUnit XML and
 %     Cobertura coverage of the package to artifacts/, and prints the verdict
 %     as passed + failed + incomplete = total, overall and per test tag, so the
 %     measured run can be compared with the prediction in the PR body (GUIDE
@@ -62,7 +63,7 @@ function results = timeSeriesPreparationCiGate(options)
 %   See also setupTimeSeriesPreparation, runtests, matlab.unittest.TestRunner.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-22 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 20:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         options.TestsFolder (1,1) string = ""
@@ -83,6 +84,13 @@ function results = timeSeriesPreparationCiGate(options)
         setupTimeSeriesPreparation(GracefoReading = deps);
     else
         setupTimeSeriesPreparation();
+    end
+    % lsqvce is test-only (CONCEPT 10.1 X-07, Q12): on the path for the
+    % agreement test, never through setupTimeSeriesPreparation.
+    lsqvceDir = fullfile(root, "deps", "lsqvce");
+    if isfolder(fullfile(lsqvceDir, "+lsqvce"))
+        addpath(lsqvceDir);
+        fprintf("lsqvce (test-only): %s\n", lsqvceDir);
     end
     fprintf("MATLAB %s\n", version);
 

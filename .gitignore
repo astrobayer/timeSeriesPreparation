@@ -4,3 +4,4 @@ artifacts/
 html/helpsearch-v*/
 # CI checks optional dependencies out here (gracefoReading); never committed.
 deps/
+__pycache__/

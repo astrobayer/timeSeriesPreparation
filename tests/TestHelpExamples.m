@@ -13,6 +13,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
 %     'contract' - every documented EXAMPLE of timeSeriesPreparation v0.1.0 runs.
 
     methods (Test, TestTags = {'contract'})
+        function timeSeriesPreparation_internal_blockLength_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.internal.blockLength: An AR(1) with phi = 0.9: a block of about 50 samples.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_blockLength_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.internal.blockLength did not run cleanly.");
+        end
+
         function timeSeriesPreparation_internal_dlyap_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.internal.dlyap: AR(1) with phi = 0.9: the stationary variance is 1/(1 - 0.81).
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_dlyap_1(), ...
@@ -29,6 +35,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.internal.resampleOnto: A 5 s series with one NaN, resampled at 1 s; the hole stays NaN.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_resampleOnto_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.internal.resampleOnto did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_internal_stageSeed_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.internal.stageSeed: The seed of the bootstrap stage with the caller's seed 0.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_stageSeed_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.internal.stageSeed did not run cleanly.");
         end
 
         function timeSeriesPreparation_internal_toolboxVersion_example1(testCase)
@@ -229,6 +241,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.align did not run cleanly.");
         end
 
+        function timeSeriesPreparation_bootstrap_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.bootstrap: sigma of the mean of an AR(1): larger than the naive 1/sqrt(N).
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_bootstrap_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.bootstrap did not run cleanly.");
+        end
+
         function timeSeriesPreparation_checkAlignment_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.checkAlignment: Two identical 1 Hz series: lag 0, verdict "aligned", no warning.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_checkAlignment_1(), ...
@@ -246,7 +264,31 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_crnKernel_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.crnKernel did not run cleanly.");
         end
+
+        function timeSeriesPreparation_crossval_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.crossval: Loss of the training mean as a predictor of the test rows.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_crossval_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.crossval did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_noise_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.noise: An AR(1) at 1 Hz with a gap: phi near 0.7, residuals white.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_noise_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.noise did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_observability_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.observability: Bias and scale on a quiet arc: the estimates correlate near -1.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_observability_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.observability did not run cleanly.");
+        end
     end
+end
+
+function example_timeSeriesPreparation_internal_blockLength_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.internal.blockLength, verbatim from its help block.
+    x = filter(1, [1 -0.9], randn(RandStream("twister", "Seed", 1), 2000, 1));
+    b = timeSeriesPreparation.internal.blockLength(x);
 end
 
 function example_timeSeriesPreparation_internal_dlyap_1()  %#ok<DEFNU>
@@ -265,6 +307,11 @@ function example_timeSeriesPreparation_internal_resampleOnto_1()  %#ok<DEFNU>
     y = sin((0:5:60)' / 20); y(7) = NaN;
     tq = int64(0:60)' * int64(1e9);
     yq = timeSeriesPreparation.internal.resampleOnto(t, y, isfinite(y), tq, "pchip", []);
+end
+
+function example_timeSeriesPreparation_internal_stageSeed_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.internal.stageSeed, verbatim from its help block.
+    seed = timeSeriesPreparation.internal.stageSeed("bootstrap", 0);
 end
 
 function example_timeSeriesPreparation_internal_toolboxVersion_1()  %#ok<DEFNU>
@@ -479,6 +526,12 @@ function example_timeSeriesPreparation_align_1()  %#ok<DEFNU>
     out = timeSeriesPreparation.align(obs, ref);
 end
 
+function example_timeSeriesPreparation_bootstrap_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.bootstrap, verbatim from its help block.
+    x = filter(1, [1 -0.5], randn(RandStream("twister", "Seed", 3), 2000, 1));
+    [m, info] = timeSeriesPreparation.bootstrap(x, @(z) mean(z, 1, "omitnan"), NBoot = 200);
+end
+
 function example_timeSeriesPreparation_checkAlignment_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.checkAlignment, verbatim from its help block.
     aux = @(p) struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", p + "_2020-01-01_C_04.txt", "product", p);
@@ -500,4 +553,27 @@ function example_timeSeriesPreparation_crnKernel_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.crnKernel, verbatim from its help block.
     k = timeSeriesPreparation.crnKernel("ACC");
     fprintf("Nf = %d, DC gain - 1 = %.3g\n", k.Nf, k.dcGain - 1);
+end
+
+function example_timeSeriesPreparation_crossval_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.crossval, verbatim from its help block.
+    x = filter(1, [1 -0.5], randn(RandStream("twister", "Seed", 4), 1000, 1));
+    mse = @(tr, te) mean((te - mean(tr, "omitnan")).^2, "omitnan");
+    [loss, info] = timeSeriesPreparation.crossval(x, mse, Folds = 5);
+end
+
+function example_timeSeriesPreparation_noise_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.noise, verbatim from its help block.
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-01_C_04.txt", "product", "ACT1B");
+    x = filter(1, [1 -0.7], randn(RandStream("twister", "Seed", 5), 1500, 1));
+    x(400:450) = NaN;
+    nm = timeSeriesPreparation.noise(timeSeriesPreparation.Arc(int64(0:1499)' * int64(1e9), x, aux), [1 0], MaxLag = 10);
+end
+
+function example_timeSeriesPreparation_observability_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.observability, verbatim from its help block.
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-01_C_04.txt", "product", "ACT1B");
+    t = int64(0:999)' * int64(1e9);
+    model = 1e-7 + 1e-9 * sin((0:999)' / 100);
+    report = timeSeriesPreparation.observability(timeSeriesPreparation.Arc(t, model, aux), [ones(1000, 1), model], Names = ["bias" "scale"]);
 end

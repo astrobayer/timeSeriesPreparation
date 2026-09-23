@@ -31,6 +31,16 @@ classdef Config
 %     align and checkAlignment (CONCEPT 6.1, row 3). maxLag and threshold
 %     are CONCEPT's numbers; pchip is v2's measured choice (see align).
 %
+%     unc (X-07): the gate and the uncertainty stages (CONCEPT 6.1, rows 6
+%     and 7). minWeightFraction is the minimum-data gate of observability
+%     (CONCEPT 5.2): an axis keeping less weight than this refuses. The
+%     presets set 0.5 for ACC1B, ACT1B, KBR1B and LRI1B (owner decision
+%     2026-09-23: half the arc must survive, provisional until the
+%     regression baseline ORC-10 can refine it); any other product leaves
+%     it [] and observability then needs it given. blockLength ([] =
+%     automatic, Politis-White), nBoot (1000), level (0.6827, 1 sigma) and
+%     folds (5) are the defaults of bootstrap and crossval.
+%
 %   INPUTS
 %     arc      (1,1) Arc      -   The arc whose product selects the preset.
 %     section  (1,1) string   -   One of Config.Sections.
@@ -59,17 +69,17 @@ classdef Config
 %     s = toStruct(cfg);
 %
 %   LIMITATIONS
-%     Only crn and align have fields so far; set refuses every other field
-%     until the stages define theirs.
+%     Only crn, align and unc have fields so far; set refuses every other
+%     field until the stages define theirs.
 %
 %   REFERENCES
 %     docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults). R-1: GRACE
 %     L1B ATBD, JPL D-27672, App. B. R-2: GRACE-FO L1 Handbook, JPL D-56935.
 %
-%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align.
+%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.observability.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 20:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
@@ -84,7 +94,8 @@ classdef Config
         align = struct("method", "pchip", "maxGap", [], "maxLag", 60, "threshold", 1)
         fill = struct()
         noise = struct()
-        unc = struct()
+        unc = struct("minWeightFraction", [], "blockLength", [], "nBoot", 1000, ...
+            "level", 0.6827, "folds", 5)
         drivers = struct()
         run = struct()
     end
@@ -104,6 +115,9 @@ classdef Config
                     cfg.crn.preset = "ACC";
                 case "KBR1B"
                     cfg.crn.preset = "KBR";
+            end
+            if any(cfg.product == ["ACC1B" "ACT1B" "KBR1B" "LRI1B"])
+                cfg.unc.minWeightFraction = 0.5;
             end
         end
 
@@ -149,6 +163,8 @@ function known = schema(section)
             known = "preset";
         case "align"
             known = ["method" "maxGap" "maxLag" "threshold"];
+        case "unc"
+            known = ["minWeightFraction" "blockLength" "nBoot" "level" "folds"];
         otherwise
             known = strings(1, 0);
     end

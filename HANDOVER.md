@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.15 · 2026-09-23 · release workflow merged; lsqvce as a test-only CI dependency in review**
+**Revision 0.16 · 2026-09-23 · X-07 in review; the reference noise-model library blocked on sources**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,101 @@ restates:
 
 ---
 
-## lsqvce in CI, before X-07 — 2026-09-23 (no WP; its own PR, GUIDE §1)
+## X-07 — 2026-09-23 (issue #10); scope frozen 2026-09-23
+
+Tier B (no local MATLAB; the MATLAB verdict is CI's). Design: CONCEPT 10.1
+row X-07, 6.1 rows 5-7, 5.2 (minimum-data gate), 8 (seed per stage,
+block bootstrap, observability before the fit), Q12. Owner decisions of
+2026-09-23 are recorded in the lsqvce section below: two PRs, gate 0.5,
+Politis-White block length, and sources fetched by the session.
+
+True after the merge:
+- **`bootstrap`** (L2): moving-block bootstrap of a caller's statistic.
+  Replicate r draws from substream r of an mrg32k3a stream seeded by
+  **`internal.stageSeed`** (32-bit FNV-1a of the stage name plus a seed),
+  so the numbers depend neither on worker count nor on stage order
+  (CONCEPT 8). Percentile interval by the type-7 quantile.
+- **`internal.blockLength`**: Politis & White (2004) with the Patton,
+  Politis & White (2009) correction, the steps of Patton's reference code;
+  NaN left out pairwise. bootstrap and crossval use the largest per-column
+  value, rounded up.
+- **`crossval`** (L2): hv-block cross-validation, contiguous folds and a
+  buffer of Gap rows (default the block length); lossFcn sees the full
+  grid with NaN outside each set.
+- **`observability`** (L2): per axis, the Belsley condition number, the
+  correlation of the estimates and the weighted, centred VIF of the design
+  as given. The **minimum-data gate** refuses an axis keeping less weight
+  than `Config.unc.minWeightFraction`: 0.5 for ACC1B, ACT1B, KBR1B and
+  LRI1B, [] (must be given) for any other product.
+- **`noise`** (L2, new unit, CONCEPT 0.16): ARMA(p,q) per axis by exact ML
+  with gaps (tsFitArima) or through a 32-segment Welch PSD (psd2arma), the
+  model's ACV (arma2acv) and Ljung-Box. The PSD route refuses gapped axes:
+  psd2arma's log-LS gain on an unaveraged periodogram biases sigma2 by
+  exp(-0.577) = 0.56. The order is the caller's (R5). The fit starts from
+  a stage-seeded stream, reset per axis, and the caller's global stream
+  is restored.
+- **Q12**: `TestLsqvceAgreement` holds the four pairs together, with
+  tolerances naming their terms (help of the test). The gate puts
+  `deps/lsqvce` on the path; without it, 14 tests are incomplete.
+- `Config.unc`: minWeightFraction, blockLength, nBoot 1000, level 0.6827,
+  folds 5.
+
+**Oracles and measurements (2026-09-23, NumPy):**
+- Block length: `tests/oracles/block_length_pw.py` pins recombinator 0.0.6.1
+  (a port of Patton's code) on six LCG-built series that MATLAB rebuilds bit
+  for bit; a NumPy transcription of the MATLAB steps agrees to 5e-16. The
+  port reads the no-window branch 0-based; two cases enter that branch and
+  both readings give M = m_max there.
+- Bootstrap: 200 AR(1) realisations (phi 0.5, N 4000) gave sigma/exact
+  0.85-1.16; single-sample resampling 0.53-0.61.
+- Q12: arma2acv vs armaACV to 8.6e-16 of r(0), 4.6e-13 for poles at 0.98;
+  spec2acv vs psd2acv to 3.2e-16; Yule-Walker Toeplitz condition <= 410.
+
+**Fault injection:**
+
+| planted fault | caught by |
+|---|---|
+| block length: stationary constant D = 2 instead of 4/3 | 6 of 6 oracle cases |
+| block length: rectangular instead of flat-top window | 6 of 6 |
+| block length: mhat off by one | 4 of 6 |
+| block length: K_N = 3 instead of 5 | 2 of 6 |
+| Q12: AR(1) pole moved by 1e-7 | `plantedErrorExceedsTolerance` (in the suite) |
+| gate: an axis at 0.4 against the 0.5 preset | `gateRefusesBelowPreset` (in the suite) |
+| whiteness: AR(0) model of AR(1) data | `underfitFailsWhiteness` (in the suite) |
+
+The first four ran on the NumPy transcription, the last three are tests
+that run in CI.
+
+**Blocked: the reference noise-model library** (ACC 1/f, KBR
+CNR-limited, LRI design ASD; CONCEPT 6.1 row 5, W-12). The environment's
+network policy refuses every source host (arXiv, Springer, NASA NTRS,
+Copernicus, DLR, IOP; HTTP 403, 2026-09-23). Search summaries name, among
+others, 80 nm/sqrt(Hz) sqrt(1 + (3 mHz/f)^2) sqrt(1 + (10 mHz/f)^2) for
+the LRI and 1e-10 sqrt(1 + 5 mHz/f) m/s^2/sqrt(Hz) for the ACC. These are
+SECONDARY and are not coded. The library needs the network hosts allowed
+or the PDFs supplied (asked 2026-09-23). Issue #10 stays open for it.
+
+**Prediction** (before any run): **489 + 0 + 0 = 489**. That is 421 plus
+68: the new classes TestBlockLength 6, TestBootstrap 12, TestCrossval 9,
+TestObservability 11, TestNoise 9, TestLsqvceAgreement 14; TestConfig +1;
+TestHelpExamples 39 -> 45. Per tag: contract 152, reference 182, precision
+13, robustness 100, metamorphic 28, vectorisation 11, speed 3. Without
+lsqvce: 475 + 0 + 14.
+
+**Risk, stated:** nothing here ran in MATLAB before CI. The PSD-route
+band of TestNoise (0.05 on phi, 15 % on sigma2) is an expectation, not a
+measurement. References cited from memory are listed as debt.
+
+**Debt.**
+- Literature cited from memory, not re-read (network): Kuensch 1989,
+  Lahiri 2003, Hyndman & Fan 1996, L'Ecuyer 1999, Politis 2003, Racine
+  2000, Burman et al. 1994, Bergmeir et al. 2018, Belsley et al. 1980,
+  Kutner et al. 2005, Box et al. 2015, Jones 1980, the FNV draft.
+- The reference noise-model library (above).
+
+---
+
+## lsqvce in CI, before X-07 — merged 2026-09-23 (PR #43, `5afbd87`)
 
 Tier B. Scope, frozen 2026-09-23. The owner decided X-07 comes in two PRs
 (asked in session, 2026-09-23): this `.github/` PR, then all of X-07.
@@ -629,11 +723,13 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**lsqvce CI dependency on branch `claude/grace-timeseries-issues-28g3a4`:
-CI green (run 35897320406, 421 + 0 + 0).** Release workflow merged (PR #42, `298b7cd`); its first run
+**X-07 on branch `claude/grace-timeseries-issues-28g3a4`: CI pending.**
+lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0). The
+reference noise-model library is blocked on sources (X-07 section).
+Release workflow merged (PR #42, `298b7cd`); its first run
 released nothing, as designed. `.github/` profile switch merged (PR #41,
-`7b94df4`). X-02 merged (PR #40, `7fe24f3`). X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
-`f969ecb`, release 0.1.0). The tag `v0.1.0` is lightweight and sits on
+`7b94df4`). X-02 merged (PR #40, `7fe24f3`). X-06 merged (PR #39,
+`4f9e11e`). X-04 merged (PR #38, `f969ecb`, release 0.1.0). The tag `v0.1.0` is lightweight and sits on
 `7fe24f3` (owner, release UI; GUIDE §3 anomaly table). X-01 + X-03 merged
 (PR #37); X-00b (PR #36); X-00a (#2).
 
@@ -654,10 +750,10 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | repository | private, `main`; auto-delete head branches on; MIT licence (owner, 2026-09-18) |
 | ruleset `Main Protection` | no deletion, no force push; **no required checks yet** (see O-2) |
 | ruleset `Tag protection` | `~ALL`, no deletion, no force push |
-| content | `docs/CONCEPT.md` Rev 0.15, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
+| content | `docs/CONCEPT.md` Rev 0.16, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
 | code, `Contents.m`, CI, audit | X-00b: setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config`. X-04: `crnKernel`, `crnApply`, `Contents.m` 0.1.0 |
 | `docs/GUIDE.md` | rev 1.11 (release workflow; `v0.1.0` anomaly) |
-| `docs/CONCEPT.md` | Rev 0.15 (6.1 row 4 consistent with section 8) |
+| `docs/CONCEPT.md` | Rev 0.16 (X-07: the L2 unit `noise`) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was

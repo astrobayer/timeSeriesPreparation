@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.internal.blockLength</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.internal.blockLength</h1>
+<p>Automatic block length for block resampling (Politis-White, Patton correction).</p>
+<h2>Syntax</h2>
+<pre><code>[b, info] = timeSeriesPreparation.internal.blockLength(x)</code></pre>
+<h2>Description</h2>
+<p>The block length that minimises the MSE of the block-bootstrap variance estimator of the mean, estimated per column by Politis &amp; White (2004) with the correction of Patton, Politis &amp; White (2009). bootstrap and crossval use it when no BlockLength is given (owner decision 2026-09-23).</p>
+<p>With n samples, K_N = max(5, ceil(sqrt(log10 n))), m_max = ceil(sqrt n) + K_N and the band c sqrt(log10(n)/n), c = 2: 1. rho(k), k = 1..m_max, the correlation of x(t) with x(t-k) over the common sample t = m_max+1..n. 2. mhat is the first lag L with rho(L..L+K_N-1) all inside the band; if there is none, the largest lag outside it. M = 2 mhat, capped at m_max. 3. With R(k) the covariance of x(t) and x(t-k) over t = M+1..n (N-1 normalisation) and the flat-top window lambda(s) = 1 for |s| &lt; 1/2, 2(1-|s|) up to 1: G = sum_{|k|&lt;=M} lambda(k/M) |k| R(k), D = 4/3 (sum_{|k|&lt;=M} lambda(k/M) R(k))^2, b = (2 G^2 / D)^(1/3) n^(1/3), capped at ceil(min(3 sqrt n, n/3)). D is the circular (and moving) block bootstrap&#x27;s constant. These are the steps of Patton&#x27;s reference implementation (opt_block_length_REV_dec07). A NaN sample is left out of every sum it would enter (pairwise-complete moments). A column without variance gets b = 1.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>N,M</td><td><code>double</code></td><td>&mdash;</td><td>- Samples in rows; NaN marks a missing sample.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>b</code></td><td>1,M</td><td><code>double</code></td><td>&mdash;</td><td>samples Block length per column, not rounded; callers round it up.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- mhat, M (1,M) double: the lags of steps 2 and 3; mmax, kn (1,1) double.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>A NumPy transcription of these steps equals recombinator 0.0.6.1 (a port of Patton&#x27;s code) to 3e-14 relative on six AR(1) series (phi -0.6 to 0.99, n 500 to 20000), measured 2026-09-23. That port returns mhat 0-based in the no-window branch of step 2; this function returns the lag, as Patton&#x27;s MATLAB find does. tests/oracles/block_length_pw.json pins the numbers.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:blockLength:tooShort</code></td><td>Input</td><td>fewer than 2 (m_max + 1) samples, so step 1 has too few pairs.</td></tr>
+</table>
+<h2>Example</h2>
+<p>An AR(1) with phi = 0.9: a block of about 50 samples.</p>
+<pre><code>x = filter(1, [1 -0.9], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 1), 2000, 1));
+b = timeSeriesPreparation.internal.blockLength(x);</code></pre>
+<h2>Limitations</h2>
+<p>Built for the variance of the mean; for other statistics it is a guide, not an optimum. Columns are treated one by one.</p>
+<h2>References</h2>
+<p>Politis, D. N., White, H. (2004). Automatic block-length selection for the dependent bootstrap. Econometric Reviews 23(1), 53-70, doi:10.1081/ETC-120028836. Patton, A., Politis, D. N., White, H. (2009). Correction to &quot;Automatic block-length selection for the dependent bootstrap&quot;. Econometric Reviews 28(4), 372-375, doi:10.1080/07474930802459016. Politis, D. N. (2003). Adaptive bandwidth choice. J. Nonparametric Statistics 15(4-5), 517-533 (the rule of step 2).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.bootstrap</code>, <code>timeSeriesPreparation.crossval</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+internal/blockLength.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>
