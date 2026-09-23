@@ -50,6 +50,14 @@ vectorisation 6, speed 3. Without gracefoReading: 413 + 0 + 8.
 run without a warning (`verifyWarningFree`). The agents wrote them without
 MATLAB, so a red here is a help-text fix in this PR, not a numerical one.
 
+**Verdict, CI run 35841401891 on `d53a040` (2026-09-23), MATLAB R2026a,
+gracefoReading `v1.1.0`:**
+- `audit` green.
+- `matlab` green on the first run: **421 + 0 + 0 = 421**, every tag as
+  predicted (contract 129).
+- All 29 new sigtools EXAMPLEs ran warning-free; the risk did not occur.
+- Gate time 1001 s.
+
 ---
 
 ## X-02 — merged 2026-09-23 (PR #40, issue #5); scope was frozen 2026-09-23
