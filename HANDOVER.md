@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.9 · 2026-09-22 · X-01 + X-03 in review; unreleased 0.0.0**
+**Revision 0.10 · 2026-09-23 · X-04 in review; release 0.1.0 prepared**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -44,6 +44,35 @@ True after the merge:
 Out of scope: LRI preset (V-2), the ACT1A → ACT1B frequency-response check
 (X-12, needs L1A data), time-tag corrections, lifting a model to 10 Hz (the
 application's), the release workflow (a `.github/` change stands alone).
+
+**Measured before the push (2026-09-23, ci-actions `v1.3.2`, NumPy oracle):**
+- ORC-1 oracle: ACC N_f 1407, N_B 5, DC gain − 1 = 1.115160e-07; KBR N_f 707,
+  N_B 7, 1.101075e-11; power on the sum instead: 4.5328e-04 (ACC). Gain at f0
+  1 to 2e-16; derivative kernels equal i2πf and (i2πf)² times the response to
+  ≤ 1.8e-13 in the passband.
+- `matlab-audit`: 72 files at 0.1.0, **clean**; `matlab-docs --check`: 12
+  files, **in sync**.
+
+**Prediction** (before any run): **315 + 0 + 0 = 315** with the
+gracefoReading checkout (without it: 307 + 0 + 8, as before).
+
+| class | contract | reference | precision | robustness | metamorphic | vectorisation | speed | untagged | total |
+|---|---|---|---|---|---|---|---|---|---|
+| unchanged from X-01 + X-03 | 19 | 33 | | 18 | 1 | | | 180 | 251 |
+| TestArc (+2: derive) | 8 | | 1 | 11 | 1 | 1 | | | 22 |
+| TestConfig (+2: crn preset) | 5 | | | 2 | | | | | 7 |
+| TestHelpExamples (+2) | 6 | | | | | | | | 6 |
+| TestCrnKernel (new) | 2 | 3 | 4 | 3 | 2 | | | | 14 |
+| TestCrnApply (new) | 2 | 3 | | 5 | 2 | 2 | 1 | | 15 |
+| **sum** | **42** | **39** | **5** | **39** | **6** | **3** | **1** | **180** | **315** |
+
+(The first row is the X-01 + X-03 total, 280, less TestArc 20, TestConfig 5
+and TestHelpExamples 4 = 251, whose new counts are listed separately.)
+
+**Debt.** Tier A (no local MATLAB). The tag `v0.1.0` and its GitHub release
+are made after the merge (GUIDE §3); this repository has no release workflow
+yet and a `.github/` change stands alone, so the tag is the owner's, or a
+separate PR adopting ci-actions `matlab-release` (`mode: file`).
 
 ---
 
@@ -221,8 +250,9 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-01 (#4) + X-03 (#6) on branch `claude/grace-timeseries-issues-28g3a4`: CI
-green (run 35777061630, 280 + 0 + 0), awaiting review.** X-00b merged (PR #36, `2ecf543`); X-00a merged (#2, `f26df8d`).
+**X-04 (#7, release 0.1.0) on branch `claude/grace-timeseries-issues-28g3a4`,
+in review.** X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b merged (PR #36,
+`2ecf543`); X-00a merged (#2, `f26df8d`).
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
@@ -231,7 +261,8 @@ green (run 35777061630, 280 + 0 + 0), awaiting review.** X-00b merged (PR #36, `
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
 C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
-`v1.3.2`). Next after X-01 + X-03: X-04 (#7, `crnKernel`, release 0.1.0).
+`v1.3.2`). Next after X-04: X-06 (#9), then X-02 (#5, CONCEPT 12.4); X-05
+(#8) also waits on V-12 (defect catalogue, D-9).
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).
 
