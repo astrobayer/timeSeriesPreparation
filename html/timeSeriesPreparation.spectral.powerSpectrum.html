@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.powerSpectrum</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.powerSpectrum</h1>
+<p>Power and amplitude spectrum of one series: Welch FFT or Lomb-Scargle.</p>
+<h2>Syntax</h2>
+<pre><code>spec = timeSeriesPreparation.spectral.powerSpectrum(t, x)
+spec = timeSeriesPreparation.spectral.powerSpectrum(fs, x, Type = &quot;amplitude&quot;, NPeaks = 3)
+spec = [powerSpectrum(t1, x1, Label = &quot;A&quot;), powerSpectrum(t2, x2, Label = &quot;B&quot;)]</code></pre>
+<h2>Description</h2>
+<p>The estimation half of sigtools&#x27; plotPowerSpectrum, split off at X-02 so that numbers never require a figure (owner decision 2026-09-23). The arithmetic is v1.3.1&#x27;s, unchanged; TestSigtoolsEquivalence holds it bit for bit against the archive.</p>
+<p>An evenly sampled, gap-free series gets a Welch-averaged windowed FFT periodogram; a series with NaN gaps or uneven sampling gets a Lomb-Scargle periodogram (floating-mean GLS by default, Zechmeister and Kuerster 2009). Both use one scaling: power      one-sided PSD, unit^2/Hz, S(f) = 2 |X|^2 / (fs sum w^2) amplitude  sinusoid amplitude, unit so A sin(2 pi f0 t) peaks at about A in the amplitude spectrum whatever the sampling. The PSD follows sigtools&#x27; convention (trapz(f, S) = variance), shared with arma2psd and synthTimeSeries.</p>
+<p>FAP gives false-alarm levels for a Lomb-Scargle series: &quot;analytic&quot; uses M = T_span f_max independent frequencies; &quot;bootstrap&quot; shuffles the data over the fixed sampling times NBootstrap times. Both assume a white-noise null; a red-noise record looks over-significant with either. NPeaks returns the highest distinct maxima of the Type quantity, at least MinPeakDistance apart (default the Rayleigh resolution 1/T_span), refined by a 3-point parabola. Several series are one struct array: concatenate the results.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>t</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>s Time stamps, or a scalar sampling rate in Hz; also datetime (stamps) or duration (stamps, or a scalar sample step).</td></tr>
+<tr><td><code>x</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Data; NaN marks a gap.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Label</code></td><td>1,1</td><td><code>string</code></td><td>&quot;Series 1&quot;</td><td>Name of the series.</td></tr>
+<tr><td><code>Type</code></td><td>1,1</td><td><code>string</code></td><td>&quot;psd&quot;</td><td>Quantity the peaks are found on and plotted: &quot;psd&quot; or &quot;amplitude&quot;.</td></tr>
+<tr><td><code>Frequencies</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>Frequencies in Hz; forces Lomb-Scargle.</td></tr>
+<tr><td><code>Detrend</code></td><td>1,1</td><td><code>string</code></td><td>&quot;linear&quot;</td><td>&quot;linear&quot;, &quot;mean&quot; or &quot;none&quot;.</td></tr>
+<tr><td><code>Window</code></td><td>1,1</td><td><code>string</code></td><td>&quot;hann&quot;</td><td>FFT window: &quot;hann&quot;, &quot;hamming&quot;, &quot;blackman&quot;, &quot;blackmanharris&quot;, &quot;nuttall&quot;, &quot;flattop&quot;, &quot;kaiser&quot;, &quot;tukey&quot;, &quot;gauss&quot;, &quot;bartlett&quot;, &quot;rect&quot;, &quot;rectangular&quot;, &quot;none&quot;.</td></tr>
+<tr><td><code>WindowParam</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Kaiser beta (8.6), Tukey ratio (0.5) or Gauss sigma (0.4).</td></tr>
+<tr><td><code>SegmentLength</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Welch segment length in samples, &gt;= 8; [] = whole record.</td></tr>
+<tr><td><code>NAvg</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Number of Welch averages, instead of SegmentLength.</td></tr>
+<tr><td><code>Overlap</code></td><td>1,1</td><td><code>double</code></td><td>0.5</td><td>Welch overlap fraction, in [0, 1).</td></tr>
+<tr><td><code>LombMethod</code></td><td>1,1</td><td><code>string</code></td><td>&quot;gls&quot;</td><td>&quot;gls&quot; (floating mean) or &quot;classic&quot;.</td></tr>
+<tr><td><code>Oversample</code></td><td>1,1</td><td><code>double</code></td><td>4</td><td>Oversampling of the default Lomb-Scargle grid, &gt;= 1.</td></tr>
+<tr><td><code>MaxFreq</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Upper frequency limit in Hz.</td></tr>
+<tr><td><code>NyquistMode</code></td><td>1,1</td><td><code>string</code></td><td>&quot;median&quot;</td><td>Sampling step that sets the default f_max = 0.5/dt: &quot;median&quot;, &quot;min&quot; or &quot;mean&quot;.</td></tr>
+<tr><td><code>UniformTol</code></td><td>1,1</td><td><code>double</code></td><td>1e-6</td><td>Relative step tolerance of the uniformity test.</td></tr>
+<tr><td><code>FAP</code></td><td>1,:</td><td><code>double</code></td><td>&mdash;</td><td>False-alarm probabilities in (0, 1), e.g. [0.05 0.01].</td></tr>
+<tr><td><code>FAPMethod</code></td><td>1,1</td><td><code>string</code></td><td>&quot;analytic&quot;</td><td>&quot;analytic&quot; or &quot;bootstrap&quot;.</td></tr>
+<tr><td><code>NBootstrap</code></td><td>1,1</td><td><code>double</code></td><td>1000</td><td>Bootstrap realisations, &gt;= 10.</td></tr>
+<tr><td><code>NPeaks</code></td><td>1,1</td><td><code>double</code></td><td>0</td><td>Number of peaks to return.</td></tr>
+<tr><td><code>MinPeakDistance</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Least peak separation in Hz; [] = 1/T_span.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>spec</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: label (char); type (&quot;psd&quot; or &quot;amplitude&quot;); frequency (M,1) double, Hz; power (M,1) double, unit^2/Hz; amplitude (M,1) double, unit; method (&#x27;fft&#x27; or &#x27;lomb-scargle&#x27;); fs, Hz; dof and nseg of the estimate; variance of the detrended data; fapLevels (struct fap, method, psd, amp, or []); spectralWindow (M,1) double, |W(f)|^2 normalised to 1 at f = 0, Lomb-Scargle only; peakFrequency (K,1) double, Hz; peakValue (K,1) double, in Type&#x27;s unit.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Unchanged from sigtools v1.3.1. A unit sinusoid is recovered at amplitude 1 within the window&#x27;s scalloping loss (flattop: &lt; 0.01 dB). The Welch dof = 2K is approximate for overlapping segments. The analytic FAP is an approximation (Scargle 1982). The bootstrap level is noisy unless FAP*NBootstrap &gt;= 10, and a warning says so.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:powerSpectrum:sizeMismatch</code></td><td>Input</td><td>t is neither a scalar nor as long as x.</td></tr>
+<tr><td><code>timeSeriesPreparation:powerSpectrum:badRate</code></td><td>Input</td><td>a scalar t is not a positive sampling rate.</td></tr>
+<tr><td><code>timeSeriesPreparation:powerSpectrum:tooFewSamples</code></td><td>Input</td><td>fewer than 8 valid samples.</td></tr>
+<tr><td><code>timeSeriesPreparation:powerSpectrum:emptyGrid</code></td><td>Input</td><td>the Lomb-Scargle frequency grid is empty (MaxFreq below the first bin).</td></tr>
+<tr><td><code>timeSeriesPreparation:powerSpectrum:badOption</code></td><td>Options</td><td>a text option is not one of its values (case-insensitive), or Frequencies is not a vector of positive values. Other options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Warnings</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:powerSpectrum:fapResolution</code></td><td>Significance</td><td>FAP*NBootstrap &lt; 10: the bootstrap level is noisy.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A 3 Hz sinusoid at 100 Hz: the amplitude peak is about 1.</p>
+<pre><code>t = (0:1/100:20)&#x27;;
+spec = timeSeriesPreparation.spectral.powerSpectrum(t, sin(2*pi*3*t), Type = &quot;amplitude&quot;, NPeaks = 1, Window = &quot;flattop&quot;);</code></pre>
+<h2>Limitations</h2>
+<p>One series per call. The bootstrap FAP draws from the global random stream (randperm); set rng for reproducible levels. Lomb-Scargle costs O(N M) with M frequencies.</p>
+<h2>References</h2>
+<p>P. D. Welch (1967), IEEE Trans. Audio Electroacoust. 15(2), 70-73. J. D. Scargle (1982), ApJ 263, 835-853. M. Zechmeister, M. Kuerster (2009), A&amp;A 496, 577-584. F. J. Harris (1978), Proc. IEEE 66(1), 51-83 (windows). sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.plotPowerSpectrum</code>, <code>timeSeriesPreparation.spectral.allanVariance</code>, <code>timeSeriesPreparation.spectral.spec2acv</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/powerSpectrum.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.plotPsd2armaFit</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.plotPsd2armaFit</h1>
+<p>Draw a psd2arma fit: target and fitted PSD, and the fit error in dB.</p>
+<h2>Syntax</h2>
+<pre><code>h = timeSeriesPreparation.spectral.plotPsd2armaFit(results)</code></pre>
+<h2>Description</h2>
+<p>The drawing half of sigtools&#x27; psd2arma (its former Display option), split at X-02 (owner decision 2026-09-23). It draws two panels in one figure: - top: the target PSD and the fitted PSD on log-log axes, titled with the orders and the RMS and maximum errors; - bottom: the error 10 log10(PSDfit/PSDtarget) in dB over frequency. The zero-frequency bin is left out of the log-log panel.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>results</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Third output of psd2arma.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>h</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Graphics handles: figure, psdAxes, errorAxes.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Not applicable, because the function draws. The error panel divides the stored PSDfit by PSDtarget; psd2arma floors both at 1e-12 of the target&#x27;s peak before its own RMSErrorDb, which the title quotes, so the panel can differ from it only where the fit falls below that floor.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:plotPsd2armaFit:badResults</code></td><td>Input</td><td>results lacks a field of psd2arma&#x27;s output.</td></tr>
+</table>
+<h2>Example</h2>
+<p>The psd2arma example, drawn.</p>
+<pre><code>f = logspace(-2, 2, 500)&#x27;;
+[~, ~, res] = timeSeriesPreparation.spectral.psd2arma(f, 1 ./ (1 + (f/5).^2).^2, 500, Order = [8 8]);
+h = timeSeriesPreparation.spectral.plotPsd2armaFit(res);
+close(h.figure);</code></pre>
+<h2>Limitations</h2>
+<p>Always a new figure.</p>
+<h2>References</h2>
+<p>sigtools v1.3.1 psd2arma (docs/inputs), its Display branch.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.psd2arma</code>, <code>timeSeriesPreparation.spectral.plotPowerSpectrum</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/plotPsd2armaFit.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

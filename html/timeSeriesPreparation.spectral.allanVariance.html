@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.allanVariance</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.allanVariance</h1>
+<p>Overlapping Allan variance and deviation, with confidence bounds and slopes.</p>
+<h2>Syntax</h2>
+<pre><code>[tau, avar, adev, info] = timeSeriesPreparation.spectral.allanVariance(x, fs)
+[tau, avar, adev, info] = timeSeriesPreparation.spectral.allanVariance(x, fs, m, ciLevel)</code></pre>
+<h2>Description</h2>
+<p>Fully overlapping Allan variance of rate-type series (IEEE 1139; Riley 2008), one column per channel, through the phase construction</p>
+<p>theta(k) = sum_(j&lt;k) x(j)/fs,   theta(1) = 0 sigma^2(tau) = sum_(i=1..K) (theta(i+2m) - 2 theta(i+m) + theta(i))^2 / (2 tau^2 K),   K = N - 2m,  tau = m/fs.</p>
+<p>Every cluster start is used, which gives far more confidence per tau than non-overlapping blocks of the same record. The confidence bounds use the chi-square construction edf*avar/chi2inv. The chi-square quantiles come from the Wilson-Hilferty approximation through erfinv, so no toolbox is needed. The equivalent degrees of freedom are the noise-agnostic large-sample value edf = 3(N-1)/(2m) - 2(N-2)/N, which is indicative only. The local log-log slope identifies the noise type: white -1/2, flicker 0, random walk +1/2, ramp +1, quantisation -1. The bias instability is 0.664 min(adev) (the IEEE convention).</p>
+<p>Since X-02 the function computes only; plotAllanVariance draws the result (owner decision 2026-09-23, clean break). The numbers are v1.3.1&#x27;s, unchanged.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>N,P</td><td><code>double</code></td><td>&mdash;</td><td>- Rate-type series, one column per channel; a row vector is one channel.</td></tr>
+<tr><td><code>fs</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Hz Sampling rate, &gt; 0.</td></tr>
+<tr><td><code>m</code></td><td>K,1</td><td><code>double</code></td><td>&mdash;</td><td>- Cluster factors, integers; tau = m/fs. Entries with N - 2m &lt; 1 are dropped. [] or omitted: about 100 log-spaced integers from 1 to floor((N-8)/2).</td></tr>
+<tr><td><code>ciLevel</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Confidence level of the bounds, in (0,1); [] or omitted: 0.6827 (1 sigma).</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>tau</code></td><td>K,1</td><td><code>double</code></td><td>&mdash;</td><td>s Averaging times used, ascending.</td></tr>
+<tr><td><code>avar</code></td><td>K,P</td><td><code>double</code></td><td>&mdash;</td><td>unit^2 Overlapping Allan variance.</td></tr>
+<tr><td><code>adev</code></td><td>K,P</td><td><code>double</code></td><td>&mdash;</td><td>unit Allan deviation, sqrt(avar).</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: edf (K,1); adevLow, adevHigh (K,P), the bounds at ciLevel; slope (K,P), d log10 adev / d log10 tau; biasInstability (1,P), 0.664 min(adev); biasInstabilityTau (1,P), s.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>The estimator is exact arithmetic on the phase sums. The bounds rest on two approximations: the edf formula is noise-type agnostic (Riley 2008 gives noise-specific values), and the Wilson-Hilferty chi-square quantile. At the default 1-sigma level that quantile errs by &lt; 0.6 % for edf &gt;= 3. At 95 % its lower 2.5 % quantile errs by 16 % at edf 3, 4 % at edf 5 and 0.7 % at edf 10 (measured against an exact quantile, 2026-09-23), so the widest-tau bounds are rough. Unchanged from sigtools v1.3.1, and TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<p>(none) Inputs outside their domain are refused by the arguments block with a MATLAB: identifier.</p>
+<h2>Example</h2>
+<p>White noise: the Allan deviation falls with slope -1/2.</p>
+<pre><code>x = randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 1), 10000, 1);
+[tau, ~, adev, info] = timeSeriesPreparation.spectral.allanVariance(x, 10);</code></pre>
+<h2>Limitations</h2>
+<p>Rate-type (frequency) data only; phase data must be differenced first. NaN is not handled: a NaN poisons every tau whose clusters touch it.</p>
+<h2>References</h2>
+<p>IEEE Std 1139-2008. W. J. Riley (2008), Handbook of Frequency Stability Analysis, NIST SP 1065. E. B. Wilson, M. M. Hilferty (1931), PNAS 17, 684-688.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.plotAllanVariance</code>, <code>timeSeriesPreparation.spectral.powerSpectrum</code>, <code>timeSeriesPreparation.spectral.spec2acv</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/allanVariance.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

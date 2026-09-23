@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsFitArima</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsFitArima</h1>
+<p>Fit an ARIMA(p,d,q) model by exact ML, CSS or Yule-Walker.</p>
+<h2>Syntax</h2>
+<pre><code>model = timeSeriesPreparation.tsmodels.tsFitArima(x, p, d, q)
+model = timeSeriesPreparation.tsmodels.tsFitArima(x, p, d, q, Method = &quot;css&quot;, Constant = false)</code></pre>
+<h2>Description</h2>
+<p>The one ARIMA estimator of the package; tsFitAR, tsFitMA, tsFitARMA and tsAutoArima call it. It fits phi(B) (1-B)^d (x_t - mu) = theta(B) e_t,   e_t ~ N(0, sigma^2), phi(B) = 1 - phi_1 B - ... - phi_p B^p, theta(B) = 1 + theta_1 B + ... + theta_q B^q; (p,0,0) is AR(p), (0,0,q) MA(q), (p,0,q) ARMA(p,q). x is differenced d times first (tsDiff); the mean mu (Constant) is that of the differenced series.</p>
+<p>Methods: &quot;exact&quot;  exact Gaussian ML (default). A Kalman filter on the Harvey state space of dimension r = max(p, q+1), started from the stationary covariance P = T P T&#x27; + R R&#x27; (the shared doubling solver timeSeriesPreparation.internal. dlyap, tolerance 1e-14, 60 doublings, Kronecker fallback), with sigma^2 concentrated out. &quot;css&quot;    conditional sum of squares, the first max(p,q) residuals set to zero. &quot;yw&quot;     Yule-Walker, pure AR only: a closed-form fast path, the mean is the sample mean, no optimiser, no standard errors.</p>
+<p>For exact ML and CSS the AR and the MA block are optimised in an unconstrained space: tanh maps each value to a partial autocorrelation in (-1, 1), clamped to +/-0.999, and the Durbin-Levinson recursion turns these into coefficients. Every trial polynomial is therefore stationary and invertible by construction. fminsearch (TolX = TolFun = 1e-8, MaxFunEvals 2000 (p+q+2)) runs from four starts: a Yule-Walker seed, a white-noise seed and two seeds perturbed by 0.3 randn; the lowest negative log-likelihood wins. Standard errors come from the observed-information Hessian of the penalty-free objective in the natural parameters: central differences at steps h = 1e-3 max(|theta|, 1) and h/2, combined by Richardson extrapolation, with an eigenvalue repair when the inverse is not positive definite. AIC = 2 nll + 2 k and BIC = 2 nll + k log(nObs), with k the number of coefficients plus one for sigma^2.</p>
+<p>Gaps: NaN marks a missing sample on a regular time grid. With the exact method the Kalman filter only predicts at a gap and accrues no likelihood term there, which gives the exact ML estimate on the observed data. Gaps require d = 0 and Method &quot;exact&quot;; resid is NaN there and nObs counts the observed samples. Base MATLAB only.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Series (a row is used as a column); NaN marks a missing sample (exact method, d = 0 only).</td></tr>
+<tr><td><code>p</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- AR order, &gt;= 0; rounded.</td></tr>
+<tr><td><code>d</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Differencing order, &gt;= 0; rounded.</td></tr>
+<tr><td><code>q</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- MA order, &gt;= 0; rounded.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Constant</code></td><td>1,1</td><td><code>logical</code></td><td>true</td><td>Include the mean mu. Ignored by &quot;yw&quot;, which always fits it.</td></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;exact&quot;</td><td>&quot;exact&quot;, &quot;css&quot; or &quot;yw&quot; (case-insensitive).</td></tr>
+<tr><td><code>Display</code></td><td>1,1</td><td><code>string</code></td><td>&quot;off&quot;</td><td>fminsearch display: &quot;off&quot;, &quot;iter&quot;, &quot;final&quot; or &quot;notify&quot;.</td></tr>
+<tr><td><code>MaxIter</code></td><td>1,1</td><td><code>double</code></td><td>2000</td><td>fminsearch iteration cap per start, &gt; 0.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>model</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: type (char, e.g. &#x27;ARMA(2,1)&#x27;); p, d, q; const; mu; ar (1,p), ma (1,q); sigma2; resid (N-d,1), NaN at gaps; stdErr (1,k-1), standard errors of [mu ar ma]; logL; n, the length of the differenced series; nObs, the observed samples; obs (N,1) logical, true = observed; k; aic; bic; x, xd (differenced), x0 (tsDiff seeds); method (char); converged, fminsearch exit flag 1. A &quot;yw&quot; model has no nObs and obs, stdErr is [] and k = p+2.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit. The sigtools HANDOFF (section 3) records independent NumPy re-derivations: the exact AR(1) log-likelihood matches the closed-form Gaussian density to about 1e-12; the Richardson-Hessian standard error of an AR(1) matches sqrt((1 - phi^2)/n) to a ratio of 1.000; the PACF &lt;-&gt; coefficient round trip is exact; the doubling Lyapunov solve matches the Kronecker solve to about 1e-15. The optimum itself is only as good as fminsearch from four starts (TolX 1e-8).</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:tsFitArima:badData</code></td><td>Input</td><td>an observed sample is Inf.</td></tr>
+<tr><td><code>timeSeriesPreparation:tsFitArima:tooShort</code></td><td>Input</td><td>fewer than p + q + 2 observed samples.</td></tr>
+<tr><td><code>timeSeriesPreparation:tsFitArima:gapsWithDiff</code></td><td>Gaps</td><td>x has NaN gaps and d &gt; 0.</td></tr>
+<tr><td><code>timeSeriesPreparation:tsFitArima:gapsNeedExact</code></td><td>Gaps</td><td>x has NaN gaps and Method is not &quot;exact&quot;.</td></tr>
+<tr><td><code>timeSeriesPreparation:tsFitArima:ywMA</code></td><td>Method</td><td>Method &quot;yw&quot; with q &gt; 0.</td></tr>
+<tr><td><code>timeSeriesPreparation:tsFitArima:method</code></td><td>Method</td><td>Method is not &quot;exact&quot;, &quot;css&quot; or &quot;yw&quot;. A non-numeric or complex x (validateattributes), or an order or option outside its domain (arguments block), is refused with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>AR(1) with phi = 0.6 and zero mean: exact ML recovers ar near 0.6.</p>
+<pre><code>x = filter(1, [1 -0.6], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 1), 200, 1));
+model = timeSeriesPreparation.tsmodels.tsFitArima(x, 1, 0, 0, Constant = false);</code></pre>
+<h2>Limitations</h2>
+<p>The two perturbed starts draw from the global random stream, whose state is restored afterwards; the fit therefore depends on the current rng state (set rng for a reproducible fit). The exact likelihood costs O(n r^3) per evaluation; fminsearch needs hundreds of evaluations, so large p + q is slow. Gaps and differencing do not mix. Options passed as one struct (inputParser&#x27;s StructExpand) are no longer accepted; pass name-value pairs.</p>
+<h2>References</h2>
+<p>G. E. P. Box, G. M. Jenkins, G. C. Reinsel, G. M. Ljung (2015), Time Series Analysis: Forecasting and Control, 5th ed., Wiley. J. Durbin, S. J. Koopman (2012), Time Series Analysis by State Space Methods, 2nd ed., Oxford University Press. R. H. Jones (1980), Technometrics 22(3), 389-395 (ARMA likelihood with missing observations). J. F. Monahan (1984), Biometrika 71(2), 403-404 (PACF reparametrisation). J. A. Nelder, R. Mead (1965), Comput. J. 7(4), 308-313. sigtools v1.3.1 HANDOFF, section 3.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsFitAR</code>, <code>timeSeriesPreparation.tsmodels.tsFitMA</code>, <code>timeSeriesPreparation.tsmodels.tsFitARMA</code>, <code>timeSeriesPreparation.tsmodels.tsAutoArima</code>, <code>timeSeriesPreparation.tsmodels.tsFitSarima</code>, <code>timeSeriesPreparation.tsmodels.tsForecast</code>, <code>timeSeriesPreparation.tsmodels.tsCheckResiduals</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsFitArima.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

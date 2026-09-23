@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.psd2arma</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.psd2arma</h1>
+<p>Fit a discrete-time ARMA (IIR) process to a target PSD or ASD.</p>
+<h2>Syntax</h2>
+<pre><code>[b, a] = timeSeriesPreparation.spectral.psd2arma(f, S, Fs)
+[b, a, results] = timeSeriesPreparation.spectral.psd2arma(f, S, Fs, Order = [8 8], InputType = &quot;asd&quot;)</code></pre>
+<h2>Description</h2>
+<p>Finds B(z)/A(z) such that x[n] = filter(b, a, w[n]), with w white of variance NoiseVariance, has the target one-sided PSD S(f) of a process sampled at Fs. The scaling is sigtools&#x27; S(f) = (2 sigma_w^2/Fs) |H(f)|^2, the same as arma2psd, so the two are inverses. Steps: 1. S is interpolated (log-log, InterpMethod) onto NFFT+1 uniform points from 0 to Fs/2, floored at 1e-12 of its peak. 2. A minimum-phase complex response with that magnitude is built by the real-cepstrum (Hilbert) method. A complex target conditions the rational fit far better than a magnitude-only one. 3. B/A is fitted with sinvfreqz (Sanathanan-Koerner, &quot;invfreqz&quot;) or sstmcb (Steiglitz-McBride on the impulse response, &quot;stmcb&quot;). 4. Optionally, poles and zeros outside the unit circle are reflected inside, and the gain is corrected in the log least-squares sense. 5. With Order &quot;auto&quot;, na = nb = 1..MaxOrder is swept. It keeps the first order within Tol dB RMS (&quot;tol&quot;) or the smallest AIC-like value (&quot;aic&quot;). Base MATLAB only. Since X-02 the function no longer draws; plotPsd2armaFit draws results (owner decision 2026-09-23, clean break; its Display option is gone). The numbers are v1.3.1&#x27;s.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>f</code></td><td>M,1</td><td><code>double</code></td><td>&mdash;</td><td>Hz Frequencies of the target, finite; points outside [0, Fs/2] are dropped with a warning.</td></tr>
+<tr><td><code>S</code></td><td>M,1</td><td><code>double</code></td><td>&mdash;</td><td>- Target PSD (unit^2/Hz) or ASD (unit/sqrt(Hz)), finite, &gt;= 0.</td></tr>
+<tr><td><code>Fs</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Hz Sampling rate of the modelled process, &gt; 0.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>InputType</code></td><td>1,1</td><td><code>string</code></td><td>&quot;psd&quot;</td><td>&quot;psd&quot; or &quot;asd&quot;.</td></tr>
+<tr><td><code>Sided</code></td><td>1,1</td><td><code>string</code></td><td>&quot;one&quot;</td><td>&quot;one&quot; or &quot;two&quot; (two-sided S is doubled).</td></tr>
+<tr><td><code>Order</code></td><td>1,:</td><td><code>double</code></td><td>&quot;auto&quot;</td><td>[na nb], or &quot;auto&quot; for the sweep.</td></tr>
+<tr><td><code>MaxOrder</code></td><td>1,1</td><td><code>double</code></td><td>30</td><td>Largest order of the sweep.</td></tr>
+<tr><td><code>OrderCriterion</code></td><td>1,1</td><td><code>string</code></td><td>&quot;tol&quot;</td><td>&quot;tol&quot; or &quot;aic&quot;.</td></tr>
+<tr><td><code>Tol</code></td><td>1,1</td><td><code>double</code></td><td>0.5</td><td>Target RMS fit error in dB (&quot;tol&quot;).</td></tr>
+<tr><td><code>NFFT</code></td><td>1,1</td><td><code>double</code></td><td>2048</td><td>Size of the uniform grid.</td></tr>
+<tr><td><code>InterpMethod</code></td><td>1,1</td><td><code>string</code></td><td>&quot;pchip&quot;</td><td>interp1 method of the log-log interpolation.</td></tr>
+<tr><td><code>NoiseVariance</code></td><td>1,1</td><td><code>double</code></td><td>1</td><td>Variance of the driving noise.</td></tr>
+<tr><td><code>EnforceStability</code></td><td>1,1</td><td><code>logical</code></td><td>true</td><td>Reflect unstable poles.</td></tr>
+<tr><td><code>EnforceMinPhaseZeros</code></td><td>1,1</td><td><code>logical</code></td><td>true</td><td>Reflect zeros outside the circle.</td></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;invfreqz&quot;</td><td>&quot;invfreqz&quot; or &quot;stmcb&quot;.</td></tr>
+<tr><td><code>MaxIter</code></td><td>1,1</td><td><code>double</code></td><td>30</td><td>Iterations of the SK or SM refinement.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>b</code></td><td>1,nb+1</td><td><code>double</code></td><td>&mdash;</td><td>- Numerator (MA) coefficients.</td></tr>
+<tr><td><code>a</code></td><td>1,na+1</td><td><code>double</code></td><td>&mdash;</td><td>- Denominator (AR) coefficients, a(1) = 1.</td></tr>
+<tr><td><code>results</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: b, a, Fs, NoiseVariance; fGrid (NFFT+1,1) Hz; PSDtarget and PSDfit (NFFT+1,1); RMSErrorDb, MaxErrorDb; OrderInfo (na, nb, searched, rmsErrDb, aic); Poles, Zeros; IsStable, IsMinPhaseZeros.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>results.RMSErrorDb and MaxErrorDb measure the achieved fit on the grid. For known ARMA targets, sinvfreqz recovers the generating filter to about 1e-15, and a smooth 4th-order low-pass is fitted to 0.0075 dB RMS (sigtools HANDOFF section 3, NumPy re-derivation). The numbers are unchanged from v1.3.1, and TestSigtoolsEquivalence holds them bit for bit.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:psd2arma:sizeMismatch</code></td><td>Input</td><td>f and S differ in length.</td></tr>
+<tr><td><code>timeSeriesPreparation:psd2arma:tooFewPoints</code></td><td>Input</td><td>fewer than 2 points lie within [0, Fs/2].</td></tr>
+<tr><td><code>timeSeriesPreparation:psd2arma:zeroPSD</code></td><td>Input</td><td>the target is identically zero.</td></tr>
+<tr><td><code>timeSeriesPreparation:psd2arma:fitDiverged</code></td><td>Fit</td><td>the fit gave non-finite coefficients.</td></tr>
+<tr><td><code>timeSeriesPreparation:psd2arma:fitFailed</code></td><td>Fit</td><td>no order up to MaxOrder could be fitted.</td></tr>
+</table>
+<h2>Warnings</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:psd2arma:freqRange</code></td><td>Input</td><td>frequencies outside [0, Fs/2] were dropped.</td></tr>
+<tr><td><code>timeSeriesPreparation:psd2arma:toleranceNotMet</code></td><td>Fit</td><td>Tol not reached up to MaxOrder; the best order found is returned.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A 4th-order low-pass PSD, fitted with an ARMA(8,8).</p>
+<pre><code>f = logspace(-2, 2, 500)&#x27;;
+S = 1 ./ (1 + (f/5).^2).^2;
+[b, a, res] = timeSeriesPreparation.spectral.psd2arma(f, S, 500, Order = [8 8]);</code></pre>
+<h2>Limitations</h2>
+<p>The fit is to the log-log interpolated target, so structure between the given frequencies is invented by InterpMethod. Very steep or notched spectra need high orders. The &quot;auto&quot; sweep uses na = nb.</p>
+<h2>References</h2>
+<p>C. K. Sanathanan, J. Koerner (1963), IEEE Trans. Autom. Control 8(1), 56-58. K. Steiglitz, L. E. McBride (1965), IEEE Trans. Autom. Control 10(4), 461-464. A. V. Oppenheim, R. W. Schafer (2010), Discrete-Time Signal Processing, 3rd ed., section 13 (real cepstrum).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.plotPsd2armaFit</code>, <code>timeSeriesPreparation.spectral.arma2psd</code>, <code>timeSeriesPreparation.spectral.sinvfreqz</code>, <code>timeSeriesPreparation.spectral.sstmcb</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/psd2arma.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

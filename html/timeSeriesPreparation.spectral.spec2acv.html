@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.spec2acv</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.spec2acv</h1>
+<p>One- or two-sided PSD/ASD to auto-covariance / -correlation.</p>
+<h2>Syntax</h2>
+<pre><code>[R, lags] = timeSeriesPreparation.spectral.spec2acv(f, S)
+[R, lags, info] = timeSeriesPreparation.spectral.spec2acv(f, S, Method = &quot;direct&quot;, Lags = (0:10)&#x27;/100, Window = &quot;tukey&quot;)</code></pre>
+<h2>Description</h2>
+<p>Transforms a spectral density S on the frequency grid f into the auto-covariance R(tau) through the Wiener-Khinchin theorem, R(tau) = integral_0^fNyq S(f) cos(2 pi f tau) df for a one-sided PSD. Measured spectra rarely sit on a uniform grid: non-uniform, offset, unsorted or log-spaced grids are sorted, duplicates averaged, and the spectrum resampled (pchip, in linear or log-log space) onto a uniform DC-aligned grid; below the lowest frequency S is zero-padded and above the highest it is taken as zero. Both methods use the trapezoidal rule with half weight at DC and Nyquist, so with Window &quot;none&quot; and Smooth &quot;none&quot; R(0) equals trapz(f,S) exactly, and &quot;ifft&quot; and &quot;direct&quot; agree to rounding. &quot;ifft&quot; is fast with the fixed lag step dt = 1/(2 fNyq); &quot;direct&quot; evaluates arbitrary Lags with NUFFT when available (R2020a+), otherwise with an O(N L) cosine matrix. Optional spectral smoothing (fixed-width kernels, or constant-relative-bandwidth &quot;octave&quot; smoothing for wideband ASDs) and a spectral taper w(f), w(0) = 1, limit ringing. With DOF (the chi-square degrees of freedom of the PSD estimate, e.g. about 2 nAvg for Welch) the 1-sigma uncertainty of R is propagated to info.Rstd, including the variance reduction of the smoothing. Single and gpuArray inputs are preserved.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>f</code></td><td>M,1</td><td><code>double</code></td><td>&mdash;</td><td>Hz Frequency grid, real; any order or spacing; negative entries only with Sided &quot;two&quot;; M &gt;= 3.</td></tr>
+<tr><td><code>S</code></td><td>M,1</td><td><code>double</code></td><td>&mdash;</td><td>- PSD (unit^2/Hz) or ASD (unit/sqrt(Hz), with InputType &quot;asd&quot;) on f.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>InputType</code></td><td>1,1</td><td><code>string</code></td><td>&quot;psd&quot;</td><td>&quot;psd&quot; or &quot;asd&quot; (squared first).</td></tr>
+<tr><td><code>Sided</code></td><td>1,1</td><td><code>string</code></td><td>&quot;one&quot;</td><td>&quot;one&quot; or &quot;two&quot;; &quot;two&quot; folds G(f) = S2(f) + S2(-f).</td></tr>
+<tr><td><code>Output</code></td><td>1,1</td><td><code>string</code></td><td>&quot;acv&quot;</td><td>&quot;acv&quot; or &quot;acf&quot; (R/R(0)).</td></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;ifft&quot;</td><td>&quot;ifft&quot; or &quot;direct&quot;.</td></tr>
+<tr><td><code>Lags</code></td><td>L,1</td><td><code>double</code></td><td>[</td><td>] Lags in s, &gt;= 0, &quot;direct&quot; only; [] = the &quot;ifft&quot; grid.</td></tr>
+<tr><td><code>InterpFactor</code></td><td>1,1</td><td><code>double</code></td><td>1</td><td>Integer &gt;= 1; refines df to df/K and extends the longest lag K-fold.</td></tr>
+<tr><td><code>MaxBins</code></td><td>1,1</td><td><code>double</code></td><td>2^20</td><td>Cap on the uniform grid; df is coarsened (warning) beyond it.</td></tr>
+<tr><td><code>ResampleSpace</code></td><td>1,1</td><td><code>string</code></td><td>&quot;auto&quot;</td><td>&quot;auto&quot;, &quot;linear&quot; or &quot;loglog&quot;; &quot;auto&quot; takes &quot;loglog&quot; for log-spaced, positive spectra.</td></tr>
+<tr><td><code>Window</code></td><td>1,1</td><td><code>string</code></td><td>&quot;none&quot;</td><td>&quot;none&quot;, &quot;cosine&quot;, &quot;hann&quot;, &quot;hamming&quot;, &quot;blackman&quot;, &quot;gauss&quot;, &quot;tukey&quot;, &quot;exp&quot;.</td></tr>
+<tr><td><code>WindowParam</code></td><td>1,1</td><td><code>double</code></td><td>NaN</td><td>gauss: alpha (sigma = fNyq/alpha), 2.5; tukey: ratio in [0,1], 0.5; exp: decay k, 3.</td></tr>
+<tr><td><code>Smooth</code></td><td>1,1</td><td><code>string</code></td><td>&quot;none&quot;</td><td>&quot;none&quot;, &quot;boxcar&quot;, &quot;triangle&quot;, &quot;cosine&quot;, &quot;hann&quot;, &quot;gauss&quot;, &quot;octave&quot;.</td></tr>
+<tr><td><code>SmoothWidth</code></td><td>1,1</td><td><code>double</code></td><td>Inf</td><td>Kernels: full width in Hz (gauss: +/-3 sigma), Inf = 10 df; &quot;octave&quot;: width in octaves, Inf = 1/3.</td></tr>
+<tr><td><code>DOF</code></td><td>1,1</td><td><code>double</code></td><td>NaN</td><td>Degrees of freedom of the PSD estimate, &gt; 0; NaN = no uncertainty.</td></tr>
+<tr><td><code>NanPolicy</code></td><td>1,1</td><td><code>string</code></td><td>&quot;interp&quot;</td><td>Non-finite bins: &quot;interp&quot; (pchip), &quot;zero&quot; or &quot;error&quot;.</td></tr>
+<tr><td><code>GridTol</code></td><td>1,1</td><td><code>double</code></td><td>1e-6</td><td>Relative tolerance for accepting a grid as uniform and DC-aligned.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>R</code></td><td>L,1</td><td><code>double</code></td><td>&mdash;</td><td>- Auto-covariance (unit^2) or auto-correlation; class of S.</td></tr>
+<tr><td><code>lags</code></td><td>L,1</td><td><code>double</code></td><td>&mdash;</td><td>s Lag axis, from 0 for the default grid.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: df, dt, N, resampled, resampleSpace, nBadBins; varIn (trapz of the input PSD); varOut (R(0) after smoothing and taper); windowLoss, 1 - varOut/varIn; integralTimescale, trapz(lags,R)/R(0), s; firstZero and tauDecorr, first crossing of 0 and 1/e, s (NaN if none); Rstd (L,1), [] unless DOF (for &quot;acf&quot; normalised by R(0), neglecting the R(0) uncertainty).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>With Window &quot;none&quot; and Smooth &quot;none&quot;, R(0) equals trapz(f,S) exactly and &quot;ifft&quot; and &quot;direct&quot; agree to rounding error (original help). The &quot;direct&quot; R(0) is NUFFT-accurate, about 1e-12, and arma2acv equals spec2acv(arma2psd(...)) at integer lags to about 1e-15 on a fine grid (sigtools HANDOFF sections 3 and 3a). Resampling and zero-padding add the interpolation error of the input grid. Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:sizeMismatch</code></td><td>Input</td><td>f and S differ in length.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:tooShort</code></td><td>Input</td><td>fewer than 3 points.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:negFreq</code></td><td>Input</td><td>negative frequencies with Sided &quot;one&quot;.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:badBins</code></td><td>Input</td><td>NanPolicy &quot;error&quot; and non-finite bins, or fewer than 2 valid bins to interpolate.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:lagsNeedDirect</code></td><td>Options</td><td>Lags given without Method &quot;direct&quot;.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:badDOF</code></td><td>Options</td><td>DOF is not positive. Other options outside their domain are refused by the arguments block (case-sensitive values), and a non-positive gauss or exp WindowParam by validateattributes, with a MATLAB: identifier.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:zeroVariance</code></td><td>Normalisation</td><td>Output &quot;acf&quot; with R(0) &lt;= 0.</td></tr>
+</table>
+<h2>Warnings</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:complexS</code></td><td>Input</td><td>S has a significant imaginary part; abs(S) is used.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:negS</code></td><td>Input</td><td>negative bins clipped to 0.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:maxBins</code></td><td>Grid and taper</td><td>the grid would exceed MaxBins; df is coarsened.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:notDecayed</code></td><td>Grid and taper</td><td>S at Nyquist is above 1 % of its maximum and no taper is applied (ringing).</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:tukeyClamp</code></td><td>Grid and taper</td><td>Tukey ratio outside [0,1] is clamped.</td></tr>
+<tr><td><code>timeSeriesPreparation:spec2acv:ciSkipped</code></td><td>Uncertainty</td><td>Rstd skipped: transform too large and no NUFFT available.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Auto-correlation of a 4th-order low-pass PSD, with uncertainty.</p>
+<pre><code>fs = 1000; f = (0:0.5:fs/2)&#x27;;
+S  = 1./(1 + (f/50).^4);
+[R, tau, nfo] = timeSeriesPreparation.spectral.spec2acv(f, S, Window = &quot;tukey&quot;, Smooth = &quot;octave&quot;, SmoothWidth = 1/6, DOF = 32, Output = &quot;acf&quot;);</code></pre>
+<h2>Limitations</h2>
+<p>The spectrum is assumed zero outside the given band, so an undersampled low-frequency end biases long lags and R(0). Text options are case-sensitive (v1.3.1). The uncertainty assumes independent chi-square bins before smoothing.</p>
+<h2>References</h2>
+<p>N. Wiener (1930), Acta Math. 55, 117-258; A. Khintchine (1934), Math. Ann. 109, 604-615 (Wiener-Khinchin theorem). J. S. Bendat, A. G. Piersol (2010), Random Data, 4th ed., Wiley (spectral uncertainty). sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.arma2acv</code>, <code>timeSeriesPreparation.spectral.arma2psd</code>, <code>timeSeriesPreparation.spectral.psd2arma</code>, <code>timeSeriesPreparation.spectral.powerSpectrum</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/spec2acv.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

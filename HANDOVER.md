@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.12 · 2026-09-23 · X-06 merged; X-02 in review**
+**Revision 0.13 · 2026-09-23 · X-02 merged; the `.github/` profile switch in review**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,49 @@ restates:
 
 ---
 
-## X-02 — scope frozen 2026-09-23 (issue #5)
+## `.github/` profile switch after X-02 — 2026-09-23 (no WP; its own PR, GUIDE §1)
+
+Tier B. This PR finishes what X-02 left to `.github/`, a change that stands
+alone. It touches only `.github/matlab-audit.json` and
+`.github/matlab-docs.json`, plus the files generated from them.
+
+True after the merge:
+- **Audit**:
+  - The profile `sigtools-imported` is gone. `+spectral` and `+tsmodels`
+    are audited under `public` (the full CONCEPT 9.1 template).
+  - `tests/sigtools` falls under `tests`.
+  - A new profile `demos` asks for a help block with the provenance footer.
+  - `public` has `"warnings": true`, so warning identifiers are checked
+    (A5/A6) and catalogued. This closes the X-06 debt.
+- **Docs**: the generator no longer excludes the subpackages. There are HTML
+  pages for all 29 of their functions, and the catalogue has **94**
+  identifiers (up from 28). **29 new help examples** run in
+  `TestHelpExamples`.
+
+**Fault injection (2026-09-23, ci-actions `v1.3.2`)**, each on a copy that
+was restored afterwards:
+
+| injected fault | finding |
+|---|---|
+| `arma2acv` without ACCURACY | A2 |
+| a `tsPacf` warning raised under an undocumented identifier | A6 (and A5 for the orphaned documented one) |
+| a demo footer at 0.0.9 | A3 |
+
+The healthy tree is **clean**: 83 files. `matlab-docs --check`: 45 files,
+**in sync**.
+
+**Prediction** (before any run): **421 + 0 + 0 = 421**. That is X-02's 392
+with TestHelpExamples going from 10 to 39 (+29, all contract): contract
+129, reference 161, precision 10, robustness 87, metamorphic 25,
+vectorisation 6, speed 3. Without gracefoReading: 413 + 0 + 8.
+
+**Risk, stated:** the 29 sigtools EXAMPLEs run for the first time. Each must
+run without a warning (`verifyWarningFree`). The agents wrote them without
+MATLAB, so a red here is a help-text fix in this PR, not a numerical one.
+
+---
+
+## X-02 — merged 2026-09-23 (PR #40, issue #5); scope was frozen 2026-09-23
 
 Tier B. Design: CONCEPT 10.1 row X-02, 12.5 and 12.9 (port first,
 conventions after, gated by equality to the port). **Numbers unchanged** is
@@ -485,12 +527,12 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-02 (#5) on branch `claude/grace-timeseries-issues-28g3a4` (PR #40):
-CI green (run 35836240391, 392 + 0 + 0), awaiting review.** X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
-`f969ecb`, release 0.1.0). The annotated tag `v0.1.0` on `f969ecb` is the
-owner's: the session's push of it was refused (HTTP 403, 2026-09-23). The
-GitHub release follows the tag. X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b merged
-(PR #36, `2ecf543`); X-00a merged (#2, `f26df8d`).
+**`.github/` profile switch on branch `claude/grace-timeseries-issues-28g3a4`:
+CI pending.** X-02 merged (PR #40, `7fe24f3`). X-06 merged (PR #39,
+`4f9e11e`). X-04 merged (PR #38, `f969ecb`, release 0.1.0). The annotated tag
+`v0.1.0` on `f969ecb` is the owner's: the session's push of it was refused
+(HTTP 403, 2026-09-23). X-01 + X-03 merged (PR #37); X-00b (PR #36); X-00a
+(#2).
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
@@ -499,7 +541,7 @@ GitHub release follows the tag. X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b me
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
 C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
-`v1.3.2`). Next after X-02: the `.github/` profile switch (its own PR), then X-07 (#10); X-05
+`v1.3.2`). Next: X-07 (#10); X-05
 (#8) also waits on V-12 (defect catalogue, D-9).
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).

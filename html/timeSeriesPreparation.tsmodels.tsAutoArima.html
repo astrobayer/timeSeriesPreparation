@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsAutoArima</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsAutoArima</h1>
+<p>Grid search over ARIMA(p,d,q) orders minimising AIC or BIC.</p>
+<h2>Syntax</h2>
+<pre><code>[best, table] = timeSeriesPreparation.tsmodels.tsAutoArima(x)
+[best, table] = timeSeriesPreparation.tsmodels.tsAutoArima(x, maxP, maxQ, d)
+[best, table] = timeSeriesPreparation.tsmodels.tsAutoArima(x, 3, 3, 0, Criterion = &quot;bic&quot;, Method = &quot;css&quot;)</code></pre>
+<h2>Description</h2>
+<p>Fits every ARIMA(p,d,q) with 0 &lt;= p &lt;= maxP and 0 &lt;= q &lt;= maxQ, except p = q = 0, by timeSeriesPreparation.tsmodels.tsFitArima, and returns the model with the smallest information criterion. The options other than Criterion that are given are passed on to tsFitArima, whose defaults apply otherwise. An order whose fit raises an error is skipped silently. The table lists every fitted order, sorted by the criterion (ties keep the grid order: p outer, q inner). AIC = 2 nll + 2 k and BIC = 2 nll + k log(nObs), with k the number of coefficients plus one, as tsFitArima computes them; d is fixed, so all candidates share one differenced series. Base MATLAB only.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Series; NaN marks a gap (exact method, d = 0).</td></tr>
+<tr><td><code>maxP</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Largest AR order; [] or omitted: 3.</td></tr>
+<tr><td><code>maxQ</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Largest MA order; [] or omitted: 3.</td></tr>
+<tr><td><code>d</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Differencing order; [] or omitted: 0.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Criterion</code></td><td>1,1</td><td><code>string</code></td><td>&quot;aic&quot;</td><td>&quot;aic&quot; or &quot;bic&quot; (case-insensitive).</td></tr>
+<tr><td><code>Constant</code></td><td>1,1</td><td><code>logical</code></td><td>true</td><td>Passed to tsFitArima.</td></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;exact&quot;</td><td>Passed to tsFitArima: &quot;exact&quot;, &quot;css&quot; or &quot;yw&quot;.</td></tr>
+<tr><td><code>Display</code></td><td>1,1</td><td><code>string</code></td><td>&quot;off&quot;</td><td>Passed to tsFitArima.</td></tr>
+<tr><td><code>MaxIter</code></td><td>1,1</td><td><code>double</code></td><td>2000</td><td>Passed to tsFitArima, &gt; 0.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>best</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- The selected model (see tsFitArima).</td></tr>
+<tr><td><code>table</code></td><td>R,6</td><td><code>double</code></td><td>&mdash;</td><td>- One row per fitted order, sorted by the criterion: [p q criterion aic bic logL].</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Each candidate is a tsFitArima fit; unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit. The selection is only as good as the individual optima (fminsearch from four starts).</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:tsAutoArima:badOption</code></td><td>Options</td><td>Criterion is not &quot;aic&quot; or &quot;bic&quot; (case-insensitive).</td></tr>
+<tr><td><code>timeSeriesPreparation:tsAutoArima:unknownCriterion</code></td><td>Options</td><td>a criterion other than &quot;aic&quot; or &quot;bic&quot; reaches the grid loop; raised inside the per-order try, so it skips the order. The arguments block refuses such a Criterion first, so it is a guard only. When no order can be fitted (also when tsFitArima refuses a forwarded option, since every order then fails), the call fails in</td></tr>
+</table>
+<h2>Example</h2>
+<p>An AR(1) series: the lowest-BIC order with p &lt;= 2, q &lt;= 1, by CSS.</p>
+<pre><code>x = filter(1, [1 -0.6], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 8), 300, 1));
+[best, table] = timeSeriesPreparation.tsmodels.tsAutoArima(x, 2, 1, 0, Criterion = &quot;bic&quot;, Method = &quot;css&quot;);</code></pre>
+<h2>Limitations</h2>
+<p>The cost is (maxP + 1)(maxQ + 1) - 1 fits; exact ML makes a large grid slow. d is not searched. A failing order is skipped without a message. Options passed as one struct are not accepted; pass name-value pairs.</p>
+<h2>References</h2>
+<p>H. Akaike (1974), IEEE Trans. Autom. Control 19(6), 716-723. G. Schwarz (1978), Ann. Statist. 6(2), 461-464. G. E. P. Box, G. M. Jenkins, G. C. Reinsel, G. M. Ljung (2015), Time Series Analysis: Forecasting and Control, 5th ed., Wiley.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsFitArima</code>, <code>timeSeriesPreparation.tsmodels.tsAutoSarima</code>, <code>timeSeriesPreparation.tsmodels.tsForecast</code>, <code>timeSeriesPreparation.tsmodels.tsModelDisp</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsAutoArima.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

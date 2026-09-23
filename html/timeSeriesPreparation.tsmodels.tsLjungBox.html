@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsLjungBox</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsLjungBox</h1>
+<p>Ljung-Box portmanteau test for residual autocorrelation.</p>
+<h2>Syntax</h2>
+<pre><code>[Q, pValue, df] = timeSeriesPreparation.tsmodels.tsLjungBox(resid)
+[Q, pValue, df] = timeSeriesPreparation.tsmodels.tsLjungBox(resid, lags)
+[Q, pValue, df] = timeSeriesPreparation.tsmodels.tsLjungBox(resid, lags, nParam)</code></pre>
+<h2>Description</h2>
+<p>Tests whether the residuals of a fitted model are white, jointly over the first L lags: H0 says the innovations are uncorrelated up to lag L. NaN residuals (missing epochs) and leading exact zeros (the conditioning samples of a CSS fit) are dropped, the mean is removed, and with r_k the sample ACF of tsAcf, Q = N (N + 2) sum_{k=1..L} r_k^2 / (N - k), which under H0 is chi-square with df = max(L - nParam, 1) degrees of freedom, nParam = p + q the fitted ARMA parameters. pValue is the upper tail 1 - chi2cdf(Q, df); a small value rejects whiteness. Base MATLAB only: the chi-square CDF is the regularised incomplete gamma function, by series (x &lt; a + 1) or Lentz continued fraction.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>resid</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Residual series; NaN marks a missing epoch.</td></tr>
+<tr><td><code>lags</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Number of lags L tested; [] or omitted: 20. Rounded and capped at N - 1.</td></tr>
+<tr><td><code>nParam</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Fitted parameter count p + q, subtracted from the degrees of freedom; [] or omitted: 0.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Q</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Ljung-Box statistic.</td></tr>
+<tr><td><code>pValue</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Upper-tail p-value, 1 - chi2cdf(Q, df).</td></tr>
+<tr><td><code>df</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Degrees of freedom, max(L - nParam, 1).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>The incomplete gamma series and continued fraction stop at a relative change below 1e-14 (at most 1000 terms), as in tsCheckResiduals. The chi-square law of Q is asymptotic (Ljung and Box 1978). Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<p>(none) A non-numeric or complex resid, or a lags or nParam that is not a numeric scalar or [], is refused by the arguments block with a MATLAB: identifier.</p>
+<h2>Example</h2>
+<p>White noise: the p-value is typically large.</p>
+<pre><code>e = randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 3), 500, 1);
+[Q, pValue, df] = timeSeriesPreparation.tsmodels.tsLjungBox(e, 20);</code></pre>
+<h2>Limitations</h2>
+<p>Every exact zero before the first nonzero residual is dropped, a genuine zero included. With gaps the ACF is pairwise (tsAcf) and N counts the observed residuals only.</p>
+<h2>References</h2>
+<p>G. M. Ljung, G. E. P. Box (1978), Biometrika 65(2), 297-303. G. E. P. Box, G. M. Jenkins, G. C. Reinsel, Time Series Analysis: Forecasting and Control, Wiley.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsCheckResiduals</code>, <code>timeSeriesPreparation.tsmodels.tsAcf</code>, <code>timeSeriesPreparation.tsmodels.tsModelDisp</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsLjungBox.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

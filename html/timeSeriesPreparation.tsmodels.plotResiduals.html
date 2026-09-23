@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.plotResiduals</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.plotResiduals</h1>
+<p>Draw the four-panel residual check from tsCheckResiduals.</p>
+<h2>Syntax</h2>
+<pre><code>h = timeSeriesPreparation.tsmodels.plotResiduals(out)</code></pre>
+<h2>Description</h2>
+<p>The drawing half of sigtools&#x27; tsCheckResiduals, which always drew in v1.3.1, split at X-02 (owner decision 2026-09-23). It draws the figure v1.3.1 drew, in four panels: - the standardised residuals over time; - the residual ACF with the +/- white-noise band; - the normal Q-Q plot, titled with the Jarque-Bera p-value; - the Ljung-Box p-value ladder with the 5 % line.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>out</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- From tsCheckResiduals.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>h</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Graphics handles: figure, axes (1,4).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Not applicable, because the function draws and computes nothing.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:plotResiduals:badInput</code></td><td>Input</td><td>out lacks a field of tsCheckResiduals&#x27; output.</td></tr>
+</table>
+<h2>Example</h2>
+<p>An AR(1) fit, checked and drawn.</p>
+<pre><code>x = filter(1, [1 -0.6], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 2), 500, 1));
+out = timeSeriesPreparation.tsmodels.tsCheckResiduals(timeSeriesPreparation.tsmodels.tsFitAR(x, 1));
+h = timeSeriesPreparation.tsmodels.plotResiduals(out);
+close(h.figure);</code></pre>
+<h2>Limitations</h2>
+<p>Always a new figure.</p>
+<h2>References</h2>
+<p>sigtools v1.3.1 tsCheckResiduals (docs/inputs), its plot branch.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsCheckResiduals</code>, <code>timeSeriesPreparation.tsmodels.tsLjungBox</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/plotResiduals.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

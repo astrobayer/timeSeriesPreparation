@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsForecast</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsForecast</h1>
+<p>h-step forecasts and prediction intervals of an (S)ARIMA model.</p>
+<h2>Syntax</h2>
+<pre><code>[yhat, se, lo, hi] = timeSeriesPreparation.tsmodels.tsForecast(model, h)
+[yhat, se, lo, hi] = timeSeriesPreparation.tsmodels.tsForecast(model, h, alpha)
+[yhat, se, lo, hi] = timeSeriesPreparation.tsmodels.tsForecast(model, h, 0.05, Bootstrap = true, NBoot = 5000, Seed = 1)</code></pre>
+<h2>Description</h2>
+<p>Point forecasts on the original scale, their standard errors and (1 - alpha) prediction intervals, for a model from tsFitArima (and its wrappers tsFitAR, tsFitMA, tsFitARMA, tsAutoArima) or from tsFitSarima. Three paths, chosen from the model&#x27;s fields: ARIMA     The ARMA recursion runs on the differenced series xd with future innovations set to zero. The forecast error variance is sigma^2 cumsum(psi.^2) with the MA(inf) psi-weights; for d &gt; 0 the path is integrated d times from the last observed values and psi is summed d times, so the one-step variance is sigma^2 exactly. SARIMA    (fields arExpanded, maExpanded, diffInfo) The same on the expanded ARMA; the path is re-integrated through Delta(B) = (1-B)^d (1-B^s)^D from the observed tail, and the variance uses Psi(B) = psi(B) / Delta(B). gaps      (field obs not all true; d = D = 0) The missing-data Kalman filter of the fit runs to the end of the record, from the stationary covariance of timeSeriesPreparation.internal.dlyap (tolerance 1e-14, 60 doublings), and the state is projected forward; se = sqrt(sigma^2 P(1,1)). The Gaussian interval is yhat -/+ z se with z the standard normal quantile at 1 - alpha/2 (Acklam&#x27;s rational approximation). With Bootstrap the interval is instead the empirical alpha/2 and 1 - alpha/2 quantile of yhat + err_k, err_k = sum_j Psi_(j+1) e*_(k-j), over NBoot draws e* with replacement from the centred finite model residuals; it captures skewed or heavy-tailed innovations. se stays the Gaussian psi-weight standard error. Base MATLAB only.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>model</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- From tsFitArima, tsFitAR, tsFitMA, tsFitARMA, tsAutoArima or tsFitSarima.</td></tr>
+<tr><td><code>h</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Forecast horizon in samples, a positive integer.</td></tr>
+<tr><td><code>alpha</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Significance of the interval, coverage 1 - alpha; [] or omitted: 0.05.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Bootstrap</code></td><td>1,1</td><td><code>logical</code></td><td>false</td><td>Residual-bootstrap interval instead of the Gaussian one; not for gap-fitted models.</td></tr>
+<tr><td><code>NBoot</code></td><td>1,1</td><td><code>double</code></td><td>2000</td><td>Bootstrap replications, &gt;= 100; rounded.</td></tr>
+<tr><td><code>Seed</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>rng seed for the bootstrap; the global state is restored after. [] draws from the global stream.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>yhat</code></td><td>h,1</td><td><code>double</code></td><td>&mdash;</td><td>- Point forecasts, original scale.</td></tr>
+<tr><td><code>se</code></td><td>h,1</td><td><code>double</code></td><td>&mdash;</td><td>- Forecast standard errors, non-decreasing in the horizon.</td></tr>
+<tr><td><code>lo</code></td><td>h,1</td><td><code>double</code></td><td>&mdash;</td><td>- Lower bound of the (1 - alpha) interval.</td></tr>
+<tr><td><code>hi</code></td><td>h,1</td><td><code>double</code></td><td>&mdash;</td><td>- Upper bound of the (1 - alpha) interval.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit. The sigtools HANDOFF (section 3) records: the seasonal path against a 150k-200k-run Monte Carlo for SARIMA(1,0,0)(1,1,0)_4 and (1,1,1)(1,1,0)_4 gives the point forecast to Monte-Carlo noise, se within about 0.3 % and the one-step se exactly; the bootstrap half-width reproduces the Gaussian one to about 1-3 % for Gaussian residuals, with about nominal out-of-sample coverage for Gaussian and skewed innovations. The normal quantile is good to about 1e-9 (the source&#x27;s comment on its Acklam approximation).</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:tsForecast:bootGaps</code></td><td>Model</td><td>Bootstrap is requested for a gap-fitted model. An h that is not a positive integer scalar (validateattributes), or an alpha or option outside its domain (arguments block), is refused with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Ten steps ahead of a CSS-fitted AR(1), with 95 % Gaussian intervals.</p>
+<pre><code>x = filter(1, [1 -0.6], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 4), 200, 1));
+[yhat, se, lo, hi] = timeSeriesPreparation.tsmodels.tsForecast(timeSeriesPreparation.tsmodels.tsFitArima(x, 1, 0, 0, Method = &quot;css&quot;), 10);</code></pre>
+<h2>Limitations</h2>
+<p>The intervals ignore the uncertainty of the estimated coefficients. The Gaussian interval assumes Gaussian innovations. The bootstrap is not available for gap-fitted models and, without Seed, draws from and advances the global random stream. alpha must be a scalar. Options passed as one struct (inputParser&#x27;s StructExpand) are no longer accepted; pass name-value pairs.</p>
+<h2>References</h2>
+<p>G. E. P. Box, G. M. Jenkins, G. C. Reinsel, G. M. Ljung (2015), Time Series Analysis: Forecasting and Control, 5th ed., Wiley. J. Durbin, S. J. Koopman (2012), Time Series Analysis by State Space Methods, 2nd ed., Oxford University Press. P. J. Acklam (2003), An algorithm for computing the inverse normal cumulative distribution function. sigtools v1.3.1 HANDOFF, section 3.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsFitArima</code>, <code>timeSeriesPreparation.tsmodels.tsFitSarima</code>, <code>timeSeriesPreparation.tsmodels.tsIntegrate</code>, <code>timeSeriesPreparation.tsmodels.tsModelDisp</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsForecast.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

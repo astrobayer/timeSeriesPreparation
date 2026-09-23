@@ -11,6 +11,35 @@
         <tocitem target="timeSeriesPreparation.internal.requirePackage.html">timeSeriesPreparation.internal.requirePackage</tocitem>
         <tocitem target="timeSeriesPreparation.internal.resampleOnto.html">timeSeriesPreparation.internal.resampleOnto</tocitem>
         <tocitem target="timeSeriesPreparation.internal.toolboxVersion.html">timeSeriesPreparation.internal.toolboxVersion</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.allanVariance.html">timeSeriesPreparation.spectral.allanVariance</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.arma2acv.html">timeSeriesPreparation.spectral.arma2acv</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.arma2psd.html">timeSeriesPreparation.spectral.arma2psd</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.plotAllanVariance.html">timeSeriesPreparation.spectral.plotAllanVariance</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.plotPowerSpectrum.html">timeSeriesPreparation.spectral.plotPowerSpectrum</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.plotPsd2armaFit.html">timeSeriesPreparation.spectral.plotPsd2armaFit</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.powerSpectrum.html">timeSeriesPreparation.spectral.powerSpectrum</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.psd2arma.html">timeSeriesPreparation.spectral.psd2arma</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.sfreqz.html">timeSeriesPreparation.spectral.sfreqz</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.sinvfreqz.html">timeSeriesPreparation.spectral.sinvfreqz</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.spec2acv.html">timeSeriesPreparation.spectral.spec2acv</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.sstmcb.html">timeSeriesPreparation.spectral.sstmcb</tocitem>
+        <tocitem target="timeSeriesPreparation.spectral.synthTimeSeries.html">timeSeriesPreparation.spectral.synthTimeSeries</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.plotResiduals.html">timeSeriesPreparation.tsmodels.plotResiduals</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsAcf.html">timeSeriesPreparation.tsmodels.tsAcf</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsAutoArima.html">timeSeriesPreparation.tsmodels.tsAutoArima</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsAutoSarima.html">timeSeriesPreparation.tsmodels.tsAutoSarima</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsCheckResiduals.html">timeSeriesPreparation.tsmodels.tsCheckResiduals</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsDiff.html">timeSeriesPreparation.tsmodels.tsDiff</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsFitAR.html">timeSeriesPreparation.tsmodels.tsFitAR</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsFitARMA.html">timeSeriesPreparation.tsmodels.tsFitARMA</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsFitArima.html">timeSeriesPreparation.tsmodels.tsFitArima</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsFitMA.html">timeSeriesPreparation.tsmodels.tsFitMA</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsFitSarima.html">timeSeriesPreparation.tsmodels.tsFitSarima</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsForecast.html">timeSeriesPreparation.tsmodels.tsForecast</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsIntegrate.html">timeSeriesPreparation.tsmodels.tsIntegrate</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsLjungBox.html">timeSeriesPreparation.tsmodels.tsLjungBox</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsModelDisp.html">timeSeriesPreparation.tsmodels.tsModelDisp</tocitem>
+        <tocitem target="timeSeriesPreparation.tsmodels.tsPacf.html">timeSeriesPreparation.tsmodels.tsPacf</tocitem>
         <tocitem target="errorIdentifiers.html">Error identifiers</tocitem>
     </tocitem>
 </toc>

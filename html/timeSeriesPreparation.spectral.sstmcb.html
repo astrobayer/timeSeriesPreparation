@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.sstmcb</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.sstmcb</h1>
+<p>Steiglitz-McBride IIR fit to an impulse response (base MATLAB).</p>
+<h2>Syntax</h2>
+<pre><code>[b, a] = timeSeriesPreparation.spectral.sstmcb(h, nb, na)
+[b, a] = timeSeriesPreparation.spectral.sstmcb(h, nb, na, maxIter)</code></pre>
+<h2>Description</h2>
+<p>Fits B(z)/A(z), a(1) = 1, of orders nb and na so that filter(b, a, delta) approximates the impulse response h. It replaces the Signal Processing Toolbox stmcb (unit-impulse input, internal initial denominator) and is psd2arma&#x27;s Method &quot;stmcb&quot;. The method is the Steiglitz-McBride iteration: each pass prefilters the unit impulse and the target h by 1/A_prev (filter), then re-estimates B and A by linear least squares (backslash). This refines the equation-error fit towards the output-error fit, which gives the method its accuracy on rational systems. Exactly maxIter passes are run; there is no convergence test.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>h</code></td><td>L,1</td><td><code>double</code></td><td>&mdash;</td><td>- Target impulse response samples (real).</td></tr>
+<tr><td><code>nb</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Numerator (zero) order, integer &gt;= 0; b has nb+1 coefficients.</td></tr>
+<tr><td><code>na</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Denominator (pole) order, integer &gt;= 0; a has na+1 coefficients.</td></tr>
+<tr><td><code>maxIter</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Optional number of SM passes, positive integer; [] or omitted: 10.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>b</code></td><td>1,nb+1</td><td><code>double</code></td><td>&mdash;</td><td>- Numerator coefficients [b0 ... b_nb].</td></tr>
+<tr><td><code>a</code></td><td>1,na+1</td><td><code>double</code></td><td>&mdash;</td><td>- Denominator coefficients [1 a1 ... a_na].</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>sigtools HANDOFF section 3 (NumPy re-derivation of the exact logic): the generating filter is recovered exactly. Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<p>(none) Non-numeric input, orders that are not non-negative integer scalars, or a maxIter that is not a positive integer are refused by the arguments block with a MATLAB: identifier.</p>
+<h2>Example</h2>
+<p>Recover the generating ARMA(2,2) filter from 61 impulse samples.</p>
+<pre><code>htrue = filter([1 -0.5 0.2], [1 -1.2 0.6], [1; zeros(60,1)]);
+[b, a] = timeSeriesPreparation.spectral.sstmcb(htrue, 2, 2);</code></pre>
+<h2>Limitations</h2>
+<p>Unit-impulse input only (no general input/output pair). No stability enforcement. The regressor has L rows and nb+na+1 columns, so h should be several times longer than the model order.</p>
+<h2>References</h2>
+<p>K. Steiglitz, L. E. McBride (1965), IEEE Trans. Autom. Control 10(4), 461-464. sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.sfreqz</code>, <code>timeSeriesPreparation.spectral.sinvfreqz</code>, <code>timeSeriesPreparation.spectral.psd2arma</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/sstmcb.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

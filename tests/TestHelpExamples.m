@@ -37,6 +37,180 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.internal.toolboxVersion did not run cleanly.");
         end
 
+        function timeSeriesPreparation_spectral_allanVariance_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.allanVariance: White noise: the Allan deviation falls with slope -1/2.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_allanVariance_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.allanVariance did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_arma2acv_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.arma2acv: Auto-covariance of an ARMA(2,1) process up to lag 30.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_arma2acv_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.arma2acv did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_arma2psd_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.arma2psd: PSD of an ARMA(2,2) process at 500 Hz with noise variance 2.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_arma2psd_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.arma2psd did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_plotAllanVariance_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.plotAllanVariance: White noise, the default 1-sigma band.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_plotAllanVariance_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.plotAllanVariance did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_plotPowerSpectrum_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.plotPowerSpectrum: Two series, one figure; the peaks come from powerSpectrum.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_plotPowerSpectrum_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.plotPowerSpectrum did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_plotPsd2armaFit_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.plotPsd2armaFit: The psd2arma example, drawn.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_plotPsd2armaFit_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.plotPsd2armaFit did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_powerSpectrum_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.powerSpectrum: A 3 Hz sinusoid at 100 Hz: the amplitude peak is about 1.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_powerSpectrum_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.powerSpectrum did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_psd2arma_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.psd2arma: A 4th-order low-pass PSD, fitted with an ARMA(8,8).
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_psd2arma_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.psd2arma did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_sfreqz_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.sfreqz: Response of an ARMA(2,2) filter on 512 points from 0 to pi.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_sfreqz_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.sfreqz did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_sinvfreqz_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.sinvfreqz: Recover a known ARMA(2,2) from its response.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_sinvfreqz_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.sinvfreqz did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_spec2acv_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.spec2acv: Auto-correlation of a 4th-order low-pass PSD, with uncertainty.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_spec2acv_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.spec2acv did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_sstmcb_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.sstmcb: Recover the generating ARMA(2,2) filter from 61 impulse samples.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_sstmcb_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.sstmcb did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_spectral_synthTimeSeries_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.spectral.synthTimeSeries: 1000 samples of an ARMA(2,2) process at 500 Hz, reproducible.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_synthTimeSeries_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.spectral.synthTimeSeries did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_plotResiduals_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.plotResiduals: An AR(1) fit, checked and drawn.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_plotResiduals_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.plotResiduals did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsAcf_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsAcf: The ACF of an AR(1) series decays like 0.7^k.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsAcf_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsAcf did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsAutoArima_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsAutoArima: An AR(1) series: the lowest-BIC order with p <= 2, q <= 1, by CSS.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsAutoArima_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsAutoArima did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsAutoSarima_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsAutoSarima: A seasonal AR(1) with period 4 on a small grid.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsAutoSarima_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsAutoSarima did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsCheckResiduals_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsCheckResiduals: An AR(1) fit and its residual numbers.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsCheckResiduals_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsCheckResiduals did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsDiff_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsDiff: Second differences of a quadratic are constant.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsDiff_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsDiff did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsFitAR_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitAR: AR(2) with phi = [0.5 -0.3], Yule-Walker.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsFitAR_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitAR did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsFitARMA_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitARMA: ARMA(1,1) with phi = 0.5, theta = 0.4 and zero mean, by CSS.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsFitARMA_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitARMA did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsFitArima_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitArima: AR(1) with phi = 0.6 and zero mean: exact ML recovers ar near 0.6.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsFitArima_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitArima did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsFitMA_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitMA: MA(1) with theta = 0.5 and zero mean, by CSS.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsFitMA_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitMA did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsFitSarima_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitSarima: A seasonal AR(1) with period 12 and PHI = 0.5, fitted by CSS.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsFitSarima_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitSarima did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsForecast_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsForecast: Ten steps ahead of a CSS-fitted AR(1), with 95 % Gaussian intervals.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsForecast_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsForecast did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsIntegrate_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsIntegrate: Difference twice and rebuild.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsIntegrate_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsIntegrate did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsLjungBox_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsLjungBox: White noise: the p-value is typically large.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsLjungBox_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsLjungBox did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsModelDisp_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsModelDisp: Fit an AR(1) and print its summary.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsModelDisp_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsModelDisp did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_tsmodels_tsPacf_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsPacf: The PACF of an AR(2) series cuts off after lag 2.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_tsmodels_tsPacf_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsPacf did not run cleanly.");
+        end
+
         function timeSeriesPreparation_Arc_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.Arc: A ten-sample ACT1B-like arc from a hand-made aux struct.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_Arc_1(), ...
@@ -96,6 +270,189 @@ end
 function example_timeSeriesPreparation_internal_toolboxVersion_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.internal.toolboxVersion, verbatim from its help block.
     v = timeSeriesPreparation.internal.toolboxVersion();
+end
+
+function example_timeSeriesPreparation_spectral_allanVariance_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.allanVariance, verbatim from its help block.
+    x = randn(RandStream("twister", "Seed", 1), 10000, 1);
+    [tau, ~, adev, info] = timeSeriesPreparation.spectral.allanVariance(x, 10);
+end
+
+function example_timeSeriesPreparation_spectral_arma2acv_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.arma2acv, verbatim from its help block.
+    [R, k, info] = timeSeriesPreparation.spectral.arma2acv([1 -0.5], [1 -1.2 0.6], 30, NoiseVariance = 2);
+end
+
+function example_timeSeriesPreparation_spectral_arma2psd_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.arma2psd, verbatim from its help block.
+    [S, f, info] = timeSeriesPreparation.spectral.arma2psd([1 -0.5 0.2], [1 -1.2 0.6], 500, NoiseVariance = 2);
+end
+
+function example_timeSeriesPreparation_spectral_plotAllanVariance_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.plotAllanVariance, verbatim from its help block.
+    x = randn(RandStream("twister", "Seed", 1), 10000, 1);
+    [tau, ~, adev, info] = timeSeriesPreparation.spectral.allanVariance(x, 10);
+    h = timeSeriesPreparation.spectral.plotAllanVariance(tau, adev, info);
+    close(h.figure);
+end
+
+function example_timeSeriesPreparation_spectral_plotPowerSpectrum_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.plotPowerSpectrum, verbatim from its help block.
+    t = (0:1/100:20)';
+    spec = [timeSeriesPreparation.spectral.powerSpectrum(t, sin(2*pi*3*t), Label = "A", Type = "amplitude", NPeaks = 1), timeSeriesPreparation.spectral.powerSpectrum(t, 0.5*sin(2*pi*7*t), Label = "B", Type = "amplitude")];
+    h = timeSeriesPreparation.spectral.plotPowerSpectrum(spec, Unit = "nT");
+    close(h.figure);
+end
+
+function example_timeSeriesPreparation_spectral_plotPsd2armaFit_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.plotPsd2armaFit, verbatim from its help block.
+    f = logspace(-2, 2, 500)';
+    [~, ~, res] = timeSeriesPreparation.spectral.psd2arma(f, 1 ./ (1 + (f/5).^2).^2, 500, Order = [8 8]);
+    h = timeSeriesPreparation.spectral.plotPsd2armaFit(res);
+    close(h.figure);
+end
+
+function example_timeSeriesPreparation_spectral_powerSpectrum_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.powerSpectrum, verbatim from its help block.
+    t = (0:1/100:20)';
+    spec = timeSeriesPreparation.spectral.powerSpectrum(t, sin(2*pi*3*t), Type = "amplitude", NPeaks = 1, Window = "flattop");
+end
+
+function example_timeSeriesPreparation_spectral_psd2arma_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.psd2arma, verbatim from its help block.
+    f = logspace(-2, 2, 500)';
+    S = 1 ./ (1 + (f/5).^2).^2;
+    [b, a, res] = timeSeriesPreparation.spectral.psd2arma(f, S, 500, Order = [8 8]);
+end
+
+function example_timeSeriesPreparation_spectral_sfreqz_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.sfreqz, verbatim from its help block.
+    w = linspace(0, pi, 512)';
+    H = timeSeriesPreparation.spectral.sfreqz([1 -0.5 0.2], [1 -1.2 0.6], w);
+end
+
+function example_timeSeriesPreparation_spectral_sinvfreqz_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.sinvfreqz, verbatim from its help block.
+    w  = linspace(0, pi, 400)';
+    Hd = timeSeriesPreparation.spectral.sfreqz([1 -0.5 0.2], [1 -1.2 0.6], w);
+    [b, a] = timeSeriesPreparation.spectral.sinvfreqz(Hd, w, 2, 2);
+end
+
+function example_timeSeriesPreparation_spectral_spec2acv_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.spec2acv, verbatim from its help block.
+    fs = 1000; f = (0:0.5:fs/2)';
+    S  = 1./(1 + (f/50).^4);
+    [R, tau, nfo] = timeSeriesPreparation.spectral.spec2acv(f, S, Window = "tukey", Smooth = "octave", SmoothWidth = 1/6, DOF = 32, Output = "acf");
+end
+
+function example_timeSeriesPreparation_spectral_sstmcb_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.sstmcb, verbatim from its help block.
+    htrue = filter([1 -0.5 0.2], [1 -1.2 0.6], [1; zeros(60,1)]);
+    [b, a] = timeSeriesPreparation.spectral.sstmcb(htrue, 2, 2);
+end
+
+function example_timeSeriesPreparation_spectral_synthTimeSeries_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.spectral.synthTimeSeries, verbatim from its help block.
+    [x, t, info] = timeSeriesPreparation.spectral.synthTimeSeries("arma", [1 -0.5 0.2], [1 -1.2 0.6], 500, 1000, NoiseVariance = 2, Seed = 1);
+end
+
+function example_timeSeriesPreparation_tsmodels_plotResiduals_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.plotResiduals, verbatim from its help block.
+    x = filter(1, [1 -0.6], randn(RandStream("twister", "Seed", 2), 500, 1));
+    out = timeSeriesPreparation.tsmodels.tsCheckResiduals(timeSeriesPreparation.tsmodels.tsFitAR(x, 1));
+    h = timeSeriesPreparation.tsmodels.plotResiduals(out);
+    close(h.figure);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsAcf_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsAcf, verbatim from its help block.
+    x = filter(1, [1 -0.7], randn(RandStream("twister", "Seed", 1), 1000, 1));
+    [rho, lags, conf] = timeSeriesPreparation.tsmodels.tsAcf(x, 10);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsAutoArima_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsAutoArima, verbatim from its help block.
+    x = filter(1, [1 -0.6], randn(RandStream("twister", "Seed", 8), 300, 1));
+    [best, table] = timeSeriesPreparation.tsmodels.tsAutoArima(x, 2, 1, 0, Criterion = "bic", Method = "css");
+end
+
+function example_timeSeriesPreparation_tsmodels_tsAutoSarima_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsAutoSarima, verbatim from its help block.
+    x = filter(1, [1 0 0 0 -0.6], randn(RandStream("twister", "Seed", 5), 300, 1));
+    [best, tbl] = timeSeriesPreparation.tsmodels.tsAutoSarima(x, [1 0 0], [1 0 0], 4, Criterion = "bic");
+end
+
+function example_timeSeriesPreparation_tsmodels_tsCheckResiduals_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsCheckResiduals, verbatim from its help block.
+    x = filter(1, [1 -0.6], randn(RandStream("twister", "Seed", 2), 500, 1));
+    out = timeSeriesPreparation.tsmodels.tsCheckResiduals(timeSeriesPreparation.tsmodels.tsFitAR(x, 1));
+end
+
+function example_timeSeriesPreparation_tsmodels_tsDiff_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsDiff, verbatim from its help block.
+    x = ((1:10)').^2;
+    [y, x0] = timeSeriesPreparation.tsmodels.tsDiff(x, 2);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsFitAR_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitAR, verbatim from its help block.
+    x = filter(1, [1 -0.5 0.3], randn(RandStream("twister", "Seed", 5), 500, 1));
+    model = timeSeriesPreparation.tsmodels.tsFitAR(x, 2, Method = "yw");
+end
+
+function example_timeSeriesPreparation_tsmodels_tsFitARMA_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitARMA, verbatim from its help block.
+    x = filter([1 0.4], [1 -0.5], randn(RandStream("twister", "Seed", 7), 300, 1));
+    model = timeSeriesPreparation.tsmodels.tsFitARMA(x, 1, 1, Method = "css", Constant = false);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsFitArima_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitArima, verbatim from its help block.
+    x = filter(1, [1 -0.6], randn(RandStream("twister", "Seed", 1), 200, 1));
+    model = timeSeriesPreparation.tsmodels.tsFitArima(x, 1, 0, 0, Constant = false);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsFitMA_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitMA, verbatim from its help block.
+    x = filter([1 0.5], 1, randn(RandStream("twister", "Seed", 6), 300, 1));
+    model = timeSeriesPreparation.tsmodels.tsFitMA(x, 1, Method = "css", Constant = false);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsFitSarima_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsFitSarima, verbatim from its help block.
+    x = filter(1, [1 zeros(1, 11) -0.5], randn(RandStream("twister", "Seed", 3), 240, 1));
+    model = timeSeriesPreparation.tsmodels.tsFitSarima(x, [0 0 0], [1 0 0], 12, Constant = false);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsForecast_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsForecast, verbatim from its help block.
+    x = filter(1, [1 -0.6], randn(RandStream("twister", "Seed", 4), 200, 1));
+    [yhat, se, lo, hi] = timeSeriesPreparation.tsmodels.tsForecast(timeSeriesPreparation.tsmodels.tsFitArima(x, 1, 0, 0, Method = "css"), 10);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsIntegrate_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsIntegrate, verbatim from its help block.
+    x = ((1:10)').^2;
+    [y, x0] = timeSeriesPreparation.tsmodels.tsDiff(x, 2);
+    xr = timeSeriesPreparation.tsmodels.tsIntegrate(y, x0);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsLjungBox_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsLjungBox, verbatim from its help block.
+    e = randn(RandStream("twister", "Seed", 3), 500, 1);
+    [Q, pValue, df] = timeSeriesPreparation.tsmodels.tsLjungBox(e, 20);
+end
+
+function example_timeSeriesPreparation_tsmodels_tsModelDisp_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsModelDisp, verbatim from its help block.
+    x = filter(1, [1 -0.6], randn(RandStream("twister", "Seed", 4), 300, 1));
+    timeSeriesPreparation.tsmodels.tsModelDisp(timeSeriesPreparation.tsmodels.tsFitAR(x, 1));
+end
+
+function example_timeSeriesPreparation_tsmodels_tsPacf_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.tsmodels.tsPacf, verbatim from its help block.
+    x = filter(1, [1 -0.5 0.3], randn(RandStream("twister", "Seed", 1), 2000, 1));
+    [pacf, lags, conf] = timeSeriesPreparation.tsmodels.tsPacf(x, 10);
 end
 
 function example_timeSeriesPreparation_Arc_1()  %#ok<DEFNU>

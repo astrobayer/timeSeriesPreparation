@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.sinvfreqz</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.sinvfreqz</h1>
+<p>Fit an IIR filter to a complex frequency response (base MATLAB).</p>
+<h2>Syntax</h2>
+<pre><code>[b, a] = timeSeriesPreparation.spectral.sinvfreqz(Hd, w, nb, na)
+[b, a] = timeSeriesPreparation.spectral.sinvfreqz(Hd, w, nb, na, maxIter)</code></pre>
+<h2>Description</h2>
+<p>Fits B(z)/A(z), z = exp(-1i w), a(1) = 1, of orders nb and na to a target complex response Hd on the angular frequencies w. It replaces the Signal Processing Toolbox invfreqz (unweighted, no user weights) and is the default fitting engine of psd2arma. The method is the Sanathanan-Koerner (SK) iteration: each pass solves the linearised least-squares problem</p>
+<p>min sum_k |W_k (A(z_k) Hd_k - B(z_k))|^2,   W_k = 1/|A_prev(z_k)|,</p>
+<p>in the real domain (real and imaginary parts stacked, backslash). The first pass is the Levy equation-error solution; as the weights converge the fit approaches the output-error (true magnitude and phase) fit. The iteration stops after maxIter passes or when the weights change by &lt;= 1e-9 relative. A rational Hd is recovered to machine precision, and smooth non-rational targets are fitted to a fraction of a dB.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Hd</code></td><td>M,1</td><td><code>double</code></td><td>&mdash;</td><td>- Target complex response, one value per frequency in w.</td></tr>
+<tr><td><code>w</code></td><td>M,1</td><td><code>double</code></td><td>&mdash;</td><td>rad/sa Angular frequencies, typically in [0, pi].</td></tr>
+<tr><td><code>nb</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Numerator (zero) order, integer &gt;= 0; b has nb+1 coefficients.</td></tr>
+<tr><td><code>na</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Denominator (pole) order, integer &gt;= 0; a has na+1 coefficients.</td></tr>
+<tr><td><code>maxIter</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Optional maximum number of SK passes, positive integer; [] or omitted: 30.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>b</code></td><td>1,nb+1</td><td><code>double</code></td><td>&mdash;</td><td>- Numerator coefficients [b0 ... b_nb].</td></tr>
+<tr><td><code>a</code></td><td>1,na+1</td><td><code>double</code></td><td>&mdash;</td><td>- Denominator coefficients [1 a1 ... a_na].</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>sigtools HANDOFF section 3 (NumPy re-derivation of the exact logic): a known ARMA is recovered to about 1e-15, and a smooth 4th-order low-pass target is fitted to 0.0075 dB RMS, stable and minimum-phase. Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<p>(none) Non-numeric input, orders that are not non-negative integer scalars, or a maxIter that is not a positive integer are refused by the arguments block with a MATLAB: identifier.</p>
+<h2>Example</h2>
+<p>Recover a known ARMA(2,2) from its response.</p>
+<pre><code>w  = linspace(0, pi, 400)&#x27;;
+Hd = timeSeriesPreparation.spectral.sfreqz([1 -0.5 0.2], [1 -1.2 0.6], w);
+[b, a] = timeSeriesPreparation.spectral.sinvfreqz(Hd, w, 2, 2);</code></pre>
+<h2>Limitations</h2>
+<p>No user weights and no stability enforcement: an unstable or non-minimum-phase result is possible, and psd2arma reflects such roots afterwards. The least-squares matrix is ill-conditioned for high orders.</p>
+<h2>References</h2>
+<p>C. K. Sanathanan, J. Koerner (1963), IEEE Trans. Autom. Control 8(1), 56-58. E. C. Levy (1959), IRE Trans. Autom. Control 4(1), 37-44. sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.sfreqz</code>, <code>timeSeriesPreparation.spectral.sstmcb</code>, <code>timeSeriesPreparation.spectral.psd2arma</code>, <code>timeSeriesPreparation.spectral.arma2psd</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/sinvfreqz.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

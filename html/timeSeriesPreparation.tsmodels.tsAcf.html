@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsAcf</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsAcf</h1>
+<p>Sample autocorrelation function (gap-aware).</p>
+<h2>Syntax</h2>
+<pre><code>[rho, lags, conf, nPairs] = timeSeriesPreparation.tsmodels.tsAcf(x)
+[rho, lags, conf, nPairs] = timeSeriesPreparation.tsmodels.tsAcf(x, maxLag)</code></pre>
+<h2>Description</h2>
+<p>The sample ACF is the first look at a series before an ARMA model is identified: rho(k) = c(k)/c(0) at lags 0..maxLag, rho(1) = 1, with the observed-sample mean removed.</p>
+<p>A complete series gets the textbook biased estimator, c(k) = sum x(t) x(t+k) / N. A series with NaN at missing epochs of an otherwise regular grid is handled gap-aware: each lag k uses only the pairs (t, t+k) in which both samples are observed, divided by their count (a consistent moment estimator). A lag without any such pair is NaN. conf is the approximate 95 % white-noise band 1.96/sqrt(n), with n the lag-1 pair count (N for a complete series). Base MATLAB only.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Series; NaN marks a missing sample, Inf is refused. A matrix is read as x(:).</td></tr>
+<tr><td><code>maxLag</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Largest lag; [] or omitted: min(N - 1, 40). Rounded and capped at N - 1.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>rho</code></td><td>L+1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Sample ACF at lags 0..L, rho(1) = 1; NaN at an unobservable lag.</td></tr>
+<tr><td><code>lags</code></td><td>L+1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Lags 0..L, in samples.</td></tr>
+<tr><td><code>conf</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Half-width of the 95 % white-noise band.</td></tr>
+<tr><td><code>nPairs</code></td><td>L+1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Number of complete pairs per lag; nPairs(1) is the number observed.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact arithmetic of the estimator, no approximation beyond rounding. The band is the large-sample normal approximation (Box, Jenkins, Reinsel). Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:tsAcf:badData</code></td><td>Input</td><td>an observed sample is Inf. A non-numeric or complex x, or a maxLag that is not a numeric</td></tr>
+</table>
+<h2>Example</h2>
+<p>The ACF of an AR(1) series decays like 0.7^k.</p>
+<pre><code>x = filter(1, [1 -0.7], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 1), 1000, 1));
+[rho, lags, conf] = timeSeriesPreparation.tsmodels.tsAcf(x, 10);</code></pre>
+<h2>Limitations</h2>
+<p>The gap-aware ACF is not guaranteed positive-definite; under heavy gapping tsPacf can then exceed 1 in magnitude. A series whose observed samples are all equal returns rho = ones and conf from the number observed. Irregular sampling is not supported: NaN must mark missing epochs of a regular grid.</p>
+<h2>References</h2>
+<p>G. E. P. Box, G. M. Jenkins, G. C. Reinsel, Time Series Analysis: Forecasting and Control, Wiley. sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsPacf</code>, <code>timeSeriesPreparation.tsmodels.tsLjungBox</code>, <code>timeSeriesPreparation.tsmodels.tsFitArima</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsAcf.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

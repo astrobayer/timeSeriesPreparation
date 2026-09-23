@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsFitMA</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsFitMA</h1>
+<p>Fit an MA(q) model: tsFitArima(x, 0, 0, q, ...).</p>
+<h2>Syntax</h2>
+<pre><code>model = timeSeriesPreparation.tsmodels.tsFitMA(x, q)
+model = timeSeriesPreparation.tsmodels.tsFitMA(x, q, Method = &quot;css&quot;)</code></pre>
+<h2>Description</h2>
+<p>Shorthand for the moving-average model x_t - mu = e_t + theta_1 e_(t-1) + ... + theta_q e_(t-q), fitted by timeSeriesPreparation.tsmodels.tsFitArima with p = d = 0; the options given are passed on unchanged, and tsFitArima&#x27;s defaults apply otherwise. The default is exact Gaussian ML by a Kalman filter, which accepts NaN gaps; Method &quot;css&quot; gives conditional sum of squares. The MA polynomial is invertible by construction (PACF reparametrisation, see tsFitArima).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Series; NaN marks a gap (exact method only).</td></tr>
+<tr><td><code>q</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- MA order, &gt;= 0; rounded.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Constant</code></td><td>1,1</td><td><code>logical</code></td><td>true</td><td>Include the mean mu.</td></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;exact&quot;</td><td>&quot;exact&quot; or &quot;css&quot; (&quot;yw&quot; is refused for q &gt; 0).</td></tr>
+<tr><td><code>Display</code></td><td>1,1</td><td><code>string</code></td><td>&quot;off&quot;</td><td>fminsearch display.</td></tr>
+<tr><td><code>MaxIter</code></td><td>1,1</td><td><code>double</code></td><td>2000</td><td>fminsearch iteration cap, &gt; 0.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>model</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- The MA(q) model of tsFitArima (fields type, p, d, q, mu, ma, sigma2, resid, stdErr, logL, aic, bic, ...).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>That of tsFitArima, which it calls; unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<p>(none of its own) The errors of timeSeriesPreparation.tsmodels.tsFitArima pass through, and so do tsFitArima&#x27;s refusals of an option outside its domain.</p>
+<h2>Example</h2>
+<p>MA(1) with theta = 0.5 and zero mean, by CSS.</p>
+<pre><code>x = filter([1 0.5], 1, randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 6), 300, 1));
+model = timeSeriesPreparation.tsmodels.tsFitMA(x, 1, Method = &quot;css&quot;, Constant = false);</code></pre>
+<h2>Limitations</h2>
+<p>Those of tsFitArima. Options passed as one struct (inputParser&#x27;s StructExpand) are no longer accepted; pass name-value pairs.</p>
+<h2>References</h2>
+<p>G. E. P. Box, G. M. Jenkins, G. C. Reinsel, G. M. Ljung (2015), Time Series Analysis: Forecasting and Control, 5th ed., Wiley.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsFitArima</code>, <code>timeSeriesPreparation.tsmodels.tsFitAR</code>, <code>timeSeriesPreparation.tsmodels.tsFitARMA</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsFitMA.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

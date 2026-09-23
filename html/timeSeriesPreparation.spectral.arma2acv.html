@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.arma2acv</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.arma2acv</h1>
+<p>Exact auto-covariance / -correlation of a discrete-time ARMA process.</p>
+<h2>Syntax</h2>
+<pre><code>[R, lags] = timeSeriesPreparation.spectral.arma2acv(b, a, maxLag)
+[R, lags, info] = timeSeriesPreparation.spectral.arma2acv(b, a, maxLag, NoiseVariance = 2, Output = &quot;acf&quot;, Fs = 10)</code></pre>
+<h2>Description</h2>
+<p>Returns the theoretical auto-covariance R(0..maxLag) of the stationary ARMA process x[n] = filter(b, a, w[n]), w white with variance sigma_w^2. Together with arma2psd and spec2acv it closes the spectral &lt;-&gt; time-series loop: arma2acv(b, a, ...) and spec2acv(arma2psd(b, a, ...)) agree to quadrature accuracy.</p>
+<p>The default method is exact. The ARMA(p,q) is written in companion state-space form, T = [phi, I; 0] (r x r, r = max(p, q+1)), with noise loading R = [1; theta_1..theta_q; 0]. The stationary state covariance solves the discrete Lyapunov equation P = T P T&#x27; + sigma_w^2 R R&#x27; (doubling iteration, tolerance 1e-15, 80 steps, Kronecker fallback; timeSeriesPreparation.internal.dlyap), and gamma(k) = e1&#x27; T^k P e1, since the first state is x[n]. There is no truncation error, and R(1) is the exact process variance. Method &quot;psi&quot; instead sums the MA(inf) weights, gamma(k) = sigma_w^2 sum_j psi_j psi_(j+k), truncated at PsiTerms terms; by default so many that the slowest pole has decayed to 1e-6 in amplitude (about 1e-12 of R(0) in gamma), at least maxLag+50, at most 1e5.</p>
+<p>b and a are normalised by a(1). A root of A with |z| &gt;= 1 - 1e-12 is refused as non-stationary.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>b</code></td><td>1,nb+1</td><td><code>double</code></td><td>&mdash;</td><td>- MA (numerator) coefficients; b = 1 for a pure AR process.</td></tr>
+<tr><td><code>a</code></td><td>1,na+1</td><td><code>double</code></td><td>&mdash;</td><td>- AR (denominator) coefficients, a(1) normally 1; all roots inside the unit circle.</td></tr>
+<tr><td><code>maxLag</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Largest lag in samples, integer &gt;= 0; R and lags have maxLag+1 elements.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>NoiseVariance</code></td><td>1,1</td><td><code>double</code></td><td>1</td><td>sigma_w^2 of the driving noise, &gt; 0; R scales linearly with it.</td></tr>
+<tr><td><code>Output</code></td><td>1,1</td><td><code>string</code></td><td>&quot;acv&quot;</td><td>&quot;acv&quot; (auto-covariance) or &quot;acf&quot; (R(k)/R(0)).</td></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;lyapunov&quot;</td><td>&quot;lyapunov&quot; (exact) or &quot;psi&quot; (truncated MA(inf)).</td></tr>
+<tr><td><code>PsiTerms</code></td><td>1,1</td><td><code>double</code></td><td>[</td><td>] Number of psi-weights for &quot;psi&quot;, &gt;= 2; [] = chosen from the slowest pole.</td></tr>
+<tr><td><code>Fs</code></td><td>1,1</td><td><code>double</code></td><td>[</td><td>] Sampling rate in Hz, &gt; 0; if given, lags are in s and info.dt = 1/Fs.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>R</code></td><td>maxLag+1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Auto-covariance (unit^2) or auto-correlation at lags 0..maxLag.</td></tr>
+<tr><td><code>lags</code></td><td>maxLag+1,1</td><td><code>double</code></td><td>&mdash;</td><td>sa|s Lag axis: samples, or seconds when Fs is given.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: variance (R(0) before any acf normalisation); method (&#x27;lyapunov&#x27; | &#x27;psi&#x27;); Poles, Zeros; IsStable; NoiseVariance; integralTime, (0.5 + sum_(k&gt;=1) rho(k)) dt, one-sided; dt (1 or 1/Fs); psiTerms (NaN for &quot;lyapunov&quot;).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>sigtools HANDOFF section 3 (NumPy re-derivation): the Lyapunov and psi methods agree to about 1e-15 across AR(1), MA(2), ARMA(2,1) and ARMA(1,3); the AR(1) and MA(q) closed forms are exact; arma2acv equals spec2acv(arma2psd(...)) at integer lags to about 1e-15 on a fine grid; the doubling Lyapunov solve matches the Kronecker solve to about 1e-15. Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:arma2acv:badAR</code></td><td>Model</td><td>a(1) is zero.</td></tr>
+<tr><td><code>timeSeriesPreparation:arma2acv:nonstationary</code></td><td>Model</td><td>a root of A lies on or outside the unit circle (|z| &gt;= 1 - 1e-12).</td></tr>
+<tr><td><code>timeSeriesPreparation:arma2acv:zeroVariance</code></td><td>Model</td><td>Output &quot;acf&quot; with R(0) &lt;= 0.</td></tr>
+<tr><td><code>timeSeriesPreparation:arma2acv:badOption</code></td><td>Options</td><td>Output or Method is not one of its values (case-insensitive). Other inputs outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Auto-covariance of an ARMA(2,1) process up to lag 30.</p>
+<pre><code>[R, k, info] = timeSeriesPreparation.spectral.arma2acv([1 -0.5], [1 -1.2 0.6], 30, NoiseVariance = 2);</code></pre>
+<h2>Limitations</h2>
+<p>Stationary models only; no integrated (ARIMA) or seasonal differencing. Method &quot;psi&quot; is approximate for poles near the unit circle (truncation at 1e5 terms). info.integralTime is a finite sum up to maxLag, not the infinite integral.</p>
+<h2>References</h2>
+<p>P. J. Brockwell, R. A. Davis (1991), Time Series: Theory and Methods, 2nd ed., Springer, section 3.3 (ARMA autocovariance). A. C. Harvey (1989), Forecasting, Structural Time Series Models and the Kalman Filter, Cambridge University Press (state-space form). sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.arma2psd</code>, <code>timeSeriesPreparation.spectral.spec2acv</code>, <code>timeSeriesPreparation.spectral.psd2arma</code>, <code>timeSeriesPreparation.spectral.synthTimeSeries</code>, <code>timeSeriesPreparation.internal.dlyap</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/arma2acv.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>
