@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.11 · 2026-09-23 · X-04 merged (0.1.0); X-06 scope frozen**
+**Revision 0.11 · 2026-09-23 · X-04 merged (0.1.0); X-06 in review**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -51,6 +51,53 @@ True after the merge:
 Out of scope: time-system conversion (v3 WP-02 items 1–2, `toGps` and leap
 seconds; the arcs are GPS ns already), frame checks, consistency filtering
 (the application's, with `crnApply`), `run`, and any automatic shift.
+
+**Added during implementation** (within the frozen scope):
+- `timeSeriesPreparation.internal.resampleOnto` holds the one resampling
+  rule both functions share.
+- `checkAlignment` in the layer map of `TestLayering` as L2, next to `align`
+  (CONCEPT 6.1 row 3 names both).
+
+**Measured before the push (2026-09-23, ci-actions `v1.3.2`, NumPy
+prototype of both estimators):**
+- pchip, 5 s → 1 s, on 1/rev + 2/rev (orbit 5640 s): error 3.8e-6 of the
+  amplitude (linear 1.2e-5); the test requires 1e-5.
+- Lag, one day at 1 s, 1/rev + 2/rev + 40 fixed tones (2–50 mHz):
+  - 7.0 s is recovered to 1.1e-5 s, 7.3 s to 1.0e-3 s and 45 s to
+    1.1e-5 s;
+  - 7.0 s with gaps of 3000 s and 2000 s is recovered to 3.2e-5 s.
+
+  The tests require 0.05 s, 0.01 s, 0.05 s and 0.05 s.
+- **Limit found:** a lag beyond the window (90 s) is not always on the edge.
+  With broadband tones a side lobe at 7.27 s wins, with peak 0.50 against
+  0.9999 for a true lag; a smooth 1/rev signal peaks on the edge ("gross").
+  This is documented in `checkAlignment` LIMITATIONS; a low peak is the sign.
+- `matlab-audit`: 77 files at 0.1.0, **clean**; catalogue 28 identifiers
+  (+5). `matlab-docs --check`: 15 files, **in sync** (+3 pages, +3 help
+  examples).
+
+**Prediction** (before any run): **353 + 0 + 0 = 353** with the
+gracefoReading checkout (without it: 345 + 0 + 8).
+
+| class | contract | reference | precision | robustness | metamorphic | vectorisation | speed | untagged | total |
+|---|---|---|---|---|---|---|---|---|---|
+| unchanged from X-04 | 31 | 39 | 5 | 37 | 6 | 3 | 1 | 180 | 302 |
+| TestConfig (+2: align) | 6 | | | 3 | | | | | 9 |
+| TestHelpExamples (+3) | 9 | | | | | | | | 9 |
+| TestAlign (new) | 1 | 2 | 1 | 8 | 2 | 1 | 1 | | 16 |
+| TestCheckAlignment (new) | 2 | 3 | 1 | 7 | 2 | 1 | 1 | | 17 |
+| **sum** | **49** | **44** | **7** | **55** | **10** | **5** | **3** | **180** | **353** |
+
+(The first row is the X-04 total, 315, less TestConfig 7 and
+TestHelpExamples 6 = 302, whose new counts are listed separately.)
+
+**Debt.**
+- Tier A: there is no local MATLAB, so the MATLAB verdict is CI's.
+- **Warning identifiers are not audited.** The profile `public` in
+  `.github/matlab-audit.json` has `"warnings": false`, so the three
+  `checkAlignment` warnings are documented in its WARNINGS section but are
+  neither checked (A5/A6) nor catalogued. Switching it on is a `.github/`
+  change and stands alone (GUIDE §1).
 
 ---
 
@@ -301,8 +348,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-06 (#9) on branch `claude/grace-timeseries-issues-28g3a4`: scope frozen,
-in progress.** X-04 merged (PR #38, `f969ecb`, release 0.1.0; the annotated tag
+**X-06 (#9) on branch `claude/grace-timeseries-issues-28g3a4`: implemented,
+CI pending.** X-04 merged (PR #38, `f969ecb`, release 0.1.0; the annotated tag
 `v0.1.0` and its GitHub release are pending, GUIDE §3). X-01 + X-03 merged
 (PR #37, `1b5c4ae`); X-00b merged (PR #36, `2ecf543`); X-00a merged (#2,
 `f26df8d`).
