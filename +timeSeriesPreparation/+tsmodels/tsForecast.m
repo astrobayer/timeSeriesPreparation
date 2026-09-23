@@ -1,83 +1,125 @@
-function [yhat, se, lo, hi] = tsForecast(model, h, alpha, varargin)
-%TSFORECAST  h-step-ahead forecasts from a fitted (S)ARIMA model.
+function [yhat, se, lo, hi] = tsForecast(model, h, alpha, options)
+%TSFORECAST  h-step forecasts and prediction intervals of an (S)ARIMA model.
 %
-%   ------------------------------------------------------------------
+%   SYNTAX
+%     [yhat, se, lo, hi] = timeSeriesPreparation.tsmodels.tsForecast(model, h)
+%     [yhat, se, lo, hi] = timeSeriesPreparation.tsmodels.tsForecast(model, h, alpha)
+%     [yhat, se, lo, hi] = timeSeriesPreparation.tsmodels.tsForecast(model, h, 0.05, Bootstrap = true, NBoot = 5000, Seed = 1)
+%
+%   DESCRIPTION
+%     Point forecasts on the original scale, their standard errors and
+%     (1 - alpha) prediction intervals, for a model from tsFitArima (and
+%     its wrappers tsFitAR, tsFitMA, tsFitARMA, tsAutoArima) or from
+%     tsFitSarima. Three paths, chosen from the model's fields:
+%       ARIMA     The ARMA recursion runs on the differenced series xd
+%                 with future innovations set to zero. The forecast error
+%                 variance is sigma^2 cumsum(psi.^2) with the MA(inf)
+%                 psi-weights; for d > 0 the path is integrated d times
+%                 from the last observed values and psi is summed d times,
+%                 so the one-step variance is sigma^2 exactly.
+%       SARIMA    (fields arExpanded, maExpanded, diffInfo) The same on
+%                 the expanded ARMA; the path is re-integrated through
+%                 Delta(B) = (1-B)^d (1-B^s)^D from the observed tail, and
+%                 the variance uses Psi(B) = psi(B) / Delta(B).
+%       gaps      (field obs not all true; d = D = 0) The missing-data
+%                 Kalman filter of the fit runs to the end of the record,
+%                 from the stationary covariance of
+%                 timeSeriesPreparation.internal.dlyap (tolerance 1e-14,
+%                 60 doublings), and the state is projected forward;
+%                 se = sqrt(sigma^2 P(1,1)).
+%     The Gaussian interval is yhat -/+ z se with z the standard normal
+%     quantile at 1 - alpha/2 (Acklam's rational approximation). With
+%     Bootstrap the interval is instead the empirical alpha/2 and
+%     1 - alpha/2 quantile of yhat + err_k, err_k = sum_j Psi_(j+1) e*_(k-j),
+%     over NBoot draws e* with replacement from the centred finite model
+%     residuals; it captures skewed or heavy-tailed innovations. se stays
+%     the Gaussian psi-weight standard error. Base MATLAB only.
+%
 %   INPUTS
-%   ------------------------------------------------------------------
-%     model   1x1 struct [struct]
-%       Model from tsFitArima / tsFitAR / tsFitMA / tsFitARMA /
-%       tsAutoArima, or a seasonal model from tsFitSarima. Seasonal
-%       models are detected automatically (via the .arExpanded /
-%       .maExpanded fields) and forecast on the fully-expanded ARMA with
-%       the combined (1-B)^d (1-B^s)^D integration undone afterwards.
-%     h       1x1 double [double,pos,integer]
-%       Forecast horizon (number of steps).
-%     alpha   1x1 double [double]
-%       (optional) Interval significance; (1-alpha) coverage. Default
-%       0.05.
-%     varargin name-value [mixed]
-%       'Bootstrap' (1x1 logical) if true, prediction intervals are formed
-%                   by resampling the model residuals (MA(inf) psi-weight
-%                   propagation) instead of the Gaussian normal quantile.
-%                   Captures skew / heavy tails in the innovations. Default
-%                   false. Not available for gap-fitted models.
-%       'NBoot'     (1x1 double) bootstrap replications. Default 2000.
-%       'Seed'      (1x1 double) RNG seed for reproducible intervals
-%                   ([] = leave RNG untouched). Default [].
+%     model  (1,1) struct   -   From tsFitArima, tsFitAR, tsFitMA,
+%                               tsFitARMA, tsAutoArima or tsFitSarima.
+%     h      (1,1) double   -   Forecast horizon in samples, a positive
+%                               integer.
+%     alpha  (1,1) double   -   Significance of the interval, coverage
+%                               1 - alpha; [] or omitted: 0.05.
 %
-%   ------------------------------------------------------------------
+%   OPTIONS
+%     Bootstrap  (1,1) logical  [false]  Residual-bootstrap interval
+%                                        instead of the Gaussian one; not
+%                                        for gap-fitted models.
+%     NBoot      (1,1) double   [2000]   Bootstrap replications, >= 100;
+%                                        rounded.
+%     Seed       (1,1) double   []       rng seed for the bootstrap; the
+%                                        global state is restored after.
+%                                        [] draws from the global stream.
+%
 %   OUTPUTS
-%   ------------------------------------------------------------------
-%     yhat    hx1 double [double]
-%       Point forecasts on the original scale.
-%     se      hx1 double [double]
-%       Forecast standard errors (non-decreasing in horizon).
-%     lo      hx1 double [double]
-%       Lower (1-alpha) prediction-interval bound.
-%     hi      hx1 double [double]
-%       Upper (1-alpha) prediction-interval bound.
+%     yhat  (h,1) double   -   Point forecasts, original scale.
+%     se    (h,1) double   -   Forecast standard errors, non-decreasing in
+%                              the horizon.
+%     lo    (h,1) double   -   Lower bound of the (1 - alpha) interval.
+%     hi    (h,1) double   -   Upper bound of the (1 - alpha) interval.
 %
-%   See also: tsFitArima, tsIntegrate, tsModelDisp.
+%   ACCURACY
+%     Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit
+%     for bit. The sigtools HANDOFF (section 3) records: the seasonal path
+%     against a 150k-200k-run Monte Carlo for SARIMA(1,0,0)(1,1,0)_4 and
+%     (1,1,1)(1,1,0)_4 gives the point forecast to Monte-Carlo noise, se
+%     within about 0.3 % and the one-step se exactly; the bootstrap
+%     half-width reproduces the Gaussian one to about 1-3 % for Gaussian
+%     residuals, with about nominal out-of-sample coverage for Gaussian
+%     and skewed innovations. The normal quantile is good to about 1e-9
+%     (the source's comment on its Acklam approximation).
 %
-%   ------------------------------------------------------------------
-%   Toolbox : sigtools (tsmodels)
-%   Author  : Generated by Claude Opus 4.8 (Anthropic)
-%   Date    : 2026-07-15  (build time-of-day not available in this environment)
-%   ------------------------------------------------------------------
-%   [YHAT,SE,LO,HI] = TSFORECAST(MODEL,H,ALPHA) returns point forecasts on
-%   the ORIGINAL scale, their standard errors SE, and (1-ALPHA) prediction
-%   intervals [LO,HI].  ALPHA defaults to 0.05 (95% interval).
+%   ERRORS
+%     Model:
+%       timeSeriesPreparation:tsForecast:bootGaps - Bootstrap is requested
+%           for a gap-fitted model.
+%     An h that is not a positive integer scalar (validateattributes), or
+%     an alpha or option outside its domain (arguments block), is refused
+%     with a MATLAB: identifier.
 %
-%   Forecast-error variance uses the MA(inf) psi-weights of the ARMA part,
-%   propagated through the d-fold integration operator for d>0.
+%   EXAMPLE
+%     % Ten steps ahead of a CSS-fitted AR(1), with 95 % Gaussian intervals.
+%     x = filter(1, [1 -0.6], randn(RandStream("twister", "Seed", 4), 200, 1));
+%     [yhat, se, lo, hi] = timeSeriesPreparation.tsmodels.tsForecast(timeSeriesPreparation.tsmodels.tsFitArima(x, 1, 0, 0, Method = "css"), 10);
 %
-%   For a seasonal model (tsFitSarima) the forecast is produced on the
-%   fully-expanded, stationary ARMA (model.arExpanded / model.maExpanded)
-%   applied to the doubly-differenced working series model.xd; the point
-%   path is then re-integrated through the combined differencing operator
-%   Delta(B) = (1-B)^d (1-B^s)^D using the observed tail, and the
-%   forecast-error variance uses the original-scale psi-weights
-%   Psi(B) = psiExpanded(B) / Delta(B), so var(1) == sigma^2 exactly.
+%   LIMITATIONS
+%     The intervals ignore the uncertainty of the estimated coefficients.
+%     The Gaussian interval assumes Gaussian innovations. The bootstrap
+%     is not available for gap-fitted models and, without Seed, draws from
+%     and advances the global random stream. alpha must be a scalar. Options
+%     passed as one struct (inputParser's StructExpand) are no longer
+%     accepted; pass name-value pairs.
 %
-%   Base MATLAB only.
+%   REFERENCES
+%     G. E. P. Box, G. M. Jenkins, G. C. Reinsel, G. M. Ljung (2015), Time
+%     Series Analysis: Forecasting and Control, 5th ed., Wiley.
+%     J. Durbin, S. J. Koopman (2012), Time Series Analysis by State Space
+%     Methods, 2nd ed., Oxford University Press.
+%     P. J. Acklam (2003), An algorithm for computing the inverse normal
+%     cumulative distribution function.
+%     sigtools v1.3.1 HANDOFF, section 3.
 %
-%   With 'Bootstrap',true the (1-alpha) interval is instead the empirical
-%   quantile of yhat + sum_j Psi_{j+1} e*, where e* are resampled (centred)
-%   model residuals and Psi are the original-scale MA(inf) weights. This
-%   captures non-Gaussian innovation shape and is not available for
-%   gap-fitted models. SE is still the Gaussian psi-weight standard error.
-    narginchk(2, inf);
-    if nargin < 3 || isempty(alpha), alpha = 0.05; end
+%   See also timeSeriesPreparation.tsmodels.tsFitArima, timeSeriesPreparation.tsmodels.tsFitSarima, timeSeriesPreparation.tsmodels.tsIntegrate, timeSeriesPreparation.tsmodels.tsModelDisp.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
+    arguments
+        model (1,1) struct
+        h
+        alpha {mustBeScalarOrEmpty, mustBeNumeric} = 0.05
+        options.Bootstrap (1,1) {mustBeNumericOrLogical} = false
+        options.NBoot (1,1) {mustBeGreaterThanOrEqual(options.NBoot, 100)} = 2000
+        options.Seed {mustBeScalarOrEmpty} = []
+    end
+    if isempty(alpha), alpha = 0.05; end
     validateattributes(h, {'numeric'}, {'scalar','integer','positive'});
 
-    ip = inputParser; ip.FunctionName = 'tsForecast';
-    ip.addParameter('Bootstrap', false, @(v) islogical(v) || isscalar(v));
-    ip.addParameter('NBoot', 2000, @(v) isscalar(v) && v >= 100);
-    ip.addParameter('Seed', [], @(v) isempty(v) || isscalar(v));
-    ip.parse(varargin{:});
-    doBoot = logical(ip.Results.Bootstrap);
-    nBoot  = round(ip.Results.NBoot);
-    seed   = ip.Results.Seed;
+    doBoot = logical(options.Bootstrap);
+    nBoot  = round(options.NBoot);
+    seed   = options.Seed;
 
     % ---- seasonal path: expanded ARMA + combined differencing ----------
     isSeasonal = isfield(model,'arExpanded') && isfield(model,'maExpanded') ...
@@ -86,7 +128,7 @@ function [yhat, se, lo, hi] = tsForecast(model, h, alpha, varargin)
         seasonalGaps = isfield(model,'obs') && ~all(model.obs);
         if seasonalGaps
             if doBoot
-                error('tsForecast:bootGaps', ...
+                error('timeSeriesPreparation:tsForecast:bootGaps', ...
                     'Bootstrap intervals are not available for gap-fitted models.');
             end
             [yhat, se] = local_forecastSarimaKF(model, h);   % d=D=0 guaranteed
@@ -111,7 +153,7 @@ function [yhat, se, lo, hi] = tsForecast(model, h, alpha, varargin)
     hasGaps = isfield(model,'obs') && ~all(model.obs);
     if hasGaps
         if doBoot
-            error('tsForecast:bootGaps', ...
+            error('timeSeriesPreparation:tsForecast:bootGaps', ...
                 'Bootstrap intervals are not available for gap-fitted models.');
         end
         [yhat, se] = local_forecastKF(model, h);
@@ -317,7 +359,7 @@ function [yhat, se] = local_forecastSarimaKF(model, h)
     T = zeros(r); T(:,1) = phi; T(1:r-1,2:r) = eye(r-1);
     RR = Rv*Rv';
 
-    P = local_dlyap(T, RR);               % in units of s2
+    P = timeSeriesPreparation.internal.dlyap(T, RR, 1e-14, 60);               % in units of s2
     a = zeros(r,1);
     for t = 1:n
         if obs(t)
@@ -361,7 +403,7 @@ function [yhat, se] = local_forecastKF(model, h)
     T = zeros(r); T(:,1) = phi; T(1:r-1,2:r) = eye(r-1);
     RR = R*R';
 
-    P = local_dlyap(T, RR);              % in units of s2
+    P = timeSeriesPreparation.internal.dlyap(T, RR, 1e-14, 60);              % in units of s2
     a = zeros(r,1);
     for t = 1:n                          % filter through history
         if obs(t)
@@ -386,26 +428,6 @@ function [yhat, se] = local_forecastKF(model, h)
         P = 0.5*(P + P');
     end
     se = sqrt(vv);
-end
-
-% ======================================================================
-function P = local_dlyap(T, Q)
-% Discrete Lyapunov P = T P T' + Q via a doubling iteration (stable for a
-% stable T), with a Kronecker-solve fallback.
-    r = size(T,1);
-    A = T; P = Q; converged = false;
-    for it = 1:60
-        Pnew = P + A*P*A';
-        A    = A*A;
-        if norm(Pnew - P, 'fro') <= 1e-14*max(norm(Pnew,'fro'), 1)
-            P = Pnew; converged = true; break;
-        end
-        P = Pnew;
-    end
-    if ~converged || any(~isfinite(P(:)))
-        P = reshape((eye(r*r) - kron(T,T)) \ Q(:), r, r);
-    end
-    P = 0.5*(P + P');
 end
 
 % ======================================================================

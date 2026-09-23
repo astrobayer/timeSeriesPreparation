@@ -1,7 +1,12 @@
-%DEMO_PLOTPOWERSPECTRUM  Worked examples for plotPowerSpectrum.
+%DEMO_PLOTPOWERSPECTRUM  Worked examples for powerSpectrum and plotPowerSpectrum.
 %
 %   Five self-contained scenarios, each in its own cell (run with Ctrl+Enter).
 %   They illustrate which option set fits which measurement situation.
+%   Since X-02 powerSpectrum computes (one series per call, peaks included)
+%   and plotPowerSpectrum draws its result.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 rng(42);                                   % reproducible noise
 
@@ -14,16 +19,16 @@ x  = 0.8*sin(2*pi*1.25*t) ...              % narrowband signal
    + 0.3*sin(2*pi*4.70*t) ...
    + 1.0*randn(size(t));                   % white noise floor
 
-[pk1, S1] = timeSeriesPreparation.spectral.plotPowerSpectrum({fs, x, 'logger'}, ...
+S1 = timeSeriesPreparation.spectral.powerSpectrum(fs, x, 'Label', 'logger', ...
     'NAvg', 12, 'Overlap', 0.5, ...        % Welch: variance down ~1/12
-    'Window', 'hann', ...
+    'Window', 'hann', 'NPeaks', 2);
+timeSeriesPreparation.spectral.plotPowerSpectrum(S1, ...
     'Confidence', 0.95, ...                % chi^2 bar, dof = 2K
-    'NPeaks', 2, 'Unit', 'nT', ...
-    'Title', '1: Welch PSD with 95% CI');
-fprintf('Scenario 1 peaks: %.3f Hz, %.3f Hz\n', pk1.frequency);
+    'Unit', 'nT', 'Title', '1: Welch PSD with 95% CI');
+fprintf('Scenario 1 peaks: %.3f Hz, %.3f Hz\n', S1.peakFrequency);
 % Reading: the CI bar shows the multiplicative uncertainty of the smooth
 % noise floor. More NAvg = smoother floor but wider spectral lines
-% (resolution = fs/L, reported in S1.rayleigh).
+% (resolution = fs/L).
 
 %% Scenario 2: Evenly sampled record WITH data gaps -> Lomb-Scargle + window
 % Use case: telemetry dropouts, instrument maintenance windows.
@@ -32,10 +37,11 @@ x  = 1.5*sin(2*pi*0.31*t) + 0.8*randn(size(t));
 x(1500:2300) = NaN;                        % 40 s gap
 x(5000:5600) = NaN;                        % another gap
 
-timeSeriesPreparation.spectral.plotPowerSpectrum({t, x, 'gapped record'}, ...
+S2 = timeSeriesPreparation.spectral.powerSpectrum(t, x, 'Label', 'gapped record', ...
     'FAP', [0.05 0.01], ...                % significance levels
+    'NPeaks', 1);
+timeSeriesPreparation.spectral.plotPowerSpectrum(S2, ...
     'ShowSpectralWindow', true, ...        % judge alias/sidelobe peaks!
-    'NPeaks', 1, ...
     'Title', '2: Gapped record, GLS + spectral window');
 % Reading: peaks in the lower |W(f)|^2 panel mark frequencies where the
 % sampling pattern itself leaks power. A data peak coinciding with a
@@ -48,13 +54,14 @@ T  = 200;                                  % days
 t  = sort(T*rand(600,1));                  % 600 irregular epochs
 x  = 0.35*sin(2*pi*t/14.3) + 1.0*randn(size(t));   % weak 14.3 d period
 
-[pk3, S3] = timeSeriesPreparation.spectral.plotPowerSpectrum({t, x, 'campaign'}, ...
+S3 = timeSeriesPreparation.spectral.powerSpectrum(t, x, 'Label', 'campaign', ...
     'LombMethod', 'gls', ...               % floating mean (default)
     'FAP', 0.01, 'FAPMethod', 'bootstrap', 'NBootstrap', 1000, ...
-    'NPeaks', 1, 'MaxFreq', 0.5, ...       % cycles per day
+    'NPeaks', 1, 'MaxFreq', 0.5);          % cycles per day
+timeSeriesPreparation.spectral.plotPowerSpectrum(S3, ...
     'Title', '3: Irregular sampling, bootstrap 99% level');
 fprintf('Scenario 3: peak at %.4f cpd (P = %.1f d), level method: %s\n', ...
-    pk3.frequency, 1/pk3.frequency, S3.fapLevels.method);
+    S3.peakFrequency, 1/S3.peakFrequency, S3.fapLevels.method);
 % Reading: the peak is real only if it clears the dashed bootstrap level.
 % Bootstrap respects the exact sampling pattern; null is WHITE noise.
 
@@ -63,13 +70,14 @@ fprintf('Scenario 3: peak at %.4f cpd (P = %.1f d), level method: %s\n', ...
 fs = 1000;  t = (0:1/fs:5)';
 x  = 2.000*sin(2*pi*123.37*t) + 0.05*randn(size(t));  % off-bin frequency!
 
-[pkH] = timeSeriesPreparation.spectral.plotPowerSpectrum({fs, x, 'hann'}, 'Type','amplitude', ...
-    'Window','hann', 'NPeaks',1, 'Title','4: Amplitude fidelity');
-[pkF] = timeSeriesPreparation.spectral.plotPowerSpectrum({fs, x, 'flattop'}, 'Type','amplitude', ...
+SH = timeSeriesPreparation.spectral.powerSpectrum(fs, x, 'Label', 'hann', 'Type','amplitude', ...
+    'Window','hann', 'NPeaks',1);
+SF = timeSeriesPreparation.spectral.powerSpectrum(fs, x, 'Label', 'flattop', 'Type','amplitude', ...
     'Window','flattop', 'NPeaks',1);
+timeSeriesPreparation.spectral.plotPowerSpectrum([SH, SF], 'Title','4: Amplitude fidelity');
 fprintf(['Scenario 4 (true A = 2.000): hann %.4f, flattop %.4f\n' ...
     '  -> flattop removes scalloping loss for off-bin tones.\n'], ...
-    pkH.amplitude, pkF.amplitude);
+    SH.peakValue, SF.peakValue);
 
 %% Scenario 5: Comparing instruments with different sampling in ONE plot
 % Use case: cross-validation of two sensors observing the same process.
@@ -79,14 +87,14 @@ t2  = sort(300*rand(1200,1));              % second sensor, irregular
 x2  = 1.05*sin(2*pi*0.8*t2) + 0.7*randn(size(t2));
 fgrid = logspace(-2, log10(4), 800);       % common custom grid
 
-[pk5, S5, h5] = timeSeriesPreparation.spectral.plotPowerSpectrum( ...
-    {t1, x1, 'sensor A (10 Hz)'}, ...
-    {t2, x2, 'sensor B (irregular)'}, ...
-    'Frequencies', fgrid, ...              % same grid -> direct comparison
-    'Type', 'amplitude', 'NPeaks', 1, 'Unit', 'mV', ...
+S5 = [timeSeriesPreparation.spectral.powerSpectrum(t1, x1, 'Label', 'sensor A (10 Hz)', ...
+          'Frequencies', fgrid, 'Type', 'amplitude', 'NPeaks', 1), ...   % same grid
+      timeSeriesPreparation.spectral.powerSpectrum(t2, x2, 'Label', 'sensor B (irregular)', ...
+          'Frequencies', fgrid, 'Type', 'amplitude', 'NPeaks', 1)];
+h5 = timeSeriesPreparation.spectral.plotPowerSpectrum(S5, 'Unit', 'mV', ...
     'Title', '5: Two instruments, common frequency grid');
 set(h5.lines(2), 'LineStyle', ':');        % post-styling via handles
 fprintf('Scenario 5: A = %.3f mV vs %.3f mV at 0.8 Hz\n', ...
-    pk5(1).amplitude, pk5(2).amplitude);
+    S5(1).peakValue, S5(2).peakValue);
 % Note: a custom 'Frequencies' grid forces Lomb-Scargle for BOTH series,
 % which is exactly what makes them directly comparable.

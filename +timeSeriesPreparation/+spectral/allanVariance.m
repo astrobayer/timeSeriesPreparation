@@ -1,143 +1,104 @@
-function [tau, avar, adev, info] = allanVariance(x, fs, m, doPlot, ciLevel)
-%ALLANVARIANCE Overlapping Allan variance/deviation using only base MATLAB.
+function [tau, avar, adev, info] = allanVariance(x, fs, m, ciLevel)
+%ALLANVARIANCE  Overlapping Allan variance and deviation, with confidence bounds and slopes.
 %
-%   ------------------------------------------------------------------
+%   SYNTAX
+%     [tau, avar, adev, info] = timeSeriesPreparation.spectral.allanVariance(x, fs)
+%     [tau, avar, adev, info] = timeSeriesPreparation.spectral.allanVariance(x, fs, m, ciLevel)
+%
+%   DESCRIPTION
+%     Fully overlapping Allan variance of rate-type series (IEEE 1139;
+%     Riley 2008), one column per channel, through the phase construction
+%
+%       theta(k) = sum_(j<k) x(j)/fs,   theta(1) = 0
+%       sigma^2(tau) = sum_(i=1..K) (theta(i+2m) - 2 theta(i+m) + theta(i))^2
+%                      / (2 tau^2 K),   K = N - 2m,  tau = m/fs.
+%
+%     Every cluster start is used, which gives far more confidence per tau
+%     than non-overlapping blocks of the same record. The confidence bounds
+%     use the chi-square construction edf*avar/chi2inv. The chi-square
+%     quantiles come from the Wilson-Hilferty approximation through erfinv,
+%     so no toolbox is needed. The equivalent degrees of freedom are the
+%     noise-agnostic large-sample value edf = 3(N-1)/(2m) - 2(N-2)/N, which
+%     is indicative only. The local log-log slope identifies the noise type:
+%     white -1/2, flicker 0, random walk +1/2, ramp +1, quantisation -1.
+%     The bias instability is 0.664 min(adev) (the IEEE convention).
+%
+%     Since X-02 the function computes only; plotAllanVariance draws the
+%     result (owner decision 2026-09-23, clean break). The numbers are
+%     v1.3.1's, unchanged.
+%
 %   INPUTS
-%   ------------------------------------------------------------------
-%     x        NxP double [double]
-%       Rate/frequency-type time series, one column per channel. A row
-%       vector is treated as a single Nx1 column. N samples, P channels.
-%     fs       1x1 double [double]
-%       Sample rate of x in Hz, > 0.
-%     m        Kx1 double [double]
-%       (optional) Integer cluster/averaging factors; tau = m/fs. Entries
-%       with (N-2*m)<1 are dropped. Default []: ~100 log-spaced integers
-%       1..floor((N-8)/2).
-%     doPlot   1x1 logical [logical]
-%       (optional) If true, plot log-log Allan deviation with shaded CI.
-%       Default false.
-%     ciLevel  1x1 double [double]
-%       (optional) Confidence level in (0,1) for INFO bounds. Default
-%       0.6827 (1-sigma).
+%     x        (N,P) double   -   Rate-type series, one column per channel;
+%                                 a row vector is one channel.
+%     fs       (1,1) double   Hz  Sampling rate, > 0.
+%     m        (K,1) double   -   Cluster factors, integers; tau = m/fs.
+%                                 Entries with N - 2m < 1 are dropped. [] or
+%                                 omitted: about 100 log-spaced integers from
+%                                 1 to floor((N-8)/2).
+%     ciLevel  (1,1) double   -   Confidence level of the bounds, in (0,1);
+%                                 [] or omitted: 0.6827 (1 sigma).
 %
-%   ------------------------------------------------------------------
 %   OUTPUTS
-%   ------------------------------------------------------------------
-%     tau     Kx1 double [double]
-%       Averaging times [s] actually used, ascending, tau = m/fs.
-%     avar    KxP double [double]
-%       Overlapping Allan variance at each tau (units of x^2).
-%     adev    KxP double [double]
-%       Allan deviation = sqrt(avar) (units of x).
-%     info    1x1 struct [struct]
-%       Fields: .edf (Kx1), .adevLow/.adevHigh (KxP), .slope (KxP, d log
-%       adev/d log tau), .biasInstability (1xP, 0.664*min adev),
-%       .biasInstabilityTau (1xP, tau at minimum).
+%     tau   (K,1) double   s        Averaging times used, ascending.
+%     avar  (K,P) double   unit^2   Overlapping Allan variance.
+%     adev  (K,P) double   unit     Allan deviation, sqrt(avar).
+%     info  (1,1) struct   -        Fields: edf (K,1); adevLow, adevHigh
+%                                   (K,P), the bounds at ciLevel; slope
+%                                   (K,P), d log10 adev / d log10 tau;
+%                                   biasInstability (1,P), 0.664 min(adev);
+%                                   biasInstabilityTau (1,P), s.
 %
-%   See also: plotPowerSpectrum, spec2acv.
+%   ACCURACY
+%     The estimator is exact arithmetic on the phase sums. The bounds rest on
+%     two approximations: the edf formula is noise-type agnostic (Riley 2008
+%     gives noise-specific values), and the Wilson-Hilferty chi-square
+%     quantile. At the default 1-sigma level that quantile errs by < 0.6 %
+%     for edf >= 3. At 95 % its lower 2.5 % quantile errs by 16 % at edf 3,
+%     4 % at edf 5 and 0.7 % at edf 10 (measured against an exact quantile,
+%     2026-09-23), so the widest-tau bounds are rough. Unchanged from
+%     sigtools v1.3.1, and TestSigtoolsEquivalence holds it bit for bit.
 %
-%   ------------------------------------------------------------------
-%   Toolbox : sigtools (spectral)
-%   Author  : Generated by Claude Opus 4.8 (Anthropic)
-%   Date    : 2026-07-15  (build time-of-day not available in this environment)
-%   ------------------------------------------------------------------
+%   ERRORS
+%     (none)
+%     Inputs outside their domain are refused by the arguments block with a
+%     MATLAB: identifier.
 %
-%   [TAU, AVAR, ADEV, INFO] = ALLANVARIANCE(X, FS, M, DOPLOT, CILEVEL)
+%   EXAMPLE
+%     % White noise: the Allan deviation falls with slope -1/2.
+%     x = randn(RandStream("twister", "Seed", 1), 10000, 1);
+%     [tau, ~, adev, info] = timeSeriesPreparation.spectral.allanVariance(x, 10);
 %
-%   -------------------------------------------------------------------
-%   INPUT PARAMETERS
-%   -------------------------------------------------------------------
-%   x        : double, size [N x P] (or [N x 1] / [1 x N] for a single
-%              series). N = number of samples, P = number of independent
-%              data columns/channels (e.g. multiple IMU axes). Each
-%              column is treated as a separate rate/frequency-type time
-%              series in the same physical unit (e.g. rad/s, Hz, m/s^2).
-%              A row vector is automatically treated as a single Nx1
-%              column.
-%   fs       : double scalar, > 0. Sample rate of x in Hz.
-%   m        : (optional) double, size [Kin x 1] or [1 x Kin]. Integer
-%              cluster/averaging factors; the corresponding averaging
-%              time is tau = m/fs. Values with (N - 2*m) < 1 are silently
-%              discarded (insufficient data for that tau). Default: []
-%              -> ~100 log-spaced integers from 1 to floor((N-8)/2), i.e.
-%              covering ~4 decades of tau while keeping at least 8
-%              overlapping clusters at the largest tau.
-%   doPlot   : (optional) logical scalar. If true, plots log-log Allan
-%              deviation with shaded confidence region. Default: false.
-%   ciLevel  : (optional) double scalar in (0,1). Confidence level for
-%              the error bounds in INFO, e.g. 0.6827 for 1-sigma (used
-%              by convention in Allan deviation plots), 0.95 for 95%.
-%              Default: 0.6827.
+%   LIMITATIONS
+%     Rate-type (frequency) data only; phase data must be differenced first.
+%     NaN is not handled: a NaN poisons every tau whose clusters touch it.
 %
-%   -------------------------------------------------------------------
-%   OUTPUT PARAMETERS
-%   -------------------------------------------------------------------
-%   tau      : double, size [K x 1]. Averaging times [s] actually used
-%              (K <= numel(m) after discarding invalid entries), sorted
-%              ascending, tau = m/fs.
-%   avar     : double, size [K x P]. Overlapping Allan variance at each
-%              tau, one column per input channel. Same units as x^2.
-%   adev     : double, size [K x P]. Allan deviation = sqrt(avar). Same
-%              units as x.
-%   info     : scalar struct with fields:
-%     .edf                 double [K x 1]. Approximate equivalent degrees
-%                           of freedom of the overlapping estimator at
-%                           each tau (noise-type-agnostic large-sample
-%                           approximation).
-%     .adevLow, .adevHigh  double [K x P] each. Lower/upper confidence
-%                           bounds on adev at the level given by ciLevel.
-%     .slope               double [K x P]. Local slope
-%                           d(log10 adev)/d(log10 tau), useful for
-%                           identifying noise types (white: -1/2,
-%                           flicker: 0, random walk: +1/2, ramp: +1,
-%                           quantization: -1).
-%     .biasInstability     double [1 x P]. 0.664 * min(adev) per column
-%                           (IEEE-conventional bias instability estimate
-%                           from the flicker-noise floor). Same units
-%                           as x.
-%     .biasInstabilityTau  double [1 x P]. tau [s] at which the adev
-%                           minimum (and hence biasInstability) occurs.
+%   REFERENCES
+%     IEEE Std 1139-2008. W. J. Riley (2008), Handbook of Frequency Stability
+%     Analysis, NIST SP 1065. E. B. Wilson, M. M. Hilferty (1931), PNAS 17,
+%     684-688.
 %
-%   -------------------------------------------------------------------
-%   METHOD
-%   -------------------------------------------------------------------
-%   Fully overlapping Allan variance via the phase/integral construction
-%   (IEEE 1139; Riley, "Handbook of Frequency Stability Analysis"):
+%   See also timeSeriesPreparation.spectral.plotAllanVariance, timeSeriesPreparation.spectral.powerSpectrum, timeSeriesPreparation.spectral.spec2acv.
 %
-%     theta(k) = sum_{j<k} x(j)/fs           (phase, theta(1) = 0)
-%     sigma_y^2(tau) = 1/(2*tau^2*K) * sum_{i=1}^{K} (theta(i+2m) - 2*theta(i+m) + theta(i))^2
-%     K = N - 2*m
-%
-%   This uses every possible cluster start (not just non-overlapping
-%   blocks), giving much better statistical confidence per tau than a
-%   simple block-average estimator for the same record length.
-%
-%   Confidence intervals use the standard chi-square construction
-%   (edf*avar/chi2inv) with a closed-form Wilson-Hilferty approximation
-%   for the chi-square quantiles (via erfinv, base MATLAB, so no
-%   Statistics Toolbox is required). EDF uses the common large-sample
-%   approximation edf ~= 3(N-1)/(2m) - 2(N-2)/N; this is noise-type
-%   agnostic and should be read as indicative, not exact.
-%
-%   -------------------------------------------------------------------
-%   Generated by Claude (Claude Sonnet 5), Anthropic.
-%   Created: 2026-07-15 (date confirmed; exact time-of-day unavailable
-%   for this revision due to a tool timeout).
-%   -------------------------------------------------------------------
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
+arguments
+    x {mustBeNumeric}
+    fs (1,1) double {mustBePositive}
+    m {mustBeNumeric} = []
+    ciLevel {mustBeScalarOrEmpty, mustBeNumeric} = []
+end
 
 if isvector(x)
     x = x(:);
 end
 [N, P] = size(x);
 
-if nargin < 3 || isempty(m)
+if isempty(m)
     maxM = max(1, floor((N - 8) / 2));
     m = unique(round(logspace(0, log10(maxM), 100)));
 end
-if nargin < 4 || isempty(doPlot)
-    doPlot = false;
-end
-if nargin < 5 || isempty(ciLevel)
+if isempty(ciLevel)
     ciLevel = 0.6827; % 1-sigma
 end
 
@@ -189,26 +150,6 @@ info = struct( ...
     'slope', slope, ...
     'biasInstability', biasInstability, ...
     'biasInstabilityTau', biasInstabilityTau);
-
-if doPlot
-    figure; hold on; grid on;
-    colors = lines(P);
-    for p = 1:P
-        fillX = [tau; flipud(tau)];
-        fillY = [adevLow(:, p); flipud(adevHigh(:, p))];
-        fill(fillX, fillY, colors(p, :), 'FaceAlpha', 0.15, 'EdgeColor', 'none', ...
-             'HandleVisibility', 'off');
-        loglog(tau, adev(:, p), 'LineWidth', 1.5, 'Color', colors(p, :));
-    end
-    set(gca, 'XScale', 'log', 'YScale', 'log');
-    xlabel('\tau [s]');
-    ylabel('\sigma_y(\tau)');
-    title(sprintf('Allan Deviation (%.0f%% CI shaded)', 100*ciLevel));
-    if P > 1
-        legend(arrayfun(@(p) sprintf('col %d', p), 1:P, 'UniformOutput', false), ...
-               'Location', 'best');
-    end
-end
 
 end
 

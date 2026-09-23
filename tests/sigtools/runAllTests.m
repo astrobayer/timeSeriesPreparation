@@ -1,10 +1,28 @@
 function results = runAllTests(seed)
-%RUNALLTESTS  Unit + integration tests for the tsmodels toolbox.
-%   RESULTS = RUNALLTESTS()  runs every test and prints a summary.
-%   RESULTS = RUNALLTESTS(SEED) fixes the RNG seed (default 12345).
+%RUNALLTESTS  legacy function-based tsmodels suite of sigtools (29 cases).
 %
-%   Uses base MATLAB only. Returns a struct array with fields
-%   {name, passed, msg}. A non-zero exit message is printed if any fail.
+%   DESCRIPTION
+%     RESULTS = runAllTests() runs every legacy case and prints a summary;
+%     runAllTests(SEED) fixes the RNG seed (default 12345). RESULTS is a
+%     struct array with fields name, passed and msg; a warning
+%     runAllTests:failures is issued if any case fails. The cases cover the
+%     ACF/PACF, differencing, the ARIMA estimators, order selection,
+%     forecasts, input validation and the missing-data paths, in base
+%     MATLAB. TestSigtoolsLegacy runs this function once and counts each
+%     case as one tagged test.
+%
+%     This is the sigtools v1.3.1 legacy suite, carried over at X-02 with
+%     its code and assertions unchanged; only the help block is new.
+%
+%   COVERAGE
+%     reference    - each case passes against its own oracle (closed forms,
+%                    known truth within statistical tolerances), as counted
+%                    by TestSigtoolsLegacy.
+%     contract     - the function runs exactly 29 named cases and returns
+%                    one result per case (TestSigtoolsLegacy).
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     if nargin < 1 || isempty(seed), seed = 12345; end
     rng(seed);

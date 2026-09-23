@@ -13,6 +13,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
 %     'contract' - every documented EXAMPLE of timeSeriesPreparation v0.1.0 runs.
 
     methods (Test, TestTags = {'contract'})
+        function timeSeriesPreparation_internal_dlyap_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.internal.dlyap: AR(1) with phi = 0.9: the stationary variance is 1/(1 - 0.81).
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_dlyap_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.internal.dlyap did not run cleanly.");
+        end
+
         function timeSeriesPreparation_internal_requirePackage_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.internal.requirePackage: The toolbox itself always resolves, so this passes silently.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_requirePackage_1(), ...
@@ -67,6 +73,11 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.crnKernel did not run cleanly.");
         end
     end
+end
+
+function example_timeSeriesPreparation_internal_dlyap_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.internal.dlyap, verbatim from its help block.
+    P = timeSeriesPreparation.internal.dlyap(0.9, 1, 1e-14, 60);
 end
 
 function example_timeSeriesPreparation_internal_requirePackage_1()  %#ok<DEFNU>

@@ -1,76 +1,147 @@
-function model = tsFitSarima(x, order, seasonal, s, varargin)
-%TSFITSARIMA  Fit a seasonal ARIMA(p,d,q)(P,D,Q)_s model (base MATLAB).
+function model = tsFitSarima(x, order, seasonal, s, options)
+%TSFITSARIMA  Fit a seasonal ARIMA(p,d,q)(P,D,Q)_s model by CSS or exact ML.
 %
-%   MODEL = TSFITSARIMA(X, [p d q], [P D Q], s) fits the multiplicative
-%   seasonal ARIMA model
+%   SYNTAX
+%     model = timeSeriesPreparation.tsmodels.tsFitSarima(x, order, seasonal, s)
+%     model = timeSeriesPreparation.tsmodels.tsFitSarima(x, [1 0 1], [1 1 0], 12, Method = "exact", NStart = 5)
+%
+%   DESCRIPTION
+%     Fits the multiplicative seasonal ARIMA model
 %       phi(B) PHI(B^s) (1-B)^d (1-B^s)^D (x_t - mu) = theta(B) THETA(B^s) e_t
-%   by conditional sum of squares (CSS, default) or exact Gaussian maximum
-%   likelihood ('Method','exact'). Non-seasonal and seasonal AR/MA operators
-%   are expanded into ordinary polynomials in B and the resulting long ARMA
-%   model is evaluated recursively (CSS) or run through a Kalman filter on
-%   its companion state space (exact ML). Estimation is unconstrained in a
-%   PACF-reparametrised space, so every trial operator is stationary and
-%   invertible by construction.
+%     with e_t ~ N(0, sigma^2). x is differenced d times by (1-B) and then
+%     D times by (1-B^s); the seeds are kept in diffInfo for tsForecast.
+%     The non-seasonal and seasonal operators are multiplied out into one
+%     long ARMA polynomial pair in B (arExpanded, maExpanded), which is
+%     evaluated by conditional sum of squares ("css", the default: the
+%     first max(p + sP, q + sQ) residuals set to zero) or by exact Gaussian
+%     ML ("exact": a Kalman filter on the companion state space of the
+%     expanded ARMA, started from the stationary covariance of the shared
+%     doubling solver timeSeriesPreparation.internal.dlyap, tolerance
+%     1e-14, 80 doublings, Kronecker fallback; sigma^2 concentrated out).
 %
-%   Set any order to 0 to omit that term; s>=2 is required if any seasonal
-%   order (P,D,Q) is nonzero. With P=D=Q=0 this reduces to a plain ARIMA fit,
-%   matching tsFitArima up to the optimiser.
+%     Each of the four operators is optimised in an unconstrained space:
+%     tanh maps to partial autocorrelations in (-1, 1), clamped to
+%     +/-0.999, and the Durbin-Levinson recursion gives the coefficients,
+%     so every trial operator is stationary and invertible by
+%     construction. fminsearch (TolX = TolFun = 1e-8, MaxFunEvals
+%     2000 (p+q+P+Q+2)) runs from NStart starts: the white-noise point and
+%     NStart - 1 points perturbed by 0.3 randn; the lowest negative
+%     log-likelihood wins. AIC = 2 nll + 2 k, BIC = 2 nll + k log(nObs),
+%     with k the number of coefficients plus one for sigma^2.
 %
-%   Exact ML additionally supports NaN gaps in X (missing samples at regular
-%   timestamps): the Kalman filter skips the update at each gap and accrues
-%   no likelihood term there, giving the exact ML estimate on the observed
-%   data. Gaps require d=D=0 (differencing across missing samples is
-%   undefined). CSS does not accept gaps.
+%     A seasonal order needs s >= 2; with P = D = Q = 0 the period is
+%     ignored and the fit is a plain ARIMA, matching tsFitArima up to the
+%     optimiser. The exact method also accepts NaN gaps on a regular time
+%     grid: the Kalman filter only predicts there and accrues no
+%     likelihood term, which gives the exact ML estimate on the observed
+%     data. Gaps require d = D = 0. Base MATLAB only.
 %
-%   Base MATLAB only.
-%
-%   ------------------------------------------------------------------
 %   INPUTS
-%   ------------------------------------------------------------------
-%     x         Nx1 double [double]
-%       Time series (finite; no NaN gaps in the seasonal path).
-%     order     1x3 double [double]
-%       Non-seasonal orders [p d q] (each >= 0).
-%     seasonal  1x3 double [double]
-%       Seasonal orders [P D Q] (each >= 0).
-%     s         1x1 double [double]
-%       Seasonal period (>= 2 if any seasonal order is nonzero; else ignored).
-%     varargin  name-value [mixed]
-%       'Method'   ('css'|'exact') CSS (default) or exact Gaussian ML.
-%       'Constant' (1x1 logical) include the mean term mu. Default true.
-%       'Display'  ('off'|'iter') forwarded to fminsearch. Default 'off'.
-%       'MaxIter'  (1x1 double) optimiser iteration cap. Default 3000.
-%       'NStart'   (1x1 double) number of multi-starts. Default 3.
+%     x         (:,1) double   -   Series (a row is used as a column); NaN
+%                                  marks a gap (exact method, d = D = 0).
+%     order     (1,3) double   -   Non-seasonal orders [p d q], integers
+%                                  >= 0.
+%     seasonal  (1,3) double   -   Seasonal orders [P D Q], integers >= 0.
+%     s         (1,1) double   -   Seasonal period in samples, integer
+%                                  >= 2 if any seasonal order is nonzero;
+%                                  otherwise max(round(s), 1) and unused.
 %
-%   ------------------------------------------------------------------
+%   OPTIONS
+%     Method    (1,1) string   ["css"]  "css" or "exact"
+%                                       (case-insensitive).
+%     Constant  (1,1) logical  [true]   Include the mean mu of the
+%                                       differenced series.
+%     Display   (1,1) string   ["off"]  fminsearch display: "off", "iter",
+%                                       "final" or "notify".
+%     MaxIter   (1,1) double   [3000]   fminsearch iteration cap per start,
+%                                       > 0.
+%     NStart    (1,1) double   [3]      Number of starts, >= 1; rounded.
+%
 %   OUTPUTS
-%   ------------------------------------------------------------------
-%     model     1x1 struct [struct]
-%       Fitted model with fields:
-%         .type    (char) e.g. 'SARIMA(1,0,1)(1,1,0)_12'
-%         .p .d .q .P .D .Q .season                (orders and period)
-%         .const .mu                               (mean term)
-%         .ar  (1xp) .ma  (1xq)                     non-seasonal coefficients
-%         .sar (1xP) .sma (1xQ)                     seasonal coefficients
-%         .arExpanded (1x.) .maExpanded (1x.)       expanded B-polynomials
-%         .sigma2 .resid .logL .aic .bic .k
-%         .n .nObs .method('css'|'exact') .converged
-%         .obs (Nx1 logical, exact only) missing-sample mask
-%         .x .xd .diffInfo                          data + differencing record
+%     model  (1,1) struct   -   Fields: type (char, e.g.
+%                               'SARIMA(1,0,1)(1,1,0)_12'); p, d, q, P, D,
+%                               Q, season; const, mu; ar (1,p), ma (1,q),
+%                               sar (1,P), sma (1,Q); arExpanded and
+%                               maExpanded (1,:), the expanded
+%                               polynomials 1 - ... and 1 + ... in B;
+%                               sigma2; resid (n,1); logL; n, the length
+%                               of the differenced series; nObs, the
+%                               samples in the likelihood; k; aic; bic; x;
+%                               xd, the differenced series; diffInfo
+%                               (struct d, D, s, seeds); method (char);
+%                               converged, fminsearch exit flag 1; obs
+%                               (n,1) logical, exact method only. No
+%                               standard errors.
 %
-%   See also: tsFitArima, tsForecast, tsCheckResiduals, tsModelDisp.
+%   ACCURACY
+%     Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit
+%     for bit. The sigtools HANDOFF (section 3) records that the
+%     expanded-ARMA Kalman filter reproduces the direct multivariate-normal
+%     concentrated log-likelihood to about 1e-14, both for a complete
+%     series and with missing samples (gap filter against the density of
+%     the observed subset: exact to 0). The optimum is only as good as
+%     fminsearch from NStart starts (TolX 1e-8).
 %
-%   ------------------------------------------------------------------
-%   Toolbox : sigtools (tsmodels)
-%   Author  : Generated by Claude Opus 4.8 (Anthropic)
-%   Date    : 2026-07-15  (build time-of-day not available in this environment)
-%   ------------------------------------------------------------------
+%   ERRORS
+%     Input:
+%       timeSeriesPreparation:tsFitSarima:badData - an observed sample of
+%           a gapped series is Inf.
+%       timeSeriesPreparation:tsFitSarima:tooShort - fewer than
+%           p + q + s (P + Q) + 3 observed samples after differencing.
+%     Gaps:
+%       timeSeriesPreparation:tsFitSarima:gapsNeedExact - x has NaN gaps
+%           and Method is not "exact".
+%       timeSeriesPreparation:tsFitSarima:gapsWithDiff - x has NaN gaps
+%           and d > 0 or D > 0.
+%     Options:
+%       timeSeriesPreparation:tsFitSarima:badOption - Method is not "css"
+%           or "exact" (case-insensitive).
+%     A non-numeric or complex x, an order that is not three nonnegative
+%     integers, or a seasonal s that is not an integer >= 2 is refused by
+%     validateattributes, and another option outside its domain by the
+%     arguments block, with a MATLAB: identifier.
 %
-%   Example
-%     m = tsFitSarima(x, [1 0 1], [1 1 0], 12);
-%     tsModelDisp(m); tsCheckResiduals(m);
+%   EXAMPLE
+%     % A seasonal AR(1) with period 12 and PHI = 0.5, fitted by CSS.
+%     x = filter(1, [1 zeros(1, 11) -0.5], randn(RandStream("twister", "Seed", 3), 240, 1));
+%     model = timeSeriesPreparation.tsmodels.tsFitSarima(x, [0 0 0], [1 0 0], 12, Constant = false);
+%
+%   LIMITATIONS
+%     No standard errors. The perturbed starts draw from the global random
+%     stream, whose state is restored afterwards; the fit therefore
+%     depends on the current rng state (set rng for a reproducible fit).
+%     The expanded ARMA has order p + sP and q + sQ, so the exact method
+%     costs O(n r^3) per evaluation with r = max(p + sP, q + sQ + 1) and is
+%     slow for long seasons. Gaps and differencing do not mix. Options
+%     passed as one struct (inputParser's StructExpand) are no longer
+%     accepted; pass name-value pairs.
+%
+%   REFERENCES
+%     G. E. P. Box, G. M. Jenkins, G. C. Reinsel, G. M. Ljung (2015), Time
+%     Series Analysis: Forecasting and Control, 5th ed., Wiley.
+%     J. Durbin, S. J. Koopman (2012), Time Series Analysis by State Space
+%     Methods, 2nd ed., Oxford University Press.
+%     J. F. Monahan (1984), Biometrika 71(2), 403-404 (PACF
+%     reparametrisation).
+%     sigtools v1.3.1 HANDOFF, section 3.
+%
+%   See also timeSeriesPreparation.tsmodels.tsFitArima, timeSeriesPreparation.tsmodels.tsAutoSarima, timeSeriesPreparation.tsmodels.tsForecast, timeSeriesPreparation.tsmodels.tsCheckResiduals, timeSeriesPreparation.tsmodels.tsModelDisp.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
-    narginchk(4, inf);
+    arguments
+        x
+        order
+        seasonal
+        s
+        options.Method {mustBeSarimaMethod} = 'css'
+        options.Constant (1,1) {mustBeNumericOrLogical} = true
+        options.Display {mustBeTextScalar} = 'off'
+        options.MaxIter (1,1) {mustBePositive} = 3000
+        options.NStart (1,1) {mustBeGreaterThanOrEqual(options.NStart, 1)} = 3
+    end
+
     x = x(:);
     validateattributes(x, {'numeric'}, {'vector','real'}, mfilename, 'x');
     validateattributes(order,    {'numeric'}, {'numel',3,'nonnegative','integer'}, mfilename, 'order');
@@ -85,14 +156,7 @@ function model = tsFitSarima(x, order, seasonal, s, varargin)
         s = max(round(s), 1);
     end
 
-    ip = inputParser; ip.FunctionName = mfilename;
-    ip.addParameter('Method', 'css', @(v) any(strcmpi(char(v), {'css','exact'})));
-    ip.addParameter('Constant', true, @(v) islogical(v) || isscalar(v));
-    ip.addParameter('Display', 'off', @(v) ischar(v) || isstring(v));
-    ip.addParameter('MaxIter', 3000, @(v) isscalar(v) && v > 0);
-    ip.addParameter('NStart', 3, @(v) isscalar(v) && v >= 1);
-    ip.parse(varargin{:});
-    o = ip.Results;
+    o = options;
     hasConst = logical(o.Constant);
     method   = lower(char(o.Method));
 
@@ -101,16 +165,16 @@ function model = tsFitSarima(x, order, seasonal, s, varargin)
     hasGaps = ~all(obs);
     if hasGaps
         if ~strcmp(method, 'exact')
-            error('tsFitSarima:gapsNeedExact', ...
+            error('timeSeriesPreparation:tsFitSarima:gapsNeedExact', ...
                 'Missing samples (NaN) require Method=''exact''.');
         end
         if d > 0 || D > 0
-            error('tsFitSarima:gapsWithDiff', ...
+            error('timeSeriesPreparation:tsFitSarima:gapsWithDiff', ...
                 ['Differencing (d>0 or D>0) across missing samples is undefined. ', ...
                  'Use d=D=0 with Method=''exact'', or difference a complete series.']);
         end
         if any(~isfinite(x(obs)))
-            error('tsFitSarima:badData', 'Observed samples must be finite.');
+            error('timeSeriesPreparation:tsFitSarima:badData', 'Observed samples must be finite.');
         end
     end
 
@@ -130,7 +194,7 @@ function model = tsFitSarima(x, order, seasonal, s, varargin)
     obsW = obs(end-n+1:end);          % obs mask aligned to w (differencing gap-free)
     nEffObs = sum(obsW);
     if nEffObs < (p + q + s*(P+Q) + 3)
-        error('tsFitSarima:tooShort', 'Too few samples after differencing for the requested orders.');
+        error('timeSeriesPreparation:tsFitSarima:tooShort', 'Too few samples after differencing for the requested orders.');
     end
 
     % ---- objective: CSS or exact Gaussian ML ----------------------------
@@ -270,7 +334,7 @@ function [nll, e, s2, coef] = local_exactSarima(psi, w, p, q, P, Q, s, hasConst,
     T = zeros(r); T(:,1) = phi; T(1:r-1,2:r) = eye(r-1);
     RR = Rv*Rv';
 
-    P0 = local_dlyapSar(T, RR);                     % stationary state cov (units s2)
+    P0 = timeSeriesPreparation.internal.dlyap(T, RR, 1e-14, 80);                     % stationary state cov (units s2)
     a  = zeros(r,1);
 
     e = nan(n,1); S = 0; logF = 0; nObs = 0; ok = true;
@@ -305,26 +369,6 @@ function [nll, e, s2, coef] = local_exactSarima(psi, w, p, q, P, Q, s, hasConst,
         coef = struct('mu',mu,'ar',ar,'ma',ma,'sar',sar,'sma',sma, ...
                       'arExp',arExp,'maExp',maExp);
     end
-end
-
-% ======================================================================
-function Pout = local_dlyapSar(T, Q)
-% Discrete Lyapunov P = T P T' + Q via doubling iteration + Kronecker
-% fallback (shared convention with tsFitArima / tsForecast / arma2acv).
-    r = size(T,1);
-    A = T; Pout = Q; converged = false;
-    for it = 1:80 %#ok<NASGU>
-        Pnew = Pout + A*Pout*A';
-        A    = A*A;
-        if norm(Pnew - Pout, 'fro') <= 1e-14*max(norm(Pnew,'fro'), 1)
-            Pout = Pnew; converged = true; break;
-        end
-        Pout = Pnew;
-    end
-    if ~converged || any(~isfinite(Pout(:)))
-        Pout = reshape((eye(r*r) - kron(T,T)) \ Q(:), r, r);
-    end
-    Pout = 0.5*(Pout + Pout');
 end
 
 % ======================================================================
@@ -374,5 +418,14 @@ function str = local_sarimaName(p,d,q,P,D,Q,s)
         str = sprintf('MA(%d)', q);
     else
         str = sprintf('ARMA(%d,%d)', p, q);
+    end
+end
+
+% ======================================================================
+function mustBeSarimaMethod(v)
+% Case-insensitive "css" or "exact", as v1.3.1's inputParser validator.
+    if ~any(strcmpi(char(v), {'css','exact'}))
+        error('timeSeriesPreparation:tsFitSarima:badOption', ...
+            'Method must be ''css'' or ''exact''.');
     end
 end

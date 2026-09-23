@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.11 · 2026-09-23 · X-04 merged (0.1.0); X-06 in review**
+**Revision 0.12 · 2026-09-23 · X-06 merged; X-02 in review**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,132 @@ restates:
 
 ---
 
-## X-06 — scope frozen 2026-09-23 (issue #9)
+## X-02 — scope frozen 2026-09-23 (issue #5)
+
+Tier B. Design: CONCEPT 10.1 row X-02, 12.5 and 12.9 (port first,
+conventions after, gated by equality to the port). **Numbers unchanged** is
+the gate (ORC-8). No release: the version stays 0.1.0.
+
+Owner decisions of 2026-09-23 (asked in session):
+- **Plotting split: clean break.** Compute functions never plot and lose
+  their plot arguments. Plotting moves to sibling functions in the same
+  subpackage. Demos and tests are updated in this PR.
+- **One Lyapunov solver, per-caller parameters.** The five local copies
+  (CONCEPT says four; `tsFitSarima` has a fifth) differ only in tolerance
+  (1e-15 in `arma2acv`, 1e-14 elsewhere) and iteration cap (80 or 60). One
+  `internal.dlyap(T, Q, Tol, MaxIter)` replaces them, and each caller passes
+  its own values, so every number stays bit-identical. Harmonising the
+  tolerances would be a later numerical WP.
+
+True after the merge:
+- `timeSeriesPreparation.internal.dlyap` replaces the five local copies.
+- Plotting split:
+  - `allanVariance` loses `doPlot`, and `plotAllanVariance` plots its
+    result.
+  - `psd2arma` loses `Plot`, and `plotPsd2armaFit` plots its `results`.
+  - `tsCheckResiduals` no longer draws, and `plotResiduals` draws the
+    four-panel figure from its output.
+  - `powerSpectrum` computes what `plotPowerSpectrum` drew, and
+    `plotPowerSpectrum` only plots.
+- `arguments` blocks in every sigtools function, replacing `inputParser` and
+  `nargin` checks. The defaults and the accepted domain stay as they were.
+- Error identifiers are prefixed (`timeSeriesPreparation:<function>:<id>`),
+  and every `error` raised has one.
+- Help to the CONCEPT 9.1 template with footer, for all sigtools functions and
+  the new ones; `Contents.m` of both subpackages.
+- Tests:
+  - `tests/sigtools` is updated for the identifiers and the split and tagged
+    with the CONCEPT 9 categories; the `TestTagPolicy` exemption is removed.
+  - **New gate `TestSigtoolsEquivalence` (ORC-8):** every function's outputs
+    on a fixed battery equal those of the archived v1.3.1, run from the zip in
+    a temporary folder, bit for bit (`isequaln`).
+  - `TestSigtoolsImport` keeps only the archive-coverage check, because
+    byte identity ends with the conventions.
+- The demos are updated for the split.
+
+Out of scope, each with its place:
+- The audit profile `sigtools-imported` and the docs exclusion of `+spectral`
+  and `+tsmodels` live in `.github/`, so they are switched in a separate PR
+  right after this one (GUIDE §1). That PR also brings the generated HTML
+  pages and help examples for the subpackages. Until then this PR's help
+  blocks are checked locally against the `public` profile.
+- Any numerical change: tolerances, algorithms, speed (X-16 for speed).
+
+**How it was done.** I did the four plotting splits, `internal.dlyap`, the
+equivalence gate, the demos and the test infrastructure myself. Four
+parallel agents did the conventions pass:
+- the spectral group;
+- the tsmodels fitting group;
+- the tsmodels utility group;
+- the tagging of `tests/sigtools`.
+
+I reviewed every non-comment line of their diffs. No computational line
+changed. Options that became string arrays are only compared with
+`strcmpi`, never returned, and option defaults keep their char class, so
+the model structs stay identical.
+
+**Interface changes, besides the plotting split** (all refuse earlier or
+more precisely; none changes a number):
+- inputParser gave way to arguments blocks, so a struct passed in place of
+  name-value pairs is no longer expanded. No caller did that.
+- `tsAutoArima` and `tsAutoSarima` forward only the options of their fit
+  function, and an unknown option is refused at once. Before, every fit
+  failed inside `try` and the call ended in `noFit`.
+- The three `tsFit*` wrappers forward only the options they are given.
+- `powerSpectrum` takes one series per call; several series are one struct
+  array.
+
+**Measured before the push (2026-09-23, ci-actions `v1.3.2`):**
+- The Wilson-Hilferty chi-square quantile of `allanVariance` was checked
+  against an exact quantile because its help needed a number. At 1 sigma
+  it errs < 0.6 % for edf >= 3; at 95 % the lower quantile errs 16 % at
+  edf 3, 4 % at edf 5 and 0.7 % at edf 10. This is now in its ACCURACY.
+- `matlab-audit` with the repository profile: 83 files at 0.1.0,
+  **clean**. With the strict profile the `.github/` PR will adopt
+  (`sigtools-imported` dropped, subpackages under `public`, `tests/sigtools`
+  under `tests`, a `demos` profile): **clean** but for its own catalogue
+  path. `matlab-docs --check`: 16 files, **in sync** (+1 page and +1 help
+  example, `internal.dlyap`).
+
+**Prediction** (before any run): **392 + 0 + 0 = 392** with the
+gracefoReading checkout (without it: 384 + 0 + 8).
+
+| class | contract | reference | precision | robustness | metamorphic | vectorisation | speed | untagged | total |
+|---|---|---|---|---|---|---|---|---|---|
+| unchanged from X-06 | 40 | 42 | 7 | 52 | 10 | 5 | 3 | | 159 |
+| tests/sigtools (tagged, count unchanged) | 48 | 79 | 3 | 34 | 15 | 1 | | | 180 |
+| TestSigtoolsEquivalence (new) | 1 | 40 | | 1 | | | | | 42 |
+| TestSigtoolsImport (5 -> 1) | 1 | | | | | | | | 1 |
+| TestHelpExamples (+1, dlyap) | 10 | | | | | | | | 10 |
+| **sum** | **100** | **161** | **10** | **87** | **25** | **6** | **3** | **0** | **392** |
+
+(The first row is the X-06 total, 353, less the untagged sigtools 180,
+TestSigtoolsImport 5 and TestHelpExamples 9 = 159.)
+
+**Verdict, CI run 35836240391 on `0d9f62c` (2026-09-23), MATLAB R2026a,
+gracefoReading `v1.1.0`:**
+- `audit` green.
+- `matlab` green on the first run: **392 + 0 + 0 = 392**, every tag as
+  predicted.
+- All 40 equivalence cases are bit-identical to the v1.3.1 archive (ORC-8
+  met).
+- Gate time 1017 s.
+
+**Debt.**
+- Tier A: there is no local MATLAB, and nothing here ran before CI. The
+  converted functions' EXAMPLEs run only once the `.github/` PR includes
+  the subpackages in the docs generator.
+- **The `.github/` follow-up PR**, which stands alone: the audit profile
+  switch described above; `"warnings": true`, so warning identifiers are
+  audited (X-06 debt); and the docs generator for `+spectral` and
+  `+tsmodels` (HTML pages, the catalogue with their identifiers, their help
+  examples).
+- The references the agents added from memory (e.g. Jones 1980, Monahan
+  1984, Durbin 1960) need a spot check of volume and page.
+
+---
+
+## X-06 — merged 2026-09-23 (PR #39, issue #9); scope was frozen 2026-09-23
 
 Tier B (no local MATLAB; the MATLAB verdict is CI's). Design: CONCEPT 5.2
 (unit check), 6.1 row 3, 10.1 row X-06; v3 WP-02 item 3 and WP-11 item 1
@@ -360,11 +485,12 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-06 (#9) on branch `claude/grace-timeseries-issues-28g3a4` (PR #39):
-CI green (run 35831044729, 353 + 0 + 0), awaiting review.** X-04 merged (PR #38, `f969ecb`, release 0.1.0; the annotated tag
-`v0.1.0` and its GitHub release are pending, GUIDE §3). X-01 + X-03 merged
-(PR #37, `1b5c4ae`); X-00b merged (PR #36, `2ecf543`); X-00a merged (#2,
-`f26df8d`).
+**X-02 (#5) on branch `claude/grace-timeseries-issues-28g3a4` (PR #40):
+CI green (run 35836240391, 392 + 0 + 0), awaiting review.** X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
+`f969ecb`, release 0.1.0). The annotated tag `v0.1.0` on `f969ecb` is the
+owner's: the session's push of it was refused (HTTP 403, 2026-09-23). The
+GitHub release follows the tag. X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b merged
+(PR #36, `2ecf543`); X-00a merged (#2, `f26df8d`).
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
@@ -373,7 +499,7 @@ CI green (run 35831044729, 353 + 0 + 0), awaiting review.** X-04 merged (PR #38,
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
 C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
-`v1.3.2`). Next after X-06: X-02 (#5, CONCEPT 12.4); X-05
+`v1.3.2`). Next after X-02: the `.github/` profile switch (its own PR), then X-07 (#10); X-05
 (#8) also waits on V-12 (defect catalogue, D-9).
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).

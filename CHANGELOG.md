@@ -16,6 +16,16 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
   It never shifts a series (v3 F2).
 - **X-06** `Config.align` (`method`, `maxGap`, `maxLag`, `threshold`);
   `internal.resampleOnto`, the resampling rule both functions share.
+- **X-02** sigtools conventions, numbers unchanged (bit for bit against the
+  v1.3.1 archive, `TestSigtoolsEquivalence`): `arguments` blocks, prefixed
+  error identifiers, template help, tagged tests, one Lyapunov solver
+  `internal.dlyap`. **Breaking:** the plotting is split out of the compute
+  functions:
+  - `plotPowerSpectrum` becomes `powerSpectrum` (one series per call, peaks
+    in the result) plus a drawing-only `plotPowerSpectrum(spec)`;
+  - `allanVariance` loses `doPlot` and gains `plotAllanVariance`;
+  - `psd2arma` loses `Display` and gains `plotPsd2armaFit`;
+  - `tsCheckResiduals` no longer draws; `plotResiduals` does.
 
 ## 0.1.0 — 2026-09-23
 
