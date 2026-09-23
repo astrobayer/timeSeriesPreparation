@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.16 (DRAFT) · 2026-09-23 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.17 (DRAFT) · 2026-09-23 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -37,6 +37,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.13 | hosting paragraph corrected: gracefoReading #15 was merged with a merge commit, so the drafts and input zips are in gracefoReading's history |
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
+| 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
 | **0.14** | **Stage C done: verification items closed from the registered documents and real bytes (9.3). The v2 CRN oracle is wrong — the ATBD raises each passband term to the power N_c, the port raised the sum; real ACT1A→ACT1B data give DC gain 1 + 6.4e-8, not 1.0004533. Section 8 and ORC-1/ORC-2 corrected** |
 
 **Read at**
@@ -142,7 +143,7 @@ These are checked mechanically: calls go downward only.
 ```
 L3  timeSeriesPreparation.run                         single point of access, instrument level
 L2  mask, qc, align, crnApply, noise, fill, observability, bootstrap, crossval, drivers, correlate, report
-L1  Arc, Config, crnKernel
+L1  Arc, Config, crnKernel, noiseReference
 L0  +spectral  (sigtools/spectral: 10 functions)      +tsmodels (sigtools/tsmodels: 15 functions)
 ```
 
@@ -282,7 +283,7 @@ no positional fallback.
 | 2 | QC | `qc` | residual-based outliers; impulses (matched filter on the CRN impulse response, THR1B priors); jumps (reported and turned into parameters, never masked); after X-16, a **labelled template bank** (twang, heater, magnetic-torquer and thruster spikes) with one mask layer per type (X-17) |
 | 3 | align | `align`, `checkAlignment` | reference moved onto the observation epochs; lag diagnostic over ±60 s that warns above 1 s and never shifts silently (v3 F2) |
 | 4 | consistency | `crnKernel`, `crnApply` | exact ATBD kernel **as printed** (section 8), normalised at f0, DC gain 1 + 1.1e-7 (ACC) kept, never renormalised to unit DC; chunked per file day with half-span overlap, bit-identical to unchunked; NaN edges. **The convolution sum is evaluated only at the output epochs** (1 Hz for ACC1B from the 10 Hz grid): about 3.6e8 instead of 3.6e9 multiply-adds per day for 3 axes, pinned equal to full-rate convolution followed by sampling |
-| 5 | noise | `noise` on `tsmodels`, `spectral` | residual noise model (AR/ARMA/SARIMA exact ML with gaps, or PSD → ARMA), Ljung-Box, Allan deviation; the model feeds `fill` and the applications' lsqvce covariance; a **reference noise-model library** (ACC 1/f, KBR CNR-limited, LRI design ASD) as priors and validation targets (W-12, X-07) |
+| 5 | noise | `noise` on `tsmodels`, `spectral` | residual noise model (AR/ARMA/SARIMA exact ML with gaps, or PSD → ARMA), Ljung-Box, Allan deviation; the model feeds `fill` and the applications' lsqvce covariance; a **reference noise-model library** `noiseReference` (ACC 1/f, KBR system and oscillator, LRI requirement and laser noise; P-13, P-21) as priors and validation targets (W-12, X-07) |
 | 6 | gate | `observability` | metrics an application uses to refuse or downgrade unidentifiable parameters before its fit |
 | 7 | uncertainty | `bootstrap`, `crossval` | moving-block bootstrap with substreamed RNG; blocked CV |
 | 8 | gaps | `fill` | see 6.5 |

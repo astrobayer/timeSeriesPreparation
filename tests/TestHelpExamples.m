@@ -277,6 +277,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.noise did not run cleanly.");
         end
 
+        function timeSeriesPreparation_noiseReference_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.noiseReference: The LRI requirement and the KBR model from 1 to 100 mHz.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_noiseReference_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.noiseReference did not run cleanly.");
+        end
+
         function timeSeriesPreparation_observability_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.observability: Bias and scale on a quiet arc: the estimates correlate near -1.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_observability_1(), ...
@@ -568,6 +574,13 @@ function example_timeSeriesPreparation_noise_1()  %#ok<DEFNU>
     x = filter(1, [1 -0.7], randn(RandStream("twister", "Seed", 5), 1500, 1));
     x(400:450) = NaN;
     nm = timeSeriesPreparation.noise(timeSeriesPreparation.Arc(int64(0:1499)' * int64(1e9), x, aux), [1 0], MaxLag = 10);
+end
+
+function example_timeSeriesPreparation_noiseReference_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.noiseReference, verbatim from its help block.
+    f = logspace(-3, -1, 50)';
+    lri = timeSeriesPreparation.noiseReference("LRI", f);
+    [kbr, info] = timeSeriesPreparation.noiseReference("KBR", f);
 end
 
 function example_timeSeriesPreparation_observability_1()  %#ok<DEFNU>

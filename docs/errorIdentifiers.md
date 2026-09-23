@@ -49,6 +49,8 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:noise:gapsInPsd` | `+timeSeriesPreparation/noise.m` | Input | Method "psd" on an axis with missing rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:noise:irregularGrid` | `+timeSeriesPreparation/noise.m` | Input | the epochs are not uniformly spaced; resample first (align) and mark missing rows NaN. |
 | `timeSeriesPreparation:noise:tooFewSamples` | `+timeSeriesPreparation/noise.m` | Input | an axis has fewer than 10 (p + q + 1) usable samples. |
+| `timeSeriesPreparation:noiseReference:axis` | `+timeSeriesPreparation/noiseReference.m` | Input | "ACC" without Axis, or Axis given for a ranging model. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:noiseReference:unknownModel` | `+timeSeriesPreparation/noiseReference.m` | Input | model is not one of the four. |
 | `timeSeriesPreparation:observability:insufficientData` | `+timeSeriesPreparation/observability.m` | Gate | an axis keeps less than MinWeightFraction of its weight. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:observability:noThreshold` | `+timeSeriesPreparation/observability.m` | Input | no MinWeightFraction given and none in the product's preset. |
 | `timeSeriesPreparation:observability:sizeMismatch` | `+timeSeriesPreparation/observability.m` | Input | X does not have one row per epoch of arc, or Names not one name per column. |
@@ -114,4 +116,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-107 identifier(s).
+109 identifier(s).

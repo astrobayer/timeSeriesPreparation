@@ -28,6 +28,10 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
   `tsLjungBox` and `tsFitAR` to lsqvce's `armaACV`, `psd2acv`,
   `whitenessCorr`, `levinsonDurbin` and `whittle`.
 - `Config.unc` (minWeightFraction, blockLength, nBoot, level, folds).
+- **X-07** `noiseReference`: the reference noise-model library. It gives the
+  LRI ranging requirement (Abich et al. 2019) and the KBR, LRI-laser and
+  accelerometer ASD models of Darbeheshti et al. (2017), each read from the
+  source page, with derivatives for rate and acceleration.
 
 ## 0.1.0 — 2026-09-23
 

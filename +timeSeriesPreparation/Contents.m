@@ -8,6 +8,8 @@
 %                  weights, layers and provenance.
 %     Config     - Instrument settings in nine sections.
 %     crnKernel  - The CRN-class digital filter of the GRACE L1B ATBD, as printed.
+%     noiseReference - Published noise ASDs of the GRACE-FO instruments (LRI,
+%                  KBR, ACC).
 %
 %   Stages (L2)
 %     align           - Move a reference series onto the epochs of an
