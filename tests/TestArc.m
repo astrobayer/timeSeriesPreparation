@@ -9,10 +9,11 @@ classdef TestArc < matlab.unittest.TestCase
 %
 %   COVERAGE
 %     contract       - properties from aux; mission and release from the file
-%                      name; header fallback; every documented identifier.
+%                      name; header fallback; derive keeps metadata and
+%                      provenance and resets weights and layers.
 %     precision      - t and obs are stored bit for bit.
-%     robustness     - each refusal fires on its planted defect and the
-%                      healthy triple passes.
+%     robustness     - each refusal, of the constructor and of derive, fires
+%                      on its planted defect and the healthy triple passes.
 %     metamorphic    - permuting Columns permutes names, units and obs.
 %     vectorisation  - one 3-column arc equals three 1-column arcs, bitwise.
 %     speed          - exempt: Arc runs no numerical kernel, only O(N)
@@ -73,6 +74,20 @@ classdef TestArc < matlab.unittest.TestCase
             [t, obs, aux] = triple(5);
             arcs = [timeSeriesPreparation.Arc(t, obs, aux), timeSeriesPreparation.Arc(t, obs, aux)];
             testCase.verifyWarningFree(@() timeSeriesPreparation.Arc.requireOneRelease(arcs));
+        end
+
+        function deriveKeepsMetadataAndProvenance(testCase)
+            [t, obs, aux] = triple(6);
+            arc = addLayer(timeSeriesPreparation.Arc(t, obs, aux), "a", [true; false(5, 1)]);
+            out = derive(arc, t(1:3), obs(1:3, :), "stage", struct("x", 1), ...
+                Units = ["a" "b" "c"]);
+            testCase.verifyEqual([out.product out.satellite out.release out.mission], ...
+                [arc.product arc.satellite arc.release arc.mission]);
+            testCase.verifyEqual(out.names, arc.names);
+            testCase.verifyEqual(out.units, ["a" "b" "c"]);
+            testCase.verifyEqual(out.weights, ones(3, 1));
+            testCase.verifyEqual(fieldnames(out.layers), cell(0, 1));
+            testCase.verifyEqual([out.provenance.stage], ["Arc" "addLayer" "stage"]);
         end
 
         function mixedReleaseAcceptedOnRequest(testCase)
@@ -167,6 +182,22 @@ classdef TestArc < matlab.unittest.TestCase
                 "timeSeriesPreparation:Arc:mixedRelease");
             testCase.verifyWarningFree(@() timeSeriesPreparation.Arc.requireOneRelease([a b], ...
                 AllowMixedRelease = true));
+        end
+
+        function deriveRefusesBadData(testCase)
+            [t, obs, aux] = triple(6);
+            arc = timeSeriesPreparation.Arc(t, obs, aux);
+            testCase.verifyError(@() derive(arc, double(t), obs, "s"), ...
+                "timeSeriesPreparation:Arc:timeFormat");
+            testCase.verifyError(@() derive(arc, flipud(t), obs, "s"), ...
+                "timeSeriesPreparation:Arc:timeNotIncreasing");
+            testCase.verifyError(@() derive(arc, t, obs(:, 1:2), "s"), ...
+                "timeSeriesPreparation:Arc:sizeMismatch");
+            testCase.verifyError(@() derive(arc, t, obs, "s", Units = "m"), ...
+                "timeSeriesPreparation:Arc:sizeMismatch");
+            bad = obs; bad(1) = -Inf;
+            testCase.verifyError(@() derive(arc, t, bad, "s"), ...
+                "timeSeriesPreparation:Arc:notFinite");
         end
 
         function badLayerRefused(testCase)

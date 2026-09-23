@@ -6,6 +6,7 @@ classdef Arc
 %     arc = timeSeriesPreparation.Arc(t, obs, aux, Columns = names, Frame = frame)
 %     arc = addLayer(arc, name, remove)
 %     arc = appendProvenance(arc, stage, detail)
+%     out = derive(arc, t, obs, stage, detail, Units = units)
 %     timeSeriesPreparation.Arc.requireOneRelease(arcs)
 %
 %   DESCRIPTION
@@ -33,6 +34,12 @@ classdef Arc
 %     append-only, one entry per stage: stage, toolbox version, UTC time,
 %     detail.
 %
+%     derive is how a stage returns data on new epochs (crnApply, later
+%     align): the result keeps names, mission, product, satellite, release,
+%     files and frame, carries the provenance and appends the stage's entry;
+%     weights, layers and filled start afresh, because they belong to the old
+%     epochs.
+%
 %   INPUTS
 %     t       (N,1) int64    -   GPS nanoseconds past 2000-01-01 12:00:00,
 %                                strictly increasing.
@@ -46,6 +53,7 @@ classdef Arc
 %     stage   (1,1) string   -   Name of the stage writing provenance.
 %     detail  (1,1) struct   -   Stage-specific provenance detail.
 %     arcs    (1,:) Arc      -   A campaign: an array of arcs.
+%     units   (1,:) string   -   derive: units of the new obs columns.
 %
 %   OPTIONS
 %     Columns            (1,:) string   [all]     Observation names to keep,
@@ -140,17 +148,7 @@ classdef Arc
                 return                                  % empty arc, for arrays
             end
 
-            if ~isa(t, "int64") || ~iscolumn(t)
-                error("timeSeriesPreparation:Arc:timeFormat", ...
-                    "t must be an int64 column vector of GPS nanoseconds " + ...
-                    "(gracefoReading 'TimeFormat', ""gpsns""), not %s %s.", ...
-                    mat2str(size(t)), class(t));
-            end
-            if any(diff(t) <= 0)
-                error("timeSeriesPreparation:Arc:timeNotIncreasing", ...
-                    "t is not strictly increasing (first at sample %d).", ...
-                    find(diff(t) <= 0, 1) + 1);
-            end
+            checkTime(t);
             required = ["obsNames" "variableNames" "variableFieldNames" "variableUnits"];
             for f = required
                 if ~isfield(aux, f)
@@ -220,6 +218,39 @@ classdef Arc
                 "allowMixedRelease", options.AllowMixedRelease));
         end
 
+        function out = derive(arc, t, obs, stage, detail, options)
+            arguments
+                arc (1,1) timeSeriesPreparation.Arc
+                t
+                obs
+                stage (1,1) string
+                detail (1,1) struct = struct()
+                options.Units (1,:) string = arc.units
+            end
+            checkTime(t);
+            if ~isa(obs, "double") || ~isreal(obs) || size(obs, 1) ~= numel(t) ...
+                    || size(obs, 2) ~= numel(arc.names) ...
+                    || numel(options.Units) ~= numel(arc.names)
+                error("timeSeriesPreparation:Arc:sizeMismatch", ...
+                    "obs is %s %s and Units has %d entries; expected real " + ...
+                    "double %d x %d and %d units.", mat2str(size(obs)), ...
+                    class(obs), numel(options.Units), numel(t), ...
+                    numel(arc.names), numel(arc.names));
+            end
+            if any(isinf(obs), "all")
+                error("timeSeriesPreparation:Arc:notFinite", ...
+                    "obs holds Inf; NaN is the only missing value (CONCEPT 5.2).");
+            end
+            out = arc;
+            out.t = t;
+            out.obs = obs;
+            out.units = options.Units;
+            out.weights = ones(numel(t), 1);
+            out.layers = struct();
+            out.filled = false(numel(t), 1);
+            out = appendProvenance(out, stage, detail);
+        end
+
         function arc = addLayer(arc, name, remove)
             arguments
                 arc (1,1) timeSeriesPreparation.Arc
@@ -271,6 +302,21 @@ classdef Arc
 end
 
 % ------------------------------------------------------------------------
+
+function checkTime(t)
+% int64 GPS ns, a column, strictly increasing.
+    if ~isa(t, "int64") || ~iscolumn(t)
+        error("timeSeriesPreparation:Arc:timeFormat", ...
+            "t must be an int64 column vector of GPS nanoseconds " + ...
+            "(gracefoReading 'TimeFormat', ""gpsns""), not %s %s.", ...
+            mat2str(size(t)), class(t));
+    end
+    if any(diff(t) <= 0)
+        error("timeSeriesPreparation:Arc:timeNotIncreasing", ...
+            "t is not strictly increasing (first at sample %d).", ...
+            find(diff(t) <= 0, 1) + 1);
+    end
+end
 
 function [files, products, headers] = fileMetadata(aux)
 % File names, products and headers from readL1b (single) or readL1bMulti.

@@ -21,7 +21,7 @@ th { background: #f0f0f0; }
 </head>
 <body>
 <h1>timeSeriesPreparation.Config</h1>
-<p>Instrument settings in nine sections, strict about field names (skeleton).</p>
+<p>Instrument settings in nine sections, strict about field names.</p>
 <h2>Syntax</h2>
 <pre><code>cfg = timeSeriesPreparation.Config()
 cfg = timeSeriesPreparation.Config(arc)
@@ -29,7 +29,8 @@ cfg = set(cfg, section, field, value)
 s   = toStruct(cfg)</code></pre>
 <h2>Description</h2>
 <p>The settings of every stage, in the sections of CONCEPT 5: mask, qc, crn, align, fill, noise, unc, drivers, run. Each section has a schema, the list of fields it knows; set refuses a section or a field outside it, so a misspelt option fails instead of being silently ignored. Config(arc) records the arc&#x27;s mission and product and returns the preset for that product (CONCEPT 5).</p>
-<p>Skeleton (X-03): every schema is empty and no product has a preset yet. Each stage adds its fields, defaults and presets in its own work package (crn at X-04, mask and qc at X-05, ...). An option whose default would be an assumption defaults to empty (R5). Applications take a Config as &#x27;Preproc&#x27; and hash it with their own options; toStruct gives them a plain struct to hash.</p>
+<p>Each stage adds its fields, defaults and presets in its own work package; the other sections are still empty. An option whose default would be an assumption defaults to empty (R5). Applications take a Config as &#x27;Preproc&#x27; and hash it with their own options; toStruct gives them a plain struct to hash.</p>
+<p>crn (X-04): field preset, the crnKernel preset the product was filtered with in L1B processing - &quot;ACC&quot; for ACC1B (GRACE) and ACT1B (GRACE-FO), &quot;KBR&quot; for KBR1B (R-1 App. B; R-2 PDF p. 20). Any other product leaves it &quot;&quot; (not known, so not assumed).</p>
 <h2>Inputs</h2>
 <table>
 <tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
@@ -57,11 +58,11 @@ s   = toStruct(cfg)</code></pre>
 <pre><code>cfg = timeSeriesPreparation.Config();
 s = toStruct(cfg);</code></pre>
 <h2>Limitations</h2>
-<p>No schema field and no preset exist yet; set therefore refuses every field until the stages define theirs.</p>
+<p>Only crn.preset exists so far; set refuses every other field until the stages define theirs.</p>
 <h2>References</h2>
-<p>docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults).</p>
+<p>docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults). R-1: GRACE L1B ATBD, JPL D-27672, App. B. R-2: GRACE-FO L1 Handbook, JPL D-56935.</p>
 <h2>See also</h2>
-<p><code>timeSeriesPreparation.Arc</code></p>
+<p><code>timeSeriesPreparation.Arc</code>, <code>timeSeriesPreparation.crnKernel</code></p>
 <p class="footer">timeSeriesPreparation v0.0.0 - generated from the help block of +timeSeriesPreparation/Config.m by ci-actions/matlab-docs. Do not edit.</p>
 </body>
 </html>

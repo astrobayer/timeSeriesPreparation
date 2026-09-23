@@ -17,9 +17,17 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:Arc:unknownColumn` | `+timeSeriesPreparation/Arc.m` | Observations | Columns names an observation the file does not have, or names one twice. |
 | `timeSeriesPreparation:Config:unknownField` | `+timeSeriesPreparation/Config.m` | Settings | field is not in the section's schema. |
 | `timeSeriesPreparation:Config:unknownSection` | `+timeSeriesPreparation/Config.m` | Settings | section is not one of the nine sections. |
+| `timeSeriesPreparation:crnApply:badKernel` | `+timeSeriesPreparation/crnApply.m` | Kernel | kernel lacks a field of crnKernel's output, or its taps are not Nf x 1. |
+| `timeSeriesPreparation:crnApply:emptyArc` | `+timeSeriesPreparation/crnApply.m` | Input | the arc holds no samples. An OutputEpochs that is not int64 is refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:crnApply:epochNotOnGrid` | `+timeSeriesPreparation/crnApply.m` | Grid | an output epoch is not on the input grid, or OutputEpochs is not strictly increasing. |
+| `timeSeriesPreparation:crnApply:notOnGrid` | `+timeSeriesPreparation/crnApply.m` | Grid | an input epoch is not a whole number of kernel sample intervals from the first. |
+| `timeSeriesPreparation:crnApply:rate` | `+timeSeriesPreparation/crnApply.m` | Grid | 1e9/kernel.fs is not a whole number of nanoseconds. |
+| `timeSeriesPreparation:crnKernel:badParameters` | `+timeSeriesPreparation/crnKernel.m` | Parameters | Fs*Tf is not an odd integer, Nc is not a positive odd integer, or B*Tf rounds to a passband of zero bins or of Nh bins or more. |
+| `timeSeriesPreparation:crnKernel:unknownPreset` | `+timeSeriesPreparation/crnKernel.m` | Preset | preset is not "ACC", "KBR" or "LRI". |
+| `timeSeriesPreparation:crnKernel:unverifiedPreset` | `+timeSeriesPreparation/crnKernel.m` | Preset | "LRI": no CRN numbers for LRI1B are confirmed from a registered document yet. |
 | `timeSeriesPreparation:setupTimeSeriesPreparation:noGracefoReading` | `setupTimeSeriesPreparation.m` | Input domain | GracefoReading names a folder that does not hold +gracefoReading. |
 | `timeSeriesPreparation:timeSeriesPreparationCiGate:empty` | `timeSeriesPreparationCiGate.m` | Gate verdict | the tests folder yields no test. |
 | `timeSeriesPreparation:timeSeriesPreparationCiGate:failed` | `timeSeriesPreparationCiGate.m` | Gate verdict | at least one test failed. |
 | `timeSeriesPreparation:toolboxVersion:noVersion` | `+timeSeriesPreparation/+internal/toolboxVersion.m` | Version source | Contents.m holds no "% Version x.y.z" line. |
 
-15 identifier(s).
+23 identifier(s).
