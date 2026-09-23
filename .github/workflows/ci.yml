@@ -19,6 +19,9 @@
 #   visible, so the "present" branch of the resolution is exercised; without
 #   the secret the step is skipped and the one test that needs it is counted
 #   incomplete, never silently passed.
+#   lsqvce is a TEST-ONLY dependency (CONCEPT 10.1 X-07, Q12): checked out
+#   into deps/lsqvce the same way, for the agreement test between the
+#   sigtools numerics and lsqvce's kernels. No toolbox function calls it.
 #
 # PINS
 #   ci-actions by immutable tag (its README: a moving tag would change this
@@ -89,6 +92,16 @@ jobs:
           ref: v1.1.0
           token: ${{ secrets.REFERENCE_READ_TOKEN }}
           path: deps/gracefoReading
+
+      # Test-only (Q12); pinned like gracefoReading.
+      - name: Check out lsqvce (test-only dependency)
+        if: ${{ env.HAVE_REFERENCE_TOKEN == 'true' }}
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: astrobayer/lsqvce
+          ref: v6.1.3
+          token: ${{ secrets.REFERENCE_READ_TOKEN }}
+          path: deps/lsqvce
 
       - name: MATLAB gate
         uses: matlab-actions/run-command@bfa857648f4895aa98a446fe41c85e0788421ed5 # v3
