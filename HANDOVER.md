@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.12 · 2026-09-23 · X-06 merged; X-02 scope frozen**
+**Revision 0.12 · 2026-09-23 · X-06 merged; X-02 in review**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -60,6 +60,69 @@ Out of scope, each with its place:
   pages and help examples for the subpackages. Until then this PR's help
   blocks are checked locally against the `public` profile.
 - Any numerical change: tolerances, algorithms, speed (X-16 for speed).
+
+**How it was done.** I did the four plotting splits, `internal.dlyap`, the
+equivalence gate, the demos and the test infrastructure myself. Four
+parallel agents did the conventions pass:
+- the spectral group;
+- the tsmodels fitting group;
+- the tsmodels utility group;
+- the tagging of `tests/sigtools`.
+
+I reviewed every non-comment line of their diffs. No computational line
+changed. Options that became string arrays are only compared with
+`strcmpi`, never returned, and option defaults keep their char class, so
+the model structs stay identical.
+
+**Interface changes, besides the plotting split** (all refuse earlier or
+more precisely; none changes a number):
+- inputParser gave way to arguments blocks, so a struct passed in place of
+  name-value pairs is no longer expanded. No caller did that.
+- `tsAutoArima` and `tsAutoSarima` forward only the options of their fit
+  function, and an unknown option is refused at once. Before, every fit
+  failed inside `try` and the call ended in `noFit`.
+- The three `tsFit*` wrappers forward only the options they are given.
+- `powerSpectrum` takes one series per call; several series are one struct
+  array.
+
+**Measured before the push (2026-09-23, ci-actions `v1.3.2`):**
+- The Wilson-Hilferty chi-square quantile of `allanVariance` was checked
+  against an exact quantile because its help needed a number. At 1 sigma
+  it errs < 0.6 % for edf >= 3; at 95 % the lower quantile errs 16 % at
+  edf 3, 4 % at edf 5 and 0.7 % at edf 10. This is now in its ACCURACY.
+- `matlab-audit` with the repository profile: 83 files at 0.1.0,
+  **clean**. With the strict profile the `.github/` PR will adopt
+  (`sigtools-imported` dropped, subpackages under `public`, `tests/sigtools`
+  under `tests`, a `demos` profile): **clean** but for its own catalogue
+  path. `matlab-docs --check`: 16 files, **in sync** (+1 page and +1 help
+  example, `internal.dlyap`).
+
+**Prediction** (before any run): **392 + 0 + 0 = 392** with the
+gracefoReading checkout (without it: 384 + 0 + 8).
+
+| class | contract | reference | precision | robustness | metamorphic | vectorisation | speed | untagged | total |
+|---|---|---|---|---|---|---|---|---|---|
+| unchanged from X-06 | 40 | 42 | 7 | 52 | 10 | 5 | 3 | | 159 |
+| tests/sigtools (tagged, count unchanged) | 48 | 79 | 3 | 34 | 15 | 1 | | | 180 |
+| TestSigtoolsEquivalence (new) | 1 | 40 | | 1 | | | | | 42 |
+| TestSigtoolsImport (5 -> 1) | 1 | | | | | | | | 1 |
+| TestHelpExamples (+1, dlyap) | 10 | | | | | | | | 10 |
+| **sum** | **100** | **161** | **10** | **87** | **25** | **6** | **3** | **0** | **392** |
+
+(The first row is the X-06 total, 353, less the untagged sigtools 180,
+TestSigtoolsImport 5 and TestHelpExamples 9 = 159.)
+
+**Debt.**
+- Tier A: there is no local MATLAB, and nothing here ran before CI. The
+  converted functions' EXAMPLEs run only once the `.github/` PR includes
+  the subpackages in the docs generator.
+- **The `.github/` follow-up PR**, which stands alone: the audit profile
+  switch described above; `"warnings": true`, so warning identifiers are
+  audited (X-06 debt); and the docs generator for `+spectral` and
+  `+tsmodels` (HTML pages, the catalogue with their identifiers, their help
+  examples).
+- The references the agents added from memory (e.g. Jones 1980, Monahan
+  1984, Durbin 1960) need a spot check of volume and page.
 
 ---
 
@@ -413,10 +476,11 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-02 (#5) on branch `claude/grace-timeseries-issues-28g3a4`: scope frozen,
-in progress.** X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
-`f969ecb`, release 0.1.0; the annotated tag `v0.1.0` and its GitHub release
-are pending, GUIDE §3). X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b merged
+**X-02 (#5) on branch `claude/grace-timeseries-issues-28g3a4`: implemented,
+CI pending.** X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
+`f969ecb`, release 0.1.0). The annotated tag `v0.1.0` on `f969ecb` is the
+owner's: the session's push of it was refused (HTTP 403, 2026-09-23). The
+GitHub release follows the tag. X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b merged
 (PR #36, `2ecf543`); X-00a merged (#2, `f26df8d`).
 
 **Phase 0 complete (2026-09-19):**

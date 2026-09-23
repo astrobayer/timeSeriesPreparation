@@ -1,84 +1,153 @@
-function model = tsFitArima(x, p, d, q, varargin)
-%TSFITARIMA  Fit an ARIMA(p,d,q) model to a time series (base MATLAB only).
+function model = tsFitArima(x, p, d, q, options)
+%TSFITARIMA  Fit an ARIMA(p,d,q) model by exact ML, CSS or Yule-Walker.
 %
-%   ------------------------------------------------------------------
+%   SYNTAX
+%     model = timeSeriesPreparation.tsmodels.tsFitArima(x, p, d, q)
+%     model = timeSeriesPreparation.tsmodels.tsFitArima(x, p, d, q, Method = "css", Constant = false)
+%
+%   DESCRIPTION
+%     The one ARIMA estimator of the package; tsFitAR, tsFitMA, tsFitARMA
+%     and tsAutoArima call it. It fits
+%       phi(B) (1-B)^d (x_t - mu) = theta(B) e_t,   e_t ~ N(0, sigma^2),
+%     phi(B) = 1 - phi_1 B - ... - phi_p B^p,
+%     theta(B) = 1 + theta_1 B + ... + theta_q B^q; (p,0,0) is AR(p),
+%     (0,0,q) MA(q), (p,0,q) ARMA(p,q). x is differenced d times first
+%     (tsDiff); the mean mu (Constant) is that of the differenced series.
+%
+%     Methods:
+%       "exact"  exact Gaussian ML (default). A Kalman filter on the
+%                Harvey state space of dimension r = max(p, q+1), started
+%                from the stationary covariance P = T P T' + R R' (the
+%                shared doubling solver timeSeriesPreparation.internal.
+%                dlyap, tolerance 1e-14, 60 doublings, Kronecker fallback),
+%                with sigma^2 concentrated out.
+%       "css"    conditional sum of squares, the first max(p,q) residuals
+%                set to zero.
+%       "yw"     Yule-Walker, pure AR only: a closed-form fast path, the
+%                mean is the sample mean, no optimiser, no standard errors.
+%
+%     For exact ML and CSS the AR and the MA block are optimised in an
+%     unconstrained space: tanh maps each value to a partial
+%     autocorrelation in (-1, 1), clamped to +/-0.999, and the
+%     Durbin-Levinson recursion turns these into coefficients. Every trial
+%     polynomial is therefore stationary and invertible by construction.
+%     fminsearch (TolX = TolFun = 1e-8, MaxFunEvals 2000 (p+q+2)) runs from
+%     four starts: a Yule-Walker seed, a white-noise seed and two seeds
+%     perturbed by 0.3 randn; the lowest negative log-likelihood wins.
+%     Standard errors come from the observed-information Hessian of the
+%     penalty-free objective in the natural parameters: central
+%     differences at steps h = 1e-3 max(|theta|, 1) and h/2, combined by
+%     Richardson extrapolation, with an eigenvalue repair when the inverse
+%     is not positive definite. AIC = 2 nll + 2 k and BIC = 2 nll + k
+%     log(nObs), with k the number of coefficients plus one for sigma^2.
+%
+%     Gaps: NaN marks a missing sample on a regular time grid. With the
+%     exact method the Kalman filter only predicts at a gap and accrues no
+%     likelihood term there, which gives the exact ML estimate on the
+%     observed data. Gaps require d = 0 and Method "exact"; resid is NaN
+%     there and nObs counts the observed samples. Base MATLAB only.
+%
 %   INPUTS
-%   ------------------------------------------------------------------
-%     x         Nx1 double [numeric,real,vector]
-%       Series; NaN allowed at missing timestamps when Method='exact',
-%       d=0.
-%     p         1x1 double [double]
-%       AR order (>=0).
-%     d         1x1 double [double]
-%       Differencing order (>=0). Must be 0 if x has gaps.
-%     q         1x1 double [double]
-%       MA order (>=0).
-%     varargin  name-value [mixed]
-%       'Constant'(true), 'Method'('exact'|'css'|'yw'),
-%       'Display'('off'|'iter'), 'MaxIter'(2000).
+%     x  (:,1) double   -   Series (a row is used as a column); NaN marks a
+%                           missing sample (exact method, d = 0 only).
+%     p  (1,1) double   -   AR order, >= 0; rounded.
+%     d  (1,1) double   -   Differencing order, >= 0; rounded.
+%     q  (1,1) double   -   MA order, >= 0; rounded.
 %
-%   ------------------------------------------------------------------
+%   OPTIONS
+%     Constant  (1,1) logical  [true]     Include the mean mu. Ignored by
+%                                         "yw", which always fits it.
+%     Method    (1,1) string   ["exact"]  "exact", "css" or "yw"
+%                                         (case-insensitive).
+%     Display   (1,1) string   ["off"]    fminsearch display: "off",
+%                                         "iter", "final" or "notify".
+%     MaxIter   (1,1) double   [2000]     fminsearch iteration cap per
+%                                         start, > 0.
+%
 %   OUTPUTS
-%   ------------------------------------------------------------------
-%     model   1x1 struct [struct]
-%       Fitted model with fields type, p, d, q, const, mu, ar (1xp), ma
-%       (1xq), sigma2, resid (Nx1, NaN at gaps), stdErr, logL, aic, bic,
-%       n, nObs, obs (Nx1 logical), k, x, xd, x0, method, converged.
+%     model  (1,1) struct   -   Fields: type (char, e.g. 'ARMA(2,1)'); p,
+%                               d, q; const; mu; ar (1,p), ma (1,q);
+%                               sigma2; resid (N-d,1), NaN at gaps; stdErr
+%                               (1,k-1), standard errors of [mu ar ma];
+%                               logL; n, the length of the differenced
+%                               series; nObs, the observed samples; obs
+%                               (N,1) logical, true = observed; k; aic;
+%                               bic; x, xd (differenced), x0 (tsDiff
+%                               seeds); method (char); converged,
+%                               fminsearch exit flag 1. A "yw" model has
+%                               no nObs and obs, stdErr is [] and k = p+2.
 %
-%   See also: tsFitAR, tsFitMA, tsFitARMA, tsAutoArima, tsForecast, tsModelDisp.
+%   ACCURACY
+%     Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit
+%     for bit. The sigtools HANDOFF (section 3) records independent NumPy
+%     re-derivations: the exact AR(1) log-likelihood matches the closed-form
+%     Gaussian density to about 1e-12; the Richardson-Hessian standard
+%     error of an AR(1) matches sqrt((1 - phi^2)/n) to a ratio of 1.000;
+%     the PACF <-> coefficient round trip is exact; the doubling Lyapunov
+%     solve matches the Kronecker solve to about 1e-15. The optimum itself
+%     is only as good as fminsearch from four starts (TolX 1e-8).
 %
-%   ------------------------------------------------------------------
-%   Toolbox : sigtools (tsmodels)
-%   Author  : Generated by Claude Opus 4.8 (Anthropic)
-%   Date    : 2026-07-15  (build time-of-day not available in this environment)
-%   ------------------------------------------------------------------
+%   ERRORS
+%     Input:
+%       timeSeriesPreparation:tsFitArima:badData - an observed sample is
+%           Inf.
+%       timeSeriesPreparation:tsFitArima:tooShort - fewer than p + q + 2
+%           observed samples.
+%     Gaps:
+%       timeSeriesPreparation:tsFitArima:gapsWithDiff - x has NaN gaps
+%           and d > 0.
+%       timeSeriesPreparation:tsFitArima:gapsNeedExact - x has NaN gaps
+%           and Method is not "exact".
+%     Method:
+%       timeSeriesPreparation:tsFitArima:ywMA - Method "yw" with q > 0.
+%       timeSeriesPreparation:tsFitArima:method - Method is not "exact",
+%           "css" or "yw".
+%     A non-numeric or complex x (validateattributes), or an order or
+%     option outside its domain (arguments block), is refused with a
+%     MATLAB: identifier.
 %
-%   MODEL = TSFITARIMA(X,P,D,Q) fits, with a constant term, the model
-%       phi(B) (1-B)^d (X_t - mu) = theta(B) e_t,   e_t ~ N(0,sigma^2)
-%   with phi(B)=1-phi_1 B-...-phi_p B^p and theta(B)=1+th_1 B+...+th_q B^q.
+%   EXAMPLE
+%     % AR(1) with phi = 0.6 and zero mean: exact ML recovers ar near 0.6.
+%     x = filter(1, [1 -0.6], randn(RandStream("twister", "Seed", 1), 200, 1));
+%     model = timeSeriesPreparation.tsmodels.tsFitArima(x, 1, 0, 0, Constant = false);
 %
-%   Special cases:  (p,0,0)=AR(p), (0,0,q)=MA(q), (p,0,q)=ARMA(p,q).
+%   LIMITATIONS
+%     The two perturbed starts draw from the global random stream, whose
+%     state is restored afterwards; the fit therefore depends on the
+%     current rng state (set rng for a reproducible fit). The exact
+%     likelihood costs O(n r^3) per evaluation; fminsearch needs hundreds
+%     of evaluations, so large p + q is slow. Gaps and differencing do not
+%     mix. Options passed as one struct (inputParser's StructExpand) are no
+%     longer accepted; pass name-value pairs.
 %
-%   Missing samples: pass X with NaN at missing (but regularly-spaced)
-%   timestamps. With Method='exact' the Kalman filter skips the update at
-%   each gap (predict-only) and accrues no likelihood term there, giving the
-%   exact ML estimate on the observed data. Gaps require d=0 and 'exact';
-%   MODEL.resid is NaN at missing timestamps and MODEL.nObs reports the
-%   number of observed samples used.
+%   REFERENCES
+%     G. E. P. Box, G. M. Jenkins, G. C. Reinsel, G. M. Ljung (2015), Time
+%     Series Analysis: Forecasting and Control, 5th ed., Wiley.
+%     J. Durbin, S. J. Koopman (2012), Time Series Analysis by State Space
+%     Methods, 2nd ed., Oxford University Press.
+%     R. H. Jones (1980), Technometrics 22(3), 389-395 (ARMA likelihood
+%     with missing observations).
+%     J. F. Monahan (1984), Biometrika 71(2), 403-404 (PACF
+%     reparametrisation).
+%     J. A. Nelder, R. Mead (1965), Comput. J. 7(4), 308-313.
+%     sigtools v1.3.1 HANDOFF, section 3.
 %
-%   Name/value options:
-%       'Constant' (true)   include mean term mu
-%       'Method'   'exact'  exact Gaussian ML via Kalman filter (DEFAULT)
-%                  'css'    conditional sum of squares
-%                  'yw'     Yule-Walker (pure AR only)
-%       'Display'  'off'|'iter'   forwarded to fminsearch
-%       'MaxIter'  2000
+%   See also timeSeriesPreparation.tsmodels.tsFitAR, timeSeriesPreparation.tsmodels.tsFitMA, timeSeriesPreparation.tsmodels.tsFitARMA, timeSeriesPreparation.tsmodels.tsAutoArima, timeSeriesPreparation.tsmodels.tsFitSarima, timeSeriesPreparation.tsmodels.tsForecast, timeSeriesPreparation.tsmodels.tsCheckResiduals.
 %
-%   MODEL fields: type p d q const mu ar ma sigma2 resid stdErr logL
-%       aic bic n nObs obs x xd x0 method converged.
-%
-%   Estimation notes:
-%     * AR and MA coefficients are optimised in an unconstrained,
-%       PACF-reparametrised space (tanh + Durbin-Levinson), so every
-%       candidate polynomial is stationary/invertible by construction --
-%       no soft-barrier penalty distorts the likelihood surface.
-%     * A small multi-start (Yule-Walker seed, white-noise seed, and a few
-%       random perturbations) reduces the chance of a local optimum from
-%       the derivative-free fminsearch.
-%     * Standard errors come from the Richardson-extrapolated observed-
-%       information Hessian of the natural-parameter negative log-likelihood.
-%
-%   See also TSFORECAST, TSAUTOARIMA, TSMODELDISP, TSLJUNGBOX, TSFITSARIMA.
-%   Base MATLAB only.
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
-    narginchk(4, inf);
-    ip = inputParser;
-    ip.addParameter('Constant', true, @(v) islogical(v) || isscalar(v));
-    ip.addParameter('Method', 'exact', @(s) ischar(s) || isstring(s));
-    ip.addParameter('Display', 'off', @(s) ischar(s) || isstring(s));
-    ip.addParameter('MaxIter', 2000, @(v) isscalar(v) && v > 0);
-    ip.parse(varargin{:});
-    opt = ip.Results;
+    arguments
+        x
+        p (1,1) {mustBeNumeric, mustBeReal, mustBeNonnegative}
+        d (1,1) {mustBeNumeric, mustBeReal, mustBeNonnegative}
+        q (1,1) {mustBeNumeric, mustBeReal, mustBeNonnegative}
+        options.Constant (1,1) {mustBeNumericOrLogical} = true
+        options.Method {mustBeTextScalar} = 'exact'
+        options.Display {mustBeTextScalar} = 'off'
+        options.MaxIter (1,1) {mustBePositive} = 2000
+    end
+    opt = options;
     method   = lower(char(opt.Method));
     hasConst = logical(opt.Constant);
 
@@ -89,17 +158,17 @@ function model = tsFitArima(x, p, d, q, varargin)
     obs = ~isnan(x);                       % observed-sample mask
     hasGaps = ~all(obs);
     if any(~isfinite(x(obs)))
-        error('tsFitArima:badData','Observed samples must be finite (Inf not allowed).');
+        error('timeSeriesPreparation:tsFitArima:badData','Observed samples must be finite (Inf not allowed).');
     end
 
     if hasGaps
         if d > 0
-            error('tsFitArima:gapsWithDiff', ...
+            error('timeSeriesPreparation:tsFitArima:gapsWithDiff', ...
                 ['Differencing (d>0) across missing samples is undefined. ', ...
                  'Difference the fully-observed series yourself, or model with d=0.']);
         end
         if ~strcmp(method,'exact')
-            error('tsFitArima:gapsNeedExact', ...
+            error('timeSeriesPreparation:tsFitArima:gapsNeedExact', ...
                 ['Missing samples require Method=''exact'' (missing-data Kalman ', ...
                  'filter). CSS and Yule-Walker assume a complete series.']);
         end
@@ -108,12 +177,12 @@ function model = tsFitArima(x, p, d, q, varargin)
     [w, x0] = timeSeriesPreparation.tsmodels.tsDiff(x, d);                % w == x when d==0 (gap case)
     n = numel(w);
     if sum(obs) < p + q + 2
-        error('tsFitArima:tooShort', 'Too few observed samples for the requested order.');
+        error('timeSeriesPreparation:tsFitArima:tooShort', 'Too few observed samples for the requested order.');
     end
 
     % ---- Yule-Walker fast path (pure AR, no constant) -------------------
     if strcmp(method,'yw')
-        if q > 0, error('tsFitArima:ywMA','Yule-Walker supports pure AR only.'); end
+        if q > 0, error('timeSeriesPreparation:tsFitArima:ywMA','Yule-Walker supports pure AR only.'); end
         model = local_finishYW(x, w, x0, p, d);
         return;
     end
@@ -130,7 +199,7 @@ function model = tsFitArima(x, p, d, q, varargin)
         case 'css'
             objNat = @(th) local_negLL_css(th, w, p, q, hasConst, true);
             objRaw = @(th) local_negLL_css(th, w, p, q, hasConst, false);
-        otherwise, error('tsFitArima:method','Unknown Method "%s".', method);
+        otherwise, error('timeSeriesPreparation:tsFitArima:method','Unknown Method "%s".', method);
     end
 
     % ---- Reparametrised (unconstrained) objective ----------------------
@@ -328,7 +397,7 @@ function [nll, e, s2] = local_negLL_exact(th, w, p, q, hasConst, obs, usePenalty
     end
     % When usePenalty is false (Hessian / standard-error evaluation) the
     % likelihood is still computed for mildly non-stationary coefficients:
-    % local_dlyap falls back to the Kronecker solve, and the KF F>0 guard
+    % internal.dlyap falls back to the Kronecker solve, and the KF F>0 guard
     % below catches any genuinely degenerate case.
     y = w - mu;
     r = max(p, q+1);
@@ -339,7 +408,7 @@ function [nll, e, s2] = local_negLL_exact(th, w, p, q, hasConst, obs, usePenalty
     RR = R*R';
 
     % Stationary initial state covariance: P = T P T' + RR  (units of s2)
-    P = local_dlyap(T, RR);
+    P = timeSeriesPreparation.internal.dlyap(T, RR, 1e-14, 60);
     a = zeros(r,1);
 
     e = nan(n,1); S = 0; logF = 0; nObs = 0; ok = true;
@@ -364,32 +433,6 @@ function [nll, e, s2] = local_negLL_exact(th, w, p, q, hasConst, obs, usePenalty
     if ~(s2 > 0) || ~isfinite(s2), nll = 1e12; e = nan(n,1); return; end
     nll = 0.5*(nObs*log(2*pi) + nObs*log(s2) + logF + nObs);
     e   = e * sqrt(s2);                        % scale innovations to ~ N(0,s2)
-end
-
-% ======================================================================
-% Discrete Lyapunov  P = T P T' + Q
-% ======================================================================
-function P = local_dlyap(T, Q)
-% Solve the discrete Lyapunov equation for the stationary state covariance.
-% Primary method: squaring/doubling iteration (Anderson-Moore), which is
-% O(r^3) per step and numerically well behaved for a stable T. Falls back
-% to the direct Kronecker solve if the iteration has not converged (e.g.
-% eigenvalues extremely close to the unit circle).
-    r = size(T,1);
-    A = T; P = Q; tol = 1e-14; maxit = 60; converged = false;
-    for it = 1:maxit
-        Pnew = P + A*P*A';
-        A    = A*A;
-        if norm(Pnew - P, 'fro') <= tol*max(norm(Pnew,'fro'), 1)
-            P = Pnew; converged = true; break;
-        end
-        P = Pnew;
-    end
-    if ~converged || any(~isfinite(P(:)))
-        M = eye(r*r) - kron(T, T);
-        P = reshape(M \ Q(:), r, r);
-    end
-    P = 0.5*(P + P');
 end
 
 % ======================================================================
