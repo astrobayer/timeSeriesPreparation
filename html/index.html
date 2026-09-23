@@ -35,6 +35,35 @@ th { background: #f0f0f0; }
 <tr><td><a href="timeSeriesPreparation.internal.requirePackage.html"><code>timeSeriesPreparation.internal.requirePackage</code></a></td><td>Refuse at the point of use when an optional dependency is missing.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.resampleOnto.html"><code>timeSeriesPreparation.internal.resampleOnto</code></a></td><td>Interpolate a series onto new epochs, never across a hole.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.toolboxVersion.html"><code>timeSeriesPreparation.internal.toolboxVersion</code></a></td><td>The toolbox version, read from its one authority, Contents.m.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.allanVariance.html"><code>timeSeriesPreparation.spectral.allanVariance</code></a></td><td>Overlapping Allan variance and deviation, with confidence bounds and slopes.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.arma2acv.html"><code>timeSeriesPreparation.spectral.arma2acv</code></a></td><td>Exact auto-covariance / -correlation of a discrete-time ARMA process.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.arma2psd.html"><code>timeSeriesPreparation.spectral.arma2psd</code></a></td><td>One-sided PSD (or ASD) of a discrete-time ARMA process.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.plotAllanVariance.html"><code>timeSeriesPreparation.spectral.plotAllanVariance</code></a></td><td>Draw Allan deviation on log-log axes with its shaded confidence band.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.plotPowerSpectrum.html"><code>timeSeriesPreparation.spectral.plotPowerSpectrum</code></a></td><td>Draw spectra from powerSpectrum: lines, peaks, FAP levels, confidence bars.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.plotPsd2armaFit.html"><code>timeSeriesPreparation.spectral.plotPsd2armaFit</code></a></td><td>Draw a psd2arma fit: target and fitted PSD, and the fit error in dB.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.powerSpectrum.html"><code>timeSeriesPreparation.spectral.powerSpectrum</code></a></td><td>Power and amplitude spectrum of one series: Welch FFT or Lomb-Scargle.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.psd2arma.html"><code>timeSeriesPreparation.spectral.psd2arma</code></a></td><td>Fit a discrete-time ARMA (IIR) process to a target PSD or ASD.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.sfreqz.html"><code>timeSeriesPreparation.spectral.sfreqz</code></a></td><td>Digital frequency response of an IIR/FIR filter (base MATLAB).</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.sinvfreqz.html"><code>timeSeriesPreparation.spectral.sinvfreqz</code></a></td><td>Fit an IIR filter to a complex frequency response (base MATLAB).</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.spec2acv.html"><code>timeSeriesPreparation.spectral.spec2acv</code></a></td><td>One- or two-sided PSD/ASD to auto-covariance / -correlation.</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.sstmcb.html"><code>timeSeriesPreparation.spectral.sstmcb</code></a></td><td>Steiglitz-McBride IIR fit to an impulse response (base MATLAB).</td></tr>
+<tr><td><a href="timeSeriesPreparation.spectral.synthTimeSeries.html"><code>timeSeriesPreparation.spectral.synthTimeSeries</code></a></td><td>Generate stationary noise from a PSD or an ARMA model.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.plotResiduals.html"><code>timeSeriesPreparation.tsmodels.plotResiduals</code></a></td><td>Draw the four-panel residual check from tsCheckResiduals.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsAcf.html"><code>timeSeriesPreparation.tsmodels.tsAcf</code></a></td><td>Sample autocorrelation function (gap-aware).</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsAutoArima.html"><code>timeSeriesPreparation.tsmodels.tsAutoArima</code></a></td><td>Grid search over ARIMA(p,d,q) orders minimising AIC or BIC.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsAutoSarima.html"><code>timeSeriesPreparation.tsmodels.tsAutoSarima</code></a></td><td>Grid search over seasonal ARIMA orders minimising AIC or BIC.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsCheckResiduals.html"><code>timeSeriesPreparation.tsmodels.tsCheckResiduals</code></a></td><td>Residual diagnostics of a fitted ARIMA/SARIMA model: ACF, Ljung-Box, Jarque-Bera.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsDiff.html"><code>timeSeriesPreparation.tsmodels.tsDiff</code></a></td><td>Apply d-th order lag-1 differencing: y = (1-B)^d x.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsFitAR.html"><code>timeSeriesPreparation.tsmodels.tsFitAR</code></a></td><td>Fit an AR(p) model: tsFitArima(x, p, 0, 0, ...).</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsFitARMA.html"><code>timeSeriesPreparation.tsmodels.tsFitARMA</code></a></td><td>Fit an ARMA(p,q) model: tsFitArima(x, p, 0, q, ...).</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsFitArima.html"><code>timeSeriesPreparation.tsmodels.tsFitArima</code></a></td><td>Fit an ARIMA(p,d,q) model by exact ML, CSS or Yule-Walker.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsFitMA.html"><code>timeSeriesPreparation.tsmodels.tsFitMA</code></a></td><td>Fit an MA(q) model: tsFitArima(x, 0, 0, q, ...).</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsFitSarima.html"><code>timeSeriesPreparation.tsmodels.tsFitSarima</code></a></td><td>Fit a seasonal ARIMA(p,d,q)(P,D,Q)_s model by CSS or exact ML.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsForecast.html"><code>timeSeriesPreparation.tsmodels.tsForecast</code></a></td><td>h-step forecasts and prediction intervals of an (S)ARIMA model.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsIntegrate.html"><code>timeSeriesPreparation.tsmodels.tsIntegrate</code></a></td><td>Inverse of tsDiff: reconstruct a series from its differences.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsLjungBox.html"><code>timeSeriesPreparation.tsmodels.tsLjungBox</code></a></td><td>Ljung-Box portmanteau test for residual autocorrelation.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsModelDisp.html"><code>timeSeriesPreparation.tsmodels.tsModelDisp</code></a></td><td>Pretty-print a fitted ARIMA or SARIMA model summary.</td></tr>
+<tr><td><a href="timeSeriesPreparation.tsmodels.tsPacf.html"><code>timeSeriesPreparation.tsmodels.tsPacf</code></a></td><td>Sample partial autocorrelation function (Durbin-Levinson, gap-aware).</td></tr>
 </table>
 <h2>Reference</h2>
 <p><a href="errorIdentifiers.html">Error identifiers</a></p>

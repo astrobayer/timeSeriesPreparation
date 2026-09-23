@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsPacf</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsPacf</h1>
+<p>Sample partial autocorrelation function (Durbin-Levinson, gap-aware).</p>
+<h2>Syntax</h2>
+<pre><code>[pacf, lags, conf] = timeSeriesPreparation.tsmodels.tsPacf(x)
+[pacf, lags, conf] = timeSeriesPreparation.tsmodels.tsPacf(x, maxLag)
+[pacf, lags, conf] = timeSeriesPreparation.tsmodels.tsPacf(x, maxLag, makePSD)</code></pre>
+<h2>Description</h2>
+<p>The PACF identifies the order of an autoregression: for an AR(p) process it cuts off after lag p. It is computed by the Durbin-Levinson recursion on the sample ACF of tsAcf, lags 1..maxLag.</p>
+<p>With NaN gaps the ACF is estimated pairwise-complete (see tsAcf), and such an ACF need not be positive-definite; the recursion can then return |PACF| &gt; 1, and a warning says so. makePSD = true first projects the ACF onto the nearest positive-semidefinite autocorrelation, by alternating projection (at most 100 sweeps, to 1e-10) between the PSD cone (eigenvalues clipped at 0) and unit- diagonal Toeplitz matrices (diagonals averaged, rho(0) renormalised to 1). That guarantees |PACF| &lt;= 1. conf is the 95 % white-noise band 1.96/sqrt(n) with n the smallest pair count over lags 1..maxLag. For estimation with gaps prefer tsFitArima (exact missing-data ML); use this PACF for identification. Base MATLAB only.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Series; NaN marks a missing sample. A matrix is read as x(:).</td></tr>
+<tr><td><code>maxLag</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Largest lag; [] or omitted: min(N - 1, 40). Rounded and capped at N - 1.</td></tr>
+<tr><td><code>makePSD</code></td><td>1,1</td><td><code>logical</code></td><td>&mdash;</td><td>- Project the ACF onto the nearest PSD autocorrelation first; [] or omitted: false.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>pacf</code></td><td>L,1</td><td><code>double</code></td><td>&mdash;</td><td>- Sample PACF at lags 1..L.</td></tr>
+<tr><td><code>lags</code></td><td>L,1</td><td><code>double</code></td><td>&mdash;</td><td>- Lags 1..L, in samples.</td></tr>
+<tr><td><code>conf</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Half-width of the 95 % white-noise band.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>The recursion is exact up to rounding; a denominator below eps is replaced by +/-eps. The PSD projection stops at a change below 1e-10 or after 100 sweeps. Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:tsPacf:unobservableLag</code></td><td>Gaps</td><td>a lag up to maxLag has no complete pair.</td></tr>
+</table>
+<h2>Warnings</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:tsPacf:nonPD</code></td><td>Gaps</td><td>|PACF| &gt; 1 at some lag: the pairwise ACF is not positive-definite.</td></tr>
+</table>
+<h2>Example</h2>
+<p>The PACF of an AR(2) series cuts off after lag 2.</p>
+<pre><code>x = filter(1, [1 -0.5 0.3], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 1), 2000, 1));
+[pacf, lags, conf] = timeSeriesPreparation.tsmodels.tsPacf(x, 10);</code></pre>
+<h2>Limitations</h2>
+<p>The projection is a heuristic nearest point, not a certified Frobenius-nearest one, and costs an eigendecomposition of a (maxLag+1)-square matrix per sweep. Without it, heavy gapping can give |PACF| &gt; 1.</p>
+<h2>References</h2>
+<p>J. Durbin (1960), Rev. Int. Stat. Inst. 28(3), 233-244. G. E. P. Box, G. M. Jenkins, G. C. Reinsel, Time Series Analysis: Forecasting and Control, Wiley. sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsAcf</code>, <code>timeSeriesPreparation.tsmodels.tsFitArima</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsPacf.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

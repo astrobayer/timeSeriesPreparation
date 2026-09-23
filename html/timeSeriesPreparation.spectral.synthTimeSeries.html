@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.synthTimeSeries</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.synthTimeSeries</h1>
+<p>Generate stationary noise from a PSD or an ARMA model.</p>
+<h2>Syntax</h2>
+<pre><code>[x, t, info] = timeSeriesPreparation.spectral.synthTimeSeries(&quot;psd&quot;, f, S, Fs, N)
+[x, t, info] = timeSeriesPreparation.spectral.synthTimeSeries(&quot;arma&quot;, b, a, Fs, N)
+x = timeSeriesPreparation.spectral.synthTimeSeries(&quot;psd&quot;, f, S, Fs, N, NColumns = 4, Seed = 1)</code></pre>
+<h2>Description</h2>
+<p>Synthesises N samples of a real, zero-mean Gaussian series at Fs that is stationary from the first sample: there is no filter warmup and no burn-in to discard.</p>
+<p>Mode &quot;psd&quot; uses the randomised-phase spectral representation. The one-sided target S(f) is interpolated onto the rFFT grid f_k = k Fs/N (log-log if the grid is log-spaced and mostly positive, else linear; zero outside [min f, max f]). Each bin gets a complex Gaussian amplitude with E|X_k|^2 = S_k Fs N/2, DC and Nyquist are real with the full power S_k Fs N, and the half-spectrum is inverted with Hermitian symmetry.</p>
+<p>Mode &quot;arma&quot; runs x[n] = filter(b, a, w[n]), w white with variance NoiseVariance, in Harvey&#x27;s companion state-space form. The initial state is drawn from the stationary distribution, whose covariance solves the discrete Lyapunov equation (doubling, tolerance 1e-14, 80 steps; timeSeriesPreparation.internal.dlyap), factored by Cholesky (eigen-decomposition if not positive definite).</p>
+<p>The PSD scaling matches arma2psd and powerSpectrum: one-sided S with trapz(f,S) equal to the variance, so an arma2psd output fed back in reproduces the spectrum. With Seed, the global generator is seeded by rng(Seed) and restored on exit; without it, the global stream is used and advanced.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>mode</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- &quot;psd&quot; or &quot;arma&quot;, case-insensitive.</td></tr>
+<tr><td><code>p1</code></td><td>M,1</td><td><code>double</code></td><td>&mdash;</td><td>- &quot;psd&quot;: f, frequency grid in Hz, real, 0 &lt;= f &lt;= Fs/2, any spacing. &quot;arma&quot;: b, MA (numerator) coefficients, real, finite.</td></tr>
+<tr><td><code>p2</code></td><td>M,1</td><td><code>double</code></td><td>&mdash;</td><td>- &quot;psd&quot;: S, one-sided PSD (unit^2/Hz), or ASD with InputType &quot;asd&quot;, real. &quot;arma&quot;: a, AR (denominator) coefficients, real, finite.</td></tr>
+<tr><td><code>Fs</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Hz Output sampling rate, &gt; 0, finite.</td></tr>
+<tr><td><code>N</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Number of samples, positive integer.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>NoiseVariance</code></td><td>1,1</td><td><code>double</code></td><td>1</td><td>Driving white-noise variance sigma_w^2 (&quot;arma&quot;), &gt; 0.</td></tr>
+<tr><td><code>InputType</code></td><td>1,1</td><td><code>string</code></td><td>&quot;psd&quot;</td><td>&quot;psd&quot; or &quot;asd&quot; (S squared first; &quot;psd&quot; mode).</td></tr>
+<tr><td><code>Mean</code></td><td>1,1</td><td><code>double</code></td><td>0</td><td>Constant added to the output, finite.</td></tr>
+<tr><td><code>Seed</code></td><td>1,1</td><td><code>double</code></td><td>[</td><td>] rng seed; [] leaves the global generator untouched.</td></tr>
+<tr><td><code>NColumns</code></td><td>1,1</td><td><code>double</code></td><td>1</td><td>Number of independent realisations (columns of x), &gt;= 1, rounded.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>N,C</td><td><code>double</code></td><td>&mdash;</td><td>- Synthesised series, one column per realisation (C = NColumns), plus Mean.</td></tr>
+<tr><td><code>t</code></td><td>N,1</td><td><code>double</code></td><td>&mdash;</td><td>s Time vector, (0:N-1)&#x27;/Fs.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: method (&#x27;spectral&#x27; | &#x27;arma-stationary&#x27;); Fs; N; df, Hz; targetVariance (trapz(f,S), or sigma_w^2 sum(psi^2) from 2000+ impulse samples); empiricalVariance (mean column variance); warmupFree (true).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>sigtools HANDOFF section 3 (NumPy re-derivation): the PSD path is unbiased (mean bias about 1e-5, error falling as 1/sqrt(M) over M realisations); the ARMA path variance matches theory; the ratio of first-block to last-block mean square is about 1.00 (no warmup); the Hermitian assembly is correct for even and odd N. A single realisation scatters around the target like any Gaussian estimate. Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:synthTimeSeries:mode</code></td><td>Input</td><td>mode is not &quot;psd&quot; or &quot;arma&quot;.</td></tr>
+<tr><td><code>timeSeriesPreparation:synthTimeSeries:sizeMismatch</code></td><td>Input</td><td>f and S differ in length (&quot;psd&quot;).</td></tr>
+<tr><td><code>timeSeriesPreparation:synthTimeSeries:freqRange</code></td><td>Input</td><td>an f exceeds Fs/2 (&quot;psd&quot;). f, S, b or a outside their domain (see INPUTS) are refused by validateattributes, and Fs, N or an option outside its domain by the arguments block, with a MATLAB: identifier.</td></tr>
+<tr><td><code>timeSeriesPreparation:synthTimeSeries:badOption</code></td><td>Options</td><td>InputType is not &quot;psd&quot; or &quot;asd&quot; (case-insensitive).</td></tr>
+</table>
+<h2>Example</h2>
+<p>1000 samples of an ARMA(2,2) process at 500 Hz, reproducible.</p>
+<pre><code>[x, t, info] = timeSeriesPreparation.spectral.synthTimeSeries(&quot;arma&quot;, [1 -0.5 0.2], [1 -1.2 0.6], 500, 1000, NoiseVariance = 2, Seed = 1);</code></pre>
+<h2>Limitations</h2>
+<p>Gaussian only: non-Gaussian higher moments are not reproduced. The PSD path is periodic with period N (circular), so the ACV wraps around. The draws use the global random stream (rng), not a RandStream argument; Seed makes a call reproducible. The ARMA path loops sample by sample in MATLAB and is slow for very long series.</p>
+<h2>References</h2>
+<p>M. Shinozuka, G. Deodatis (1991), Appl. Mech. Rev. 44(4), 191-204 (spectral representation). A. C. Harvey (1989), Forecasting, Structural Time Series Models and the Kalman Filter, Cambridge University Press (state space). sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.arma2psd</code>, <code>timeSeriesPreparation.spectral.psd2arma</code>, <code>timeSeriesPreparation.spectral.spec2acv</code>, <code>timeSeriesPreparation.spectral.powerSpectrum</code>, <code>timeSeriesPreparation.spectral.sfreqz</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/synthTimeSeries.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

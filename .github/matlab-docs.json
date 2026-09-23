@@ -9,9 +9,7 @@
     "+timeSeriesPreparation"
   ],
   "exclude": [
-    "**/Contents.m",
-    "+timeSeriesPreparation/+spectral/*.m",
-    "+timeSeriesPreparation/+tsmodels/*.m"
+    "**/Contents.m"
   ],
   "entries": "template",
   "output": "html",

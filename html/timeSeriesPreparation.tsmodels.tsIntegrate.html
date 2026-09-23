@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsIntegrate</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsIntegrate</h1>
+<p>Inverse of tsDiff: reconstruct a series from its differences.</p>
+<h2>Syntax</h2>
+<pre><code>x = timeSeriesPreparation.tsmodels.tsIntegrate(y, x0)</code></pre>
+<h2>Description</h2>
+<p>Undoes y = (1-B)^d x of tsDiff, for instance to bring a forecast of the differenced series back to the original scale. Starting from the deepest level, each step prepends the stored initial value x0(i) and cumulatively sums: x = x0(i) + [0; cumsum(y)]. With d = numel(x0) levels the result is d samples longer than y; an empty x0 returns y. Base MATLAB only.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>y</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Differenced series, finite. A matrix is read as y(:).</td></tr>
+<tr><td><code>x0</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Initial value per differencing level, as returned by tsDiff; [] for d = 0.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>M+d,1</td><td><code>double</code></td><td>&mdash;</td><td>- Reconstructed series on the original scale.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact up to rounding in the cumulative sums; tsIntegrate(tsDiff(x, d)) returns x to rounding. Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<p>(none) A non-numeric, complex or non-finite y, or a non-numeric x0, is refused by the arguments block with a MATLAB: identifier.</p>
+<h2>Example</h2>
+<p>Difference twice and rebuild.</p>
+<pre><code>x = ((1:10)&#x27;).^2;
+[y, x0] = timeSeriesPreparation.tsmodels.tsDiff(x, 2);
+xr = timeSeriesPreparation.tsmodels.tsIntegrate(y, x0);</code></pre>
+<h2>Limitations</h2>
+<p>Lag-1 levels only, matching tsDiff. The rounding error of the cumulative sums grows with the length and with d.</p>
+<h2>References</h2>
+<p>G. E. P. Box, G. M. Jenkins, G. C. Reinsel, Time Series Analysis: Forecasting and Control, Wiley. sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsDiff</code>, <code>timeSeriesPreparation.tsmodels.tsForecast</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsIntegrate.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsCheckResiduals</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsCheckResiduals</h1>
+<p>Residual diagnostics of a fitted ARIMA/SARIMA model: ACF, Ljung-Box, Jarque-Bera.</p>
+<h2>Syntax</h2>
+<pre><code>out = timeSeriesPreparation.tsmodels.tsCheckResiduals(model)
+out = timeSeriesPreparation.tsmodels.tsCheckResiduals(model, lags)</code></pre>
+<h2>Description</h2>
+<p>The numbers behind the standard residual check of a model from tsFitArima and its wrappers: - the standardised residuals; - the residual ACF with its white-noise band; - the Ljung-Box p-value ladder over lags 1..L, with degrees of freedom L minus the number of ARMA parameters; - the Jarque-Bera normality test (chi-square, 2 dof); - the normal Q-Q pairs. Since X-02 it draws nothing. plotResiduals draws the four-panel figure from this output (owner decision 2026-09-23, clean break). The numbers are v1.3.1&#x27;s; the output lost the field figure and gained the Q-Q data qqSample and qqTheoretical, which v1.3.1 computed only for the plot. Base MATLAB only.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>model</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- From tsFitArima, tsFitAR, tsFitMA, tsFitARMA or tsAutoArima; uses resid, obs, p, q, and P, Q for SARIMA.</td></tr>
+<tr><td><code>lags</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Largest lag of the ACF and the ladder; [] or omitted: min(20, floor(nObs/4)).</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>out</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: resid (N,1) standardised residuals, NaN at gaps; acf (L,1), lags 1..L; acfConf, the +/- white-noise band; lags and lbLags (L,1); lbP and lbQ (L,1), the Ljung-Box p-values and statistics; jbStat, jbP; qqSample (nObs,1), the sorted standardised residuals; qqTheoretical (nObs,1), the normal quantiles at (k - 0.5)/nObs.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>The chi-square CDF comes from a series and continued-fraction incomplete gamma, converged to 1e-14 relative. The normal quantiles use the Acklam rational approximation, whose relative error is below 1.15e-9. The numbers are unchanged from v1.3.1, and TestSigtoolsEquivalence holds them bit for bit.</p>
+<h2>Errors</h2>
+<p>(none) A model without the field resid, or a lags that is not a scalar, is refused by the arguments block or by MATLAB with a MATLAB: identifier.</p>
+<h2>Example</h2>
+<p>An AR(1) fit and its residual numbers.</p>
+<pre><code>x = filter(1, [1 -0.6], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 2), 500, 1));
+out = timeSeriesPreparation.tsmodels.tsCheckResiduals(timeSeriesPreparation.tsmodels.tsFitAR(x, 1));</code></pre>
+<h2>Limitations</h2>
+<p>The Ljung-Box degrees of freedom subtract p + q (+ P + Q); for lags below that count they are clamped to 1, so the first p-values are not meaningful.</p>
+<h2>References</h2>
+<p>G. M. Ljung, G. E. P. Box (1978), Biometrika 65(2), 297-303. C. M. Jarque, A. K. Bera (1980), Econ. Lett. 6(3), 255-259. P. J. Acklam (2003), An algorithm for computing the inverse normal cumulative distribution function.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.plotResiduals</code>, <code>timeSeriesPreparation.tsmodels.tsLjungBox</code>, <code>timeSeriesPreparation.tsmodels.tsAcf</code>, <code>timeSeriesPreparation.tsmodels.tsFitArima</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsCheckResiduals.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

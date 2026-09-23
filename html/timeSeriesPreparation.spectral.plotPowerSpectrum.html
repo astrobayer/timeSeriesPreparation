@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.spectral.plotPowerSpectrum</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.spectral.plotPowerSpectrum</h1>
+<p>Draw spectra from powerSpectrum: lines, peaks, FAP levels, confidence bars.</p>
+<h2>Syntax</h2>
+<pre><code>h = timeSeriesPreparation.spectral.plotPowerSpectrum(spec)
+h = timeSeriesPreparation.spectral.plotPowerSpectrum(spec, Confidence = 0.95, Unit = &quot;nT&quot;)</code></pre>
+<h2>Description</h2>
+<p>The drawing half of sigtools&#x27; plotPowerSpectrum, split at X-02 (owner decision 2026-09-23): it computes nothing but the placement of the display elements. It takes the struct array from powerSpectrum and draws each series in the quantity that series was computed for (spec.type), on log-log axes by default. It also draws the peaks returned by powerSpectrum (triangles), and each Lomb-Scargle series&#x27; false-alarm levels as dashed lines labelled with their confidence. Confidence adds a chi-square confidence bar for each FFT/Welch series (dof = spec.dof). ShowSpectralWindow adds a lower panel with the spectral window |W(f)|^2 of each Lomb-Scargle series, to judge alias peaks.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>spec</code></td><td>1,S</td><td><code>struct</code></td><td>&mdash;</td><td>- From powerSpectrum; all series of one type.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Confidence</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Confidence level in (0,1) of the chi-square bar.</td></tr>
+<tr><td><code>XScale</code></td><td>1,1</td><td><code>string</code></td><td>&quot;log&quot;</td><td>&quot;log&quot; or &quot;linear&quot;.</td></tr>
+<tr><td><code>YScale</code></td><td>1,1</td><td><code>string</code></td><td>&quot;log&quot;</td><td>&quot;log&quot; or &quot;linear&quot;.</td></tr>
+<tr><td><code>Unit</code></td><td>1,1</td><td><code>string</code></td><td>&quot;&quot;</td><td>Unit of the data, for the axis label.</td></tr>
+<tr><td><code>Title</code></td><td>1,1</td><td><code>string</code></td><td>&quot;&quot;</td><td>Plot title.</td></tr>
+<tr><td><code>Axes</code></td><td>1,1</td><td><code>handle</code></td><td>&mdash;</td><td>Target axes; [] = a new figure.</td></tr>
+<tr><td><code>ShowSpectralWindow</code></td><td>1,1</td><td><code>logical</code></td><td>false</td><td>Lower panel with |W(f)|^2 (new figure only).</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>h</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Graphics handles: figure, axes, windowAxes, lines (S,1), peakMarkers, ciBars, fapLines, legend.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Not applicable, because the function draws and computes no result. The confidence bar&#x27;s factors solve gammainc(x/2, dof/2) = p with fzero, as in sigtools v1.3.1.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:plotPowerSpectrum:badSpec</code></td><td>Input</td><td>spec is empty, lacks a field of powerSpectrum&#x27;s output, or mixes &quot;psd&quot; and &quot;amplitude&quot; series.</td></tr>
+<tr><td><code>timeSeriesPreparation:plotPowerSpectrum:badOption</code></td><td>Options</td><td>XScale or YScale is neither &quot;log&quot; nor &quot;linear&quot; (case-insensitive). Other options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Two series, one figure; the peaks come from powerSpectrum.</p>
+<pre><code>t = (0:1/100:20)&#x27;;
+spec = [timeSeriesPreparation.spectral.powerSpectrum(t, sin(2*pi*3*t), Label = &quot;A&quot;, Type = &quot;amplitude&quot;, NPeaks = 1), timeSeriesPreparation.spectral.powerSpectrum(t, 0.5*sin(2*pi*7*t), Label = &quot;B&quot;, Type = &quot;amplitude&quot;)];
+h = timeSeriesPreparation.spectral.plotPowerSpectrum(spec, Unit = &quot;nT&quot;);
+close(h.figure);</code></pre>
+<h2>Limitations</h2>
+<p>One figure per call. The spectral-window panel needs a new figure, so it is ignored when Axes is given.</p>
+<h2>References</h2>
+<p>sigtools v1.3.1 plotPowerSpectrum (docs/inputs); the numbers are powerSpectrum&#x27;s.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.spectral.powerSpectrum</code>, <code>timeSeriesPreparation.spectral.plotAllanVariance</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+spectral/plotPowerSpectrum.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

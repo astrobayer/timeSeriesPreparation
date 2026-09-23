@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsModelDisp</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsModelDisp</h1>
+<p>Pretty-print a fitted ARIMA or SARIMA model summary.</p>
+<h2>Syntax</h2>
+<pre><code>timeSeriesPreparation.tsmodels.tsModelDisp(model)</code></pre>
+<h2>Description</h2>
+<p>A readable summary of a fit for the command window: the model type and method (flagged when the optimiser did not converge), each coefficient (mu, AR, MA and, for SARIMA, SAR, SMA) with its standard error, sigma^2, the log-likelihood with n and k, the observed count when samples are missing, AIC and BIC, and a Ljung-Box test of the residuals at L = min(20, max(1, floor(n/4))) lags with nParam = p + q (+ P + Q). Standard errors are shown only when the model carries a field stdErr; tsFitSarima fits do not compute them, so the column reads &#x27;-&#x27;. Base MATLAB only.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>model</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fit from tsFitArima, tsFitAR, tsFitMA, tsFitARMA, tsFitSarima, tsAutoArima or tsAutoSarima.</td></tr>
+</table>
+<h2>Outputs</h2>
+<p>(none)</p>
+<h2>Accuracy</h2>
+<p>Not applicable, because it prints the model&#x27;s numbers, rounded to the printed digits (%12.6g for coefficients, %.5g for standard errors), and a Ljung-Box value computed by tsLjungBox.</p>
+<h2>Errors</h2>
+<p>(none) A model that is not a 1x1 struct is refused by the arguments block, and a missing field by MATLAB, each with a MATLAB: identifier.</p>
+<h2>Example</h2>
+<p>Fit an AR(1) and print its summary.</p>
+<pre><code>x = filter(1, [1 -0.6], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 4), 300, 1));
+timeSeriesPreparation.tsmodels.tsModelDisp(timeSeriesPreparation.tsmodels.tsFitAR(x, 1));</code></pre>
+<h2>Limitations</h2>
+<p>Output only; nothing is returned. Use tsCheckResiduals for the residual numbers.</p>
+<h2>References</h2>
+<p>G. M. Ljung, G. E. P. Box (1978), Biometrika 65(2), 297-303. sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsFitArima</code>, <code>timeSeriesPreparation.tsmodels.tsLjungBox</code>, <code>timeSeriesPreparation.tsmodels.tsForecast</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsModelDisp.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

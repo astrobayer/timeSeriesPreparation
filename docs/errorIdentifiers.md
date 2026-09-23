@@ -20,8 +20,17 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:align:columnMismatch` | `+timeSeriesPreparation/align.m` | Units | obs and ref have different numbers of columns. |
 | `timeSeriesPreparation:align:unitMismatch` | `+timeSeriesPreparation/align.m` | Units | a column pair states different units. |
 | `timeSeriesPreparation:align:unitUnknown` | `+timeSeriesPreparation/align.m` | Units | a column of obs or ref states no unit. |
+| `timeSeriesPreparation:arma2acv:badAR` | `+timeSeriesPreparation/+spectral/arma2acv.m` | Model | a(1) is zero. |
+| `timeSeriesPreparation:arma2acv:badOption` | `+timeSeriesPreparation/+spectral/arma2acv.m` | Options | Output or Method is not one of its values (case-insensitive). Other inputs outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:arma2acv:nonstationary` | `+timeSeriesPreparation/+spectral/arma2acv.m` | Model | a root of A lies on or outside the unit circle (\|z\| >= 1 - 1e-12). |
+| `timeSeriesPreparation:arma2acv:zeroVariance` | `+timeSeriesPreparation/+spectral/arma2acv.m` | Model | Output "acf" with R(0) <= 0. |
+| `timeSeriesPreparation:arma2psd:badOption` | `+timeSeriesPreparation/+spectral/arma2psd.m` | Options | Output or Sided is not one of its values (case-insensitive), or Frequencies is not empty or a vector of values >= 0. Other options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:arma2psd:freqRange` | `+timeSeriesPreparation/+spectral/arma2psd.m` | Input | a Frequencies entry exceeds Fs/2. |
 | `timeSeriesPreparation:checkAlignment:badGrid` | `+timeSeriesPreparation/checkAlignment.m` | Input | Step is not a whole number of nanoseconds, or MaxLag is not a whole multiple of Step. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:checkAlignment:columnMismatch` | `+timeSeriesPreparation/checkAlignment.m` | Input | obs and ref have different numbers of columns. |
+| `timeSeriesPreparation:checkAlignment:grossOffset` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column lags by more than MaxLag/2, or its peak lies on the search edge. |
+| `timeSeriesPreparation:checkAlignment:offset` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column lags by more than Threshold. |
+| `timeSeriesPreparation:checkAlignment:undetermined` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column has no positive peak or too few valid pairs. |
 | `timeSeriesPreparation:crnApply:badKernel` | `+timeSeriesPreparation/crnApply.m` | Kernel | kernel lacks a field of crnKernel's output, or its taps are not Nf x 1. |
 | `timeSeriesPreparation:crnApply:emptyArc` | `+timeSeriesPreparation/crnApply.m` | Input | the arc holds no samples. An OutputEpochs that is not int64 is refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:crnApply:epochNotOnGrid` | `+timeSeriesPreparation/crnApply.m` | Grid | an output epoch is not on the input grid, or OutputEpochs is not strictly increasing. |
@@ -30,9 +39,66 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:crnKernel:badParameters` | `+timeSeriesPreparation/crnKernel.m` | Parameters | Fs*Tf is not an odd integer, Nc is not a positive odd integer, or B*Tf rounds to a passband of zero bins or of Nh bins or more. |
 | `timeSeriesPreparation:crnKernel:unknownPreset` | `+timeSeriesPreparation/crnKernel.m` | Preset | preset is not "ACC", "KBR" or "LRI". |
 | `timeSeriesPreparation:crnKernel:unverifiedPreset` | `+timeSeriesPreparation/crnKernel.m` | Preset | "LRI": no CRN numbers for LRI1B are confirmed from a registered document yet. |
+| `timeSeriesPreparation:plotAllanVariance:sizeMismatch` | `+timeSeriesPreparation/+spectral/plotAllanVariance.m` | Input | adev, info.adevLow or info.adevHigh is not numel(tau) x P. Inputs outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:plotPowerSpectrum:badOption` | `+timeSeriesPreparation/+spectral/plotPowerSpectrum.m` | Options | XScale or YScale is neither "log" nor "linear" (case-insensitive). Other options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:plotPowerSpectrum:badSpec` | `+timeSeriesPreparation/+spectral/plotPowerSpectrum.m` | Input | spec is empty, lacks a field of powerSpectrum's output, or mixes "psd" and "amplitude" series. |
+| `timeSeriesPreparation:plotPsd2armaFit:badResults` | `+timeSeriesPreparation/+spectral/plotPsd2armaFit.m` | Input | results lacks a field of psd2arma's output. |
+| `timeSeriesPreparation:plotResiduals:badInput` | `+timeSeriesPreparation/+tsmodels/plotResiduals.m` | Input | out lacks a field of tsCheckResiduals' output. |
+| `timeSeriesPreparation:powerSpectrum:badOption` | `+timeSeriesPreparation/+spectral/powerSpectrum.m` | Options | a text option is not one of its values (case-insensitive), or Frequencies is not a vector of positive values. Other options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:powerSpectrum:badRate` | `+timeSeriesPreparation/+spectral/powerSpectrum.m` | Input | a scalar t is not a positive sampling rate. |
+| `timeSeriesPreparation:powerSpectrum:emptyGrid` | `+timeSeriesPreparation/+spectral/powerSpectrum.m` | Input | the Lomb-Scargle frequency grid is empty (MaxFreq below the first bin). |
+| `timeSeriesPreparation:powerSpectrum:fapResolution` | `+timeSeriesPreparation/+spectral/powerSpectrum.m` | Significance | FAP*NBootstrap < 10: the bootstrap level is noisy. |
+| `timeSeriesPreparation:powerSpectrum:sizeMismatch` | `+timeSeriesPreparation/+spectral/powerSpectrum.m` | Input | t is neither a scalar nor as long as x. |
+| `timeSeriesPreparation:powerSpectrum:tooFewSamples` | `+timeSeriesPreparation/+spectral/powerSpectrum.m` | Input | fewer than 8 valid samples. |
+| `timeSeriesPreparation:psd2arma:fitDiverged` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Fit | the fit gave non-finite coefficients. |
+| `timeSeriesPreparation:psd2arma:fitFailed` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Fit | no order up to MaxOrder could be fitted. |
+| `timeSeriesPreparation:psd2arma:freqRange` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Input | frequencies outside [0, Fs/2] were dropped. |
+| `timeSeriesPreparation:psd2arma:sizeMismatch` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Input | f and S differ in length. |
+| `timeSeriesPreparation:psd2arma:toleranceNotMet` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Fit | Tol not reached up to MaxOrder; the best order found is returned. |
+| `timeSeriesPreparation:psd2arma:tooFewPoints` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Input | fewer than 2 points lie within [0, Fs/2]. |
+| `timeSeriesPreparation:psd2arma:zeroPSD` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Input | the target is identically zero. |
 | `timeSeriesPreparation:setupTimeSeriesPreparation:noGracefoReading` | `setupTimeSeriesPreparation.m` | Input domain | GracefoReading names a folder that does not hold +gracefoReading. |
+| `timeSeriesPreparation:spec2acv:badBins` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Input | NanPolicy "error" and non-finite bins, or fewer than 2 valid bins to interpolate. |
+| `timeSeriesPreparation:spec2acv:badDOF` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Options | DOF is not positive. Other options outside their domain are refused by the arguments block (case-sensitive values), and a non-positive gauss or exp WindowParam by validateattributes, with a MATLAB: identifier. |
+| `timeSeriesPreparation:spec2acv:ciSkipped` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Uncertainty | Rstd skipped: transform too large and no NUFFT available. |
+| `timeSeriesPreparation:spec2acv:complexS` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Input | S has a significant imaginary part; abs(S) is used. |
+| `timeSeriesPreparation:spec2acv:lagsNeedDirect` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Options | Lags given without Method "direct". |
+| `timeSeriesPreparation:spec2acv:maxBins` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Grid and taper | the grid would exceed MaxBins; df is coarsened. |
+| `timeSeriesPreparation:spec2acv:negFreq` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Input | negative frequencies with Sided "one". |
+| `timeSeriesPreparation:spec2acv:negS` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Input | negative bins clipped to 0. |
+| `timeSeriesPreparation:spec2acv:notDecayed` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Grid and taper | S at Nyquist is above 1 % of its maximum and no taper is applied (ringing). |
+| `timeSeriesPreparation:spec2acv:sizeMismatch` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Input | f and S differ in length. |
+| `timeSeriesPreparation:spec2acv:tooShort` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Input | fewer than 3 points. |
+| `timeSeriesPreparation:spec2acv:tukeyClamp` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Grid and taper | Tukey ratio outside [0,1] is clamped. |
+| `timeSeriesPreparation:spec2acv:zeroVariance` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Normalisation | Output "acf" with R(0) <= 0. |
+| `timeSeriesPreparation:synthTimeSeries:badOption` | `+timeSeriesPreparation/+spectral/synthTimeSeries.m` | Options | InputType is not "psd" or "asd" (case-insensitive). |
+| `timeSeriesPreparation:synthTimeSeries:freqRange` | `+timeSeriesPreparation/+spectral/synthTimeSeries.m` | Input | an f exceeds Fs/2 ("psd"). f, S, b or a outside their domain (see INPUTS) are refused by validateattributes, and Fs, N or an option outside its domain by the arguments block, with a MATLAB: identifier. |
+| `timeSeriesPreparation:synthTimeSeries:mode` | `+timeSeriesPreparation/+spectral/synthTimeSeries.m` | Input | mode is not "psd" or "arma". |
+| `timeSeriesPreparation:synthTimeSeries:sizeMismatch` | `+timeSeriesPreparation/+spectral/synthTimeSeries.m` | Input | f and S differ in length ("psd"). |
 | `timeSeriesPreparation:timeSeriesPreparationCiGate:empty` | `timeSeriesPreparationCiGate.m` | Gate verdict | the tests folder yields no test. |
 | `timeSeriesPreparation:timeSeriesPreparationCiGate:failed` | `timeSeriesPreparationCiGate.m` | Gate verdict | at least one test failed. |
 | `timeSeriesPreparation:toolboxVersion:noVersion` | `+timeSeriesPreparation/+internal/toolboxVersion.m` | Version source | Contents.m holds no "% Version x.y.z" line. |
+| `timeSeriesPreparation:tsAcf:badData` | `+timeSeriesPreparation/+tsmodels/tsAcf.m` | Input | an observed sample is Inf. A non-numeric or complex x, or a maxLag that is not a numeric |
+| `timeSeriesPreparation:tsAutoArima:badOption` | `+timeSeriesPreparation/+tsmodels/tsAutoArima.m` | Options | Criterion is not "aic" or "bic" (case-insensitive). |
+| `timeSeriesPreparation:tsAutoArima:unknownCriterion` | `+timeSeriesPreparation/+tsmodels/tsAutoArima.m` | Options | a criterion other than "aic" or "bic" reaches the grid loop; raised inside the per-order try, so it skips the order. The arguments block refuses such a Criterion first, so it is a guard only. When no order can be fitted (also when tsFitArima refuses a forwarded option, since every order then fails), the call fails in |
+| `timeSeriesPreparation:tsAutoSarima:criterion` | `+timeSeriesPreparation/+tsmodels/tsAutoSarima.m` | Options | Criterion is neither "aic" nor "bic". |
+| `timeSeriesPreparation:tsAutoSarima:noFit` | `+timeSeriesPreparation/+tsmodels/tsAutoSarima.m` | Fit | no order in the grid could be fitted. |
+| `timeSeriesPreparation:tsDiff:negativeOrder` | `+timeSeriesPreparation/+tsmodels/tsDiff.m` | Order | d < 0. |
+| `timeSeriesPreparation:tsDiff:nonfiniteWithDiff` | `+timeSeriesPreparation/+tsmodels/tsDiff.m` | Gaps | d > 0 and x holds NaN or Inf. |
+| `timeSeriesPreparation:tsDiff:tooShort` | `+timeSeriesPreparation/+tsmodels/tsDiff.m` | Order | d >= numel(x). |
+| `timeSeriesPreparation:tsFitArima:badData` | `+timeSeriesPreparation/+tsmodels/tsFitArima.m` | Input | an observed sample is Inf. |
+| `timeSeriesPreparation:tsFitArima:gapsNeedExact` | `+timeSeriesPreparation/+tsmodels/tsFitArima.m` | Gaps | x has NaN gaps and Method is not "exact". |
+| `timeSeriesPreparation:tsFitArima:gapsWithDiff` | `+timeSeriesPreparation/+tsmodels/tsFitArima.m` | Gaps | x has NaN gaps and d > 0. |
+| `timeSeriesPreparation:tsFitArima:method` | `+timeSeriesPreparation/+tsmodels/tsFitArima.m` | Method | Method is not "exact", "css" or "yw". A non-numeric or complex x (validateattributes), or an order or option outside its domain (arguments block), is refused with a MATLAB: identifier. |
+| `timeSeriesPreparation:tsFitArima:tooShort` | `+timeSeriesPreparation/+tsmodels/tsFitArima.m` | Input | fewer than p + q + 2 observed samples. |
+| `timeSeriesPreparation:tsFitArima:ywMA` | `+timeSeriesPreparation/+tsmodels/tsFitArima.m` | Method | Method "yw" with q > 0. |
+| `timeSeriesPreparation:tsFitSarima:badData` | `+timeSeriesPreparation/+tsmodels/tsFitSarima.m` | Input | an observed sample of a gapped series is Inf. |
+| `timeSeriesPreparation:tsFitSarima:badOption` | `+timeSeriesPreparation/+tsmodels/tsFitSarima.m` | Options | Method is not "css" or "exact" (case-insensitive). A non-numeric or complex x, an order that is not three nonnegative integers, or a seasonal s that is not an integer >= 2 is refused by validateattributes, and another option outside its domain by the arguments block, with a MATLAB: identifier. |
+| `timeSeriesPreparation:tsFitSarima:gapsNeedExact` | `+timeSeriesPreparation/+tsmodels/tsFitSarima.m` | Gaps | x has NaN gaps and Method is not "exact". |
+| `timeSeriesPreparation:tsFitSarima:gapsWithDiff` | `+timeSeriesPreparation/+tsmodels/tsFitSarima.m` | Gaps | x has NaN gaps and d > 0 or D > 0. |
+| `timeSeriesPreparation:tsFitSarima:tooShort` | `+timeSeriesPreparation/+tsmodels/tsFitSarima.m` | Input | fewer than p + q + s (P + Q) + 3 observed samples after differencing. |
+| `timeSeriesPreparation:tsForecast:bootGaps` | `+timeSeriesPreparation/+tsmodels/tsForecast.m` | Model | Bootstrap is requested for a gap-fitted model. An h that is not a positive integer scalar (validateattributes), or an alpha or option outside its domain (arguments block), is refused with a MATLAB: identifier. |
+| `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
+| `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-28 identifier(s).
+94 identifier(s).

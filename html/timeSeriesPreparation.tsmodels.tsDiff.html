@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.tsmodels.tsDiff</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.tsmodels.tsDiff</h1>
+<p>Apply d-th order lag-1 differencing: y = (1-B)^d x.</p>
+<h2>Syntax</h2>
+<pre><code>y = timeSeriesPreparation.tsmodels.tsDiff(x)
+[y, x0] = timeSeriesPreparation.tsmodels.tsDiff(x, d)</code></pre>
+<h2>Description</h2>
+<p>Differencing removes a stochastic trend before an ARMA model is fitted (the &quot;I&quot; of ARIMA): y = (1-B)^d x, with B the lag operator, applied as d successive diff calls. x0(i) keeps the first value at level i, so tsIntegrate(y, x0) rebuilds x exactly. d = 0 passes the series through, NaN gaps included; for d &gt; 0 the series must be finite, because a difference across a missing sample is undefined. Base MATLAB only.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>:,1</td><td><code>double</code></td><td>&mdash;</td><td>- Series. A matrix is read as x(:).</td></tr>
+<tr><td><code>d</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Differencing order &gt;= 0, rounded; [] or omitted: 0.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>y</code></td><td>N-d,1</td><td><code>double</code></td><td>&mdash;</td><td>- Differenced series (1-B)^d x.</td></tr>
+<tr><td><code>x0</code></td><td>d,1</td><td><code>double</code></td><td>&mdash;</td><td>- First value at each differencing level, for tsIntegrate.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact up to rounding in the differences. Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit for bit.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:tsDiff:negativeOrder</code></td><td>Order</td><td>d &lt; 0.</td></tr>
+<tr><td><code>timeSeriesPreparation:tsDiff:tooShort</code></td><td>Order</td><td>d &gt;= numel(x).</td></tr>
+<tr><td><code>timeSeriesPreparation:tsDiff:nonfiniteWithDiff</code></td><td>Gaps</td><td>d &gt; 0 and x holds NaN or Inf.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Second differences of a quadratic are constant.</p>
+<pre><code>x = ((1:10)&#x27;).^2;
+[y, x0] = timeSeriesPreparation.tsmodels.tsDiff(x, 2);</code></pre>
+<h2>Limitations</h2>
+<p>Lag-1 differencing only; seasonal differencing (1-B^s)^D lives in tsFitSarima. No differencing across gaps.</p>
+<h2>References</h2>
+<p>G. E. P. Box, G. M. Jenkins, G. C. Reinsel, Time Series Analysis: Forecasting and Control, Wiley. sigtools v1.3.1 HANDOFF (docs/inputs).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.tsmodels.tsIntegrate</code>, <code>timeSeriesPreparation.tsmodels.tsFitArima</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/+tsmodels/tsDiff.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

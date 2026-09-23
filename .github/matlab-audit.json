@@ -37,18 +37,15 @@
       "seeAlso": false
     },
     {
-      "name": "sigtools-imported",
-      "reason": "sigtools v1.3.1 moved in unchanged at X-01 (CONCEPT 12.9); its help style, unprefixed identifiers and missing footer are brought to this template at X-02. Only the presence of a help block is checked until then.",
+      "name": "demos",
+      "reason": "Demo scripts: a help block with the provenance footer; no function template.",
       "match": [
-        "+timeSeriesPreparation/+spectral/*.m",
-        "+timeSeriesPreparation/+tsmodels/*.m",
-        "tests/sigtools/*.m",
         "demos/*.m"
       ],
       "sections": [],
       "optionsSection": null,
       "entries": "off",
-      "footer": "off",
+      "footer": "provenance",
       "errorGroups": false,
       "identifiers": false,
       "seeAlso": false
@@ -59,7 +56,9 @@
         "+timeSeriesPreparation/*.m",
         "+timeSeriesPreparation/+internal/*.m",
         "setupTimeSeriesPreparation.m",
-        "timeSeriesPreparationCiGate.m"
+        "timeSeriesPreparationCiGate.m",
+        "+timeSeriesPreparation/+spectral/*.m",
+        "+timeSeriesPreparation/+tsmodels/*.m"
       ],
       "sections": [
         "SYNTAX",
@@ -77,13 +76,14 @@
       "footer": "provenance",
       "errorGroups": true,
       "identifiers": true,
-      "warnings": false,
+      "warnings": true,
       "seeAlso": true
     },
     {
       "name": "tests",
       "match": [
-        "tests/*.m"
+        "tests/*.m",
+        "tests/sigtools/*.m"
       ],
       "sections": [
         "DESCRIPTION",
