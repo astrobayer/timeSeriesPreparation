@@ -1,17 +1,41 @@
-% timeSeriesPreparation.spectral - spectral analysis (sigtools v1.3.1, imported unchanged at X-01)
+% timeSeriesPreparation.spectral - spectral analysis and noise models
+% sigtools v1.3.1, conventions of X-02
 %
 %   Base MATLAB only. Call as timeSeriesPreparation.spectral.<name>.
 %
-%     plotPowerSpectrum  - Welch-FFT / Lomb-Scargle power & amplitude spectra.
-%     allanVariance      - Overlapping Allan variance/deviation + CI + slope.
-%     spec2acv           - PSD/ASD -> auto-covariance / -correlation (Wiener-Khinchin).
-%     psd2arma           - Fit a discrete-time ARMA process to a target PSD/ASD.
-%     arma2psd           - PSD/ASD of an ARMA process (inverse of psd2arma).
-%     arma2acv           - Exact ARMA auto-covariance / -correlation (Lyapunov).
-%     synthTimeSeries    - Warmup-free noise series from a PSD or ARMA model.
-%     sfreqz             - Digital frequency response B(z)/A(z) (base freqz).
-%     sinvfreqz          - Fit an IIR filter to a frequency response (SK).
-%     sstmcb             - Steiglitz-McBride IIR fit to an impulse response.
+%   Spectra and Allan variance
+%     powerSpectrum      - Power and amplitude spectrum of one series: Welch
+%                          FFT or Lomb-Scargle.
+%     allanVariance      - Overlapping Allan variance and deviation, with
+%                          confidence bounds and slopes.
+%     spec2acv           - One- or two-sided PSD/ASD to auto-covariance /
+%                          -correlation.
 %
-%   Help text, error identifiers and plotting are sigtools' own until X-02
-%   brings them to this toolbox's conventions (CONCEPT 10.1, X-02).
+%   ARMA noise models
+%     psd2arma           - Fit a discrete-time ARMA (IIR) process to a target
+%                          PSD or ASD.
+%     arma2psd           - One-sided PSD (or ASD) of a discrete-time ARMA
+%                          process.
+%     arma2acv           - Exact auto-covariance / -correlation of a
+%                          discrete-time ARMA process.
+%     synthTimeSeries    - Generate stationary noise from a PSD or an ARMA
+%                          model.
+%
+%   Filter design (base-MATLAB stand-ins)
+%     sfreqz             - Digital frequency response of an IIR/FIR filter
+%                          (base MATLAB).
+%     sinvfreqz          - Fit an IIR filter to a complex frequency response
+%                          (base MATLAB).
+%     sstmcb             - Steiglitz-McBride IIR fit to an impulse response
+%                          (base MATLAB).
+%
+%   Plots (draw only, from the numbers above)
+%     plotPowerSpectrum  - Draw spectra from powerSpectrum: lines, peaks, FAP
+%                          levels, confidence bars.
+%     plotAllanVariance  - Draw Allan deviation on log-log axes with its
+%                          shaded confidence band.
+%     plotPsd2armaFit    - Draw a psd2arma fit: target and fitted PSD, and the
+%                          fit error in dB.
+%
+%   The discrete Lyapunov solver shared with tsmodels is
+%   timeSeriesPreparation.internal.dlyap.

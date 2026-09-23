@@ -1,77 +1,105 @@
-function [S, f, info] = arma2psd(b, a, Fs, varargin)
+function [S, f, info] = arma2psd(b, a, Fs, options)
 %ARMA2PSD  One-sided PSD (or ASD) of a discrete-time ARMA process.
 %
-%   [S, f] = ARMA2PSD(B, A, FS) returns the one-sided power spectral
-%   density S (unit^2/Hz) on a frequency grid f (Hz, 0..FS/2) of the
-%   stationary ARMA process
-%       x[n] = filter(B, A, w[n]),   w[n] ~ white, variance sigma_w^2,
-%   sampled at FS. This is the exact inverse of PSD2ARMA and uses the same
-%   scaling convention
-%       S(f) = (2*sigma_w^2/Fs) * |H(f)|^2,     H(f) = B(z)/A(z), z=e^{-j2*pi*f/Fs},
-%   so that trapz(f, S) equals the process variance sigma_w^2 * sum(psi^2).
+%   SYNTAX
+%     [S, f] = timeSeriesPreparation.spectral.arma2psd(b, a, Fs)
+%     [S, f, info] = timeSeriesPreparation.spectral.arma2psd(b, a, Fs, NoiseVariance = 2, NFreq = 4096)
 %
-%   [S, f, info] = ARMA2PSD(...) also returns diagnostics (variance,
-%   poles/zeros, stability). Base MATLAB only.
+%   DESCRIPTION
+%     Returns the spectral density of the stationary ARMA process
+%     x[n] = filter(b, a, w[n]), w white with variance sigma_w^2, sampled
+%     at Fs. It is the inverse of psd2arma and uses the same scaling,
 %
-%   ------------------------------------------------------------------
+%       S(f) = (2 sigma_w^2/Fs) |H(f)|^2,   H = B(z)/A(z), z = exp(-2i pi f/Fs),
+%
+%     so that trapz(f, S) is the process variance sigma_w^2 sum(psi^2).
+%     H is evaluated with sfreqz on NFreq+1 points from 0 to Fs/2, or on
+%     the given Frequencies. Sided "two" returns the two-sided level
+%     (sigma_w^2/Fs)|H|^2; Output "asd" returns sqrt(S). info.variance is
+%     always the trapz of the one-sided PSD. The model's roots are
+%     reported, not checked: an unstable A still gives a spectrum.
+%
 %   INPUTS
-%   ------------------------------------------------------------------
-%     b       1x(nb+1) double [double]
-%       MA / numerator polynomial coefficients B(z) = b(1) + b(2) z^-1 + ...
-%     a       1x(na+1) double [double]
-%       AR / denominator polynomial coefficients A(z), a(1) normally 1.
-%     Fs      1x1 double [double,pos]
-%       Sample rate of the process [Hz].
-%     varargin  name-value [mixed]
-%       'NFreq'        (1x1 double) grid size; f has NFreq+1 points 0..Fs/2.
-%                      Default 1024.
-%       'Frequencies'  (Kx1 double) explicit frequency grid [Hz] in
-%                      [0, Fs/2]; overrides 'NFreq'.
-%       'NoiseVariance'(1x1 double) sigma_w^2 of the driving noise. Default 1.
-%       'Output'       ("psd"|"asd") return PSD (default) or ASD (sqrt).
-%       'Sided'        ("one"|"two") one-sided (default) or two-sided level.
+%     b   (1,nb+1) double   -    MA (numerator) coefficients,
+%                                B(z) = b(1) + b(2) z^-1 + ...
+%     a   (1,na+1) double   -    AR (denominator) coefficients, a(1)
+%                                normally 1.
+%     Fs  (1,1) double      Hz   Sampling rate of the process, > 0, finite.
 %
-%   ------------------------------------------------------------------
+%   OPTIONS
+%     NFreq          (1,1) double   [1024]    Grid size; f has NFreq+1
+%                                             points from 0 to Fs/2, >= 2.
+%     Frequencies    (K,1) double   [[]]      Explicit grid in Hz within
+%                                             [0, Fs/2]; overrides NFreq.
+%     NoiseVariance  (1,1) double   [1]       sigma_w^2 of the driving
+%                                             noise, > 0.
+%     Output         (1,1) string   ["psd"]   "psd" (unit^2/Hz) or "asd"
+%                                             (unit/sqrt(Hz)).
+%     Sided          (1,1) string   ["one"]   "one" or "two" (level
+%                                             halved).
+%
 %   OUTPUTS
-%   ------------------------------------------------------------------
-%     S       Kx1 double [double]
-%       Spectral density on f (PSD unit^2/Hz, or ASD unit/sqrt(Hz)).
-%     f       Kx1 double [double]
-%       Frequency grid [Hz], ascending, from 0 to Fs/2.
-%     info    1x1 struct [struct]
-%       Fields: .variance (trapz(f,S) for one-sided PSD), .Poles, .Zeros,
-%       .IsStable, .NoiseVariance, .H (Kx1 complex response).
+%     S     (K,1) double   -    PSD (unit^2/Hz) or ASD (unit/sqrt(Hz)) on f.
+%     f     (K,1) double   Hz   Frequency grid, ascending, 0 to Fs/2.
+%     info  (1,1) struct   -    Fields: variance (trapz(f,S) of the
+%                               one-sided PSD; NaN for a single point),
+%                               Poles, Zeros, IsStable, NoiseVariance,
+%                               H (K,1) complex response.
 %
-%   See also: psd2arma, spec2acv, plotPowerSpectrum.
+%   ACCURACY
+%     sigtools HANDOFF section 3 (NumPy re-derivation): the Parseval
+%     identity trapz(f,S) = sigma_w^2 sum(psi^2) holds to ratio 1.0, up to
+%     the trapezoidal quadrature error of the grid. Unchanged from sigtools
+%     v1.3.1; TestSigtoolsEquivalence holds it bit for bit.
 %
-%   ------------------------------------------------------------------
-%   Toolbox : sigtools (spectral)
-%   Author  : Generated by Claude Opus 4.8 (Anthropic)
-%   Date    : 2026-07-15  (build time-of-day not available in this environment)
-%   ------------------------------------------------------------------
+%   ERRORS
+%     Input:
+%       timeSeriesPreparation:arma2psd:freqRange - a Frequencies entry
+%           exceeds Fs/2.
+%     Options:
+%       timeSeriesPreparation:arma2psd:badOption - Output or Sided is not
+%           one of its values (case-insensitive), or Frequencies is not
+%           empty or a vector of values >= 0.
+%       Other options outside their domain are refused by the arguments
+%       block with a MATLAB: identifier.
 %
-%   Example
-%     Fs = 500; a = [1 -1.2 0.6]; b = [1 -0.5 0.2];
-%     [S, f] = arma2psd(b, a, Fs, 'NoiseVariance', 2);
-%     loglog(f, S); xlabel('Hz'); ylabel('PSD');
+%   EXAMPLE
+%     % PSD of an ARMA(2,2) process at 500 Hz with noise variance 2.
+%     [S, f, info] = timeSeriesPreparation.spectral.arma2psd([1 -0.5 0.2], [1 -1.2 0.6], 500, NoiseVariance = 2);
+%
+%   LIMITATIONS
+%     Discrete-time model only; the spectrum is periodic in Fs and is
+%     returned up to Fs/2. info.variance is a trapezoidal sum on the
+%     chosen grid, so a coarse grid under-resolves sharp peaks.
+%
+%   REFERENCES
+%     G. E. P. Box, G. M. Jenkins (1970), Time Series Analysis: Forecasting
+%     and Control, Holden-Day (ARMA spectrum). sigtools v1.3.1 HANDOFF
+%     (docs/inputs), section 5 (PSD scaling).
+%
+%   See also timeSeriesPreparation.spectral.psd2arma, timeSeriesPreparation.spectral.arma2acv, timeSeriesPreparation.spectral.spec2acv, timeSeriesPreparation.spectral.sfreqz, timeSeriesPreparation.spectral.synthTimeSeries.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
-    narginchk(3, inf);
+    arguments
+        b {mustBeNumeric}
+        a {mustBeNumeric}
+        Fs (1,1) {mustBeNumeric, mustBePositive, mustBeFinite}
+        options.NFreq (1,1) {mustBeNumeric, mustBeGreaterThanOrEqual(options.NFreq, 2)} = 1024
+        options.Frequencies {mustBeFrequencyGrid} = []
+        options.NoiseVariance (1,1) {mustBeNumeric, mustBePositive} = 1
+        options.Output (1,1) string {mustBeOneOf(options.Output, ["psd" "asd"])} = "psd"
+        options.Sided (1,1) string {mustBeOneOf(options.Sided, ["one" "two"])} = "one"
+    end
+
     b = b(:).';  a = a(:).';
-    validateattributes(Fs, {'numeric'}, {'scalar','positive','finite'}, mfilename, 'Fs');
-
-    ip = inputParser; ip.FunctionName = mfilename;
-    ip.addParameter('NFreq', 1024, @(v) isscalar(v) && v >= 2);
-    ip.addParameter('Frequencies', [], @(v) isempty(v) || (isvector(v) && all(v >= 0)));
-    ip.addParameter('NoiseVariance', 1, @(v) isscalar(v) && v > 0);
-    ip.addParameter('Output', 'psd', @(s) any(strcmpi(char(s), {'psd','asd'})));
-    ip.addParameter('Sided', 'one', @(s) any(strcmpi(char(s), {'one','two'})));
-    ip.parse(varargin{:});
-    o = ip.Results;
+    o = options;
 
     if ~isempty(o.Frequencies)
         f = double(o.Frequencies(:));
         if any(f > Fs/2 + eps(Fs)*10)
-            error('arma2psd:freqRange', 'Frequencies must lie within [0, Fs/2].');
+            error('timeSeriesPreparation:arma2psd:freqRange', 'Frequencies must lie within [0, Fs/2].');
         end
     else
         f = linspace(0, Fs/2, round(o.NFreq) + 1).';
@@ -106,4 +134,21 @@ function [S, f, info] = arma2psd(b, a, Fs, varargin)
     end
 
     S = Sout;
+end
+
+% ----------------------------------------------------------------------
+function mustBeOneOf(value, allowed)
+% Case-insensitive membership, as v1.3.1's strcmpi validators.
+    if ~any(strcmpi(value, allowed))
+        error("timeSeriesPreparation:arma2psd:badOption", ...
+            "Value must be one of: %s.", strjoin(allowed, ", "));
+    end
+end
+
+function mustBeFrequencyGrid(f)
+% Empty, or a vector of values >= 0 (v1.3.1's rule).
+    if ~isempty(f) && ~(isvector(f) && all(f >= 0))
+        error("timeSeriesPreparation:arma2psd:badOption", ...
+            "Frequencies must be empty or a vector of values >= 0.");
+    end
 end

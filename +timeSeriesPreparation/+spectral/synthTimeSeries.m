@@ -1,119 +1,141 @@
-function [x, t, info] = synthTimeSeries(varargin)
-%SYNTHTIMESERIES  Generate a stationary noise time series from a PSD or ARMA model.
+function [x, t, info] = synthTimeSeries(mode, p1, p2, Fs, N, options)
+%SYNTHTIMESERIES  Generate stationary noise from a PSD or an ARMA model.
 %
-%   X = SYNTHTIMESERIES('PSD', F, S, Fs, N) synthesises N samples of a real,
-%   zero-mean Gaussian time series (sample rate Fs) whose one-sided power
-%   spectral density matches the target S(F) [unit^2/Hz], using the
-%   randomized-phase spectral-representation method. The result is
-%   statistically stationary by construction: every sample has identical
-%   distribution, so there is NO filter warmup / start-up transient.
+%   SYNTAX
+%     [x, t, info] = timeSeriesPreparation.spectral.synthTimeSeries("psd", f, S, Fs, N)
+%     [x, t, info] = timeSeriesPreparation.spectral.synthTimeSeries("arma", b, a, Fs, N)
+%     x = timeSeriesPreparation.spectral.synthTimeSeries("psd", f, S, Fs, N, NColumns = 4, Seed = 1)
 %
-%   X = SYNTHTIMESERIES('ARMA', B, A, Fs, N) synthesises N samples of the
-%   ARMA process x[n] = filter(B, A, w[n]), w ~ white with variance
-%   'NoiseVariance' (default 1). The initial filter state is drawn from the
-%   process's stationary distribution (discrete-Lyapunov covariance), so the
-%   series is stationary from the very first sample -- again NO warmup
-%   transient and no burn-in samples to discard.
+%   DESCRIPTION
+%     Synthesises N samples of a real, zero-mean Gaussian series at Fs
+%     that is stationary from the first sample: there is no filter warmup
+%     and no burn-in to discard.
 %
-%   [X, T, INFO] = SYNTHTIMESERIES(...) also returns the time vector T (s)
-%   and a diagnostics struct.
+%     Mode "psd" uses the randomised-phase spectral representation. The
+%     one-sided target S(f) is interpolated onto the rFFT grid
+%     f_k = k Fs/N (log-log if the grid is log-spaced and mostly positive,
+%     else linear; zero outside [min f, max f]). Each bin gets a complex
+%     Gaussian amplitude with E|X_k|^2 = S_k Fs N/2, DC and Nyquist are
+%     real with the full power S_k Fs N, and the half-spectrum is inverted
+%     with Hermitian symmetry.
 %
-%   The PSD scaling convention matches ARMA2PSD / PLOTPOWERSPECTRUM:
-%   one-sided S with trapz(F,S) equal to the process variance. Feeding an
-%   ARMA2PSD output back through SYNTHTIMESERIES('PSD',...) reproduces the
-%   same spectrum. Base MATLAB only.
+%     Mode "arma" runs x[n] = filter(b, a, w[n]), w white with variance
+%     NoiseVariance, in Harvey's companion state-space form. The initial
+%     state is drawn from the stationary distribution, whose covariance
+%     solves the discrete Lyapunov equation (doubling, tolerance 1e-14, 80
+%     steps; timeSeriesPreparation.internal.dlyap), factored by Cholesky
+%     (eigen-decomposition if not positive definite).
 %
-%   ------------------------------------------------------------------
+%     The PSD scaling matches arma2psd and powerSpectrum: one-sided S with
+%     trapz(f,S) equal to the variance, so an arma2psd output fed back in
+%     reproduces the spectrum. With Seed, the global generator is seeded
+%     by rng(Seed) and restored on exit; without it, the global stream is
+%     used and advanced.
+%
 %   INPUTS
-%   ------------------------------------------------------------------
-%     mode    1x1 char/string [char]
-%       'psd' or 'arma' (case-insensitive), selecting the source model.
+%     mode  (1,1) string   -    "psd" or "arma", case-insensitive.
+%     p1    (M,1) double   -    "psd": f, frequency grid in Hz, real,
+%                               0 <= f <= Fs/2, any spacing. "arma": b,
+%                               MA (numerator) coefficients, real, finite.
+%     p2    (M,1) double   -    "psd": S, one-sided PSD (unit^2/Hz), or ASD
+%                               with InputType "asd", real. "arma": a, AR
+%                               (denominator) coefficients, real, finite.
+%     Fs    (1,1) double   Hz   Output sampling rate, > 0, finite.
+%     N     (1,1) double   -    Number of samples, positive integer.
 %
-%   For mode = 'psd':
-%     f       Mx1 double [double,nonneg]
-%       Frequency grid [Hz] of the target PSD, 0 <= f <= Fs/2. May be
-%       non-uniform; it is interpolated onto the FFT grid (log-log if the
-%       grid looks log-spaced and positive, else linear).
-%     S       Mx1 double [double,nonneg]
-%       One-sided target PSD [unit^2/Hz] on f (or ASD if 'InputType','asd').
-%     Fs      1x1 double [double,pos]
-%       Output sample rate [Hz].
-%     N       1x1 double [double,pos,integer]
-%       Number of output samples.
+%   OPTIONS
+%     NoiseVariance  (1,1) double   [1]       Driving white-noise variance
+%                                             sigma_w^2 ("arma"), > 0.
+%     InputType      (1,1) string   ["psd"]   "psd" or "asd" (S squared
+%                                             first; "psd" mode).
+%     Mean           (1,1) double   [0]       Constant added to the
+%                                             output, finite.
+%     Seed           (1,1) double   [[]]      rng seed; [] leaves the
+%                                             global generator untouched.
+%     NColumns       (1,1) double   [1]       Number of independent
+%                                             realisations (columns of x),
+%                                             >= 1, rounded.
 %
-%   For mode = 'arma':
-%     b       1x(nb+1) double [double]
-%       MA/numerator polynomial coefficients B(z).
-%     a       1x(na+1) double [double]
-%       AR/denominator polynomial coefficients A(z), a(1) = 1.
-%     Fs      1x1 double [double,pos]
-%       Output sample rate [Hz] (used only for the time vector T).
-%     N       1x1 double [double,pos,integer]
-%       Number of output samples.
-%
-%   Name-value options (either mode)
-%     'NoiseVariance' (1x1 double)  driving white-noise variance sigma_w^2
-%                     for the ARMA mode. Default 1.
-%     'InputType'     ("psd"|"asd") interpret S as PSD (default) or ASD.
-%     'Mean'          (1x1 double)  add a constant mean to the output. Default 0.
-%     'Seed'          (1x1 double)  RNG seed for reproducibility. Default []
-%                     (do not touch the global RNG state).
-%     'NColumns'      (1x1 double)  number of independent realisations
-%                     (columns of X). Default 1.
-%
-%   ------------------------------------------------------------------
 %   OUTPUTS
-%   ------------------------------------------------------------------
-%     x       NxC double [double]
-%       Synthesised time series, one column per realisation (C = NColumns).
-%       Real, (approximately) Gaussian, zero-mean plus 'Mean'.
-%     t       Nx1 double [double]
-%       Time vector [s], t = (0:N-1)'/Fs.
-%     info    1x1 struct [struct]
-%       Diagnostics:
-%         .method       ('spectral' | 'arma-stationary')
-%         .Fs .N .df                                (grid quantities)
-%         .targetVariance   variance implied by the model (trapz PSD, or
-%                           sigma_w^2*sum(psi^2) for ARMA)
-%         .empiricalVariance mean sample variance of X (per column, averaged)
-%         .warmupFree   true (both methods are stationary from sample 1)
+%     x     (N,C) double   -   Synthesised series, one column per
+%                              realisation (C = NColumns), plus Mean.
+%     t     (N,1) double   s   Time vector, (0:N-1)'/Fs.
+%     info  (1,1) struct   -   Fields: method ('spectral' |
+%                              'arma-stationary'); Fs; N; df, Hz;
+%                              targetVariance (trapz(f,S), or sigma_w^2
+%                              sum(psi^2) from 2000+ impulse samples);
+%                              empiricalVariance (mean column variance);
+%                              warmupFree (true).
 %
-%   See also: arma2psd, psd2arma, spec2acv, plotPowerSpectrum, sfreqz.
+%   ACCURACY
+%     sigtools HANDOFF section 3 (NumPy re-derivation): the PSD path is
+%     unbiased (mean bias about 1e-5, error falling as 1/sqrt(M) over M
+%     realisations); the ARMA path variance matches theory; the ratio of
+%     first-block to last-block mean square is about 1.00 (no warmup); the
+%     Hermitian assembly is correct for even and odd N. A single
+%     realisation scatters around the target like any Gaussian estimate.
+%     Unchanged from sigtools v1.3.1; TestSigtoolsEquivalence holds it bit
+%     for bit.
 %
-%   ------------------------------------------------------------------
-%   Toolbox : sigtools (spectral)
-%   Author  : Generated by Claude Opus 4.8 (Anthropic)
-%   Date    : 2026-07-15  (build time-of-day not available in this environment)
-%   ------------------------------------------------------------------
+%   ERRORS
+%     Input:
+%       timeSeriesPreparation:synthTimeSeries:mode - mode is not "psd" or
+%           "arma".
+%       timeSeriesPreparation:synthTimeSeries:sizeMismatch - f and S differ
+%           in length ("psd").
+%       timeSeriesPreparation:synthTimeSeries:freqRange - an f exceeds
+%           Fs/2 ("psd").
+%       f, S, b or a outside their domain (see INPUTS) are refused by
+%       validateattributes, and Fs, N or an option outside its domain by
+%       the arguments block, with a MATLAB: identifier.
+%     Options:
+%       timeSeriesPreparation:synthTimeSeries:badOption - InputType is not
+%           "psd" or "asd" (case-insensitive).
 %
-%   Example (PSD)
-%     Fs = 500; f = (0:0.25:Fs/2)';  S = 1./(1+(f/20).^4);
-%     x = synthTimeSeries('psd', f, S, Fs, 2^16);
-%     plotPowerSpectrum({Fs, x}, 'NAvg', 16);      % matches S, no transient
+%   EXAMPLE
+%     % 1000 samples of an ARMA(2,2) process at 500 Hz, reproducible.
+%     [x, t, info] = timeSeriesPreparation.spectral.synthTimeSeries("arma", [1 -0.5 0.2], [1 -1.2 0.6], 500, 1000, NoiseVariance = 2, Seed = 1);
 %
-%   Example (ARMA)
-%     b = [1 -0.5 0.2]; a = [1 -1.2 0.6];
-%     x = synthTimeSeries('arma', b, a, 500, 1e5, 'NoiseVariance', 2);
+%   LIMITATIONS
+%     Gaussian only: non-Gaussian higher moments are not reproduced. The
+%     PSD path is periodic with period N (circular), so the ACV wraps
+%     around. The draws use the global random stream (rng), not a
+%     RandStream argument; Seed makes a call reproducible. The ARMA path
+%     loops sample by sample in MATLAB and is slow for very long series.
+%
+%   REFERENCES
+%     M. Shinozuka, G. Deodatis (1991), Appl. Mech. Rev. 44(4), 191-204
+%     (spectral representation). A. C. Harvey (1989), Forecasting,
+%     Structural Time Series Models and the Kalman Filter, Cambridge
+%     University Press (state space). sigtools v1.3.1 HANDOFF
+%     (docs/inputs).
+%
+%   See also timeSeriesPreparation.spectral.arma2psd, timeSeriesPreparation.spectral.psd2arma, timeSeriesPreparation.spectral.spec2acv, timeSeriesPreparation.spectral.powerSpectrum, timeSeriesPreparation.spectral.sfreqz.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
+    arguments
+        mode
+        p1
+        p2
+        Fs (1,1) {mustBeNumeric, mustBePositive, mustBeFinite}
+        N (1,1) {mustBeNumeric, mustBePositive, mustBeInteger}
+        options.NoiseVariance (1,1) {mustBeNumeric, mustBePositive} = 1
+        options.InputType (1,1) string {mustBeOneOf(options.InputType, ["psd" "asd"])} = "psd"
+        options.Mean (1,1) {mustBeNumeric, mustBeFinite} = 0
+        options.Seed {mustBeScalarOrEmpty, mustBeNumeric, mustBeFinite} = []
+        options.NColumns (1,1) {mustBeNumeric, mustBeGreaterThanOrEqual(options.NColumns, 1)} = 1
+    end
 
     % ---- mode + positional parsing -------------------------------------
-    narginchk(5, inf);
-    mode = lower(char(varargin{1}));
+    mode = lower(char(mode));
     if ~any(strcmp(mode, {'psd','arma'}))
-        error('synthTimeSeries:mode', 'First argument must be ''psd'' or ''arma''.');
+        error('timeSeriesPreparation:synthTimeSeries:mode', 'First argument must be ''psd'' or ''arma''.');
     end
-    p1 = varargin{2};  p2 = varargin{3};  Fs = varargin{4};  N = varargin{5};
-    validateattributes(Fs, {'numeric'}, {'scalar','positive','finite'}, mfilename, 'Fs');
-    validateattributes(N,  {'numeric'}, {'scalar','positive','integer'}, mfilename, 'N');
     N = double(N);
 
-    ip = inputParser; ip.FunctionName = mfilename;
-    ip.addParameter('NoiseVariance', 1,   @(v) isscalar(v) && v > 0);
-    ip.addParameter('InputType', 'psd',   @(s) any(strcmpi(char(s), {'psd','asd'})));
-    ip.addParameter('Mean', 0,            @(v) isscalar(v) && isfinite(v));
-    ip.addParameter('Seed', [],           @(v) isempty(v) || (isscalar(v) && isfinite(v)));
-    ip.addParameter('NColumns', 1,        @(v) isscalar(v) && v >= 1);
-    ip.parse(varargin{6:end});
-    o = ip.Results;
+    o = options;
     C = round(o.NColumns);
 
     % ---- reproducible RNG (restore global state on exit) ---------------
@@ -132,10 +154,10 @@ function [x, t, info] = synthTimeSeries(varargin)
             validateattributes(f, {'numeric'}, {'vector','real','nonnegative'}, mfilename, 'f');
             validateattributes(S, {'numeric'}, {'vector','real'}, mfilename, 'S');
             if numel(f) ~= numel(S)
-                error('synthTimeSeries:sizeMismatch', 'f and S must have equal length.');
+                error('timeSeriesPreparation:synthTimeSeries:sizeMismatch', 'f and S must have equal length.');
             end
             if any(f > Fs/2 + 10*eps(Fs))
-                error('synthTimeSeries:freqRange', 'f must lie within [0, Fs/2].');
+                error('timeSeriesPreparation:synthTimeSeries:freqRange', 'f must lie within [0, Fs/2].');
             end
             if strcmpi(o.InputType, 'asd'), S = S.^2; end
             S = max(S, 0);
@@ -236,7 +258,7 @@ function [x, info] = local_synthFromARMA(b, a, s2, N, C, info)
     T = zeros(r);  T(:,1) = phi;  T(1:r-1, 2:r) = eye(r-1);
     RR = R*R';
 
-    P = local_dlyap(T, RR);                    % stationary state cov (units s2)
+    P = timeSeriesPreparation.internal.dlyap(T, RR, 1e-14, 80);                    % stationary state cov (units s2)
     P = 0.5*(P + P');
     % robust Cholesky of a PSD matrix
     [L, pd] = chol(P + 1e-12*trace(P)/r*eye(r), 'lower');
@@ -260,21 +282,10 @@ function [x, info] = local_synthFromARMA(b, a, s2, N, C, info)
 end
 
 % ----------------------------------------------------------------------
-function P = local_dlyap(T, Q)
-% Discrete Lyapunov P = T P T' + Q via a doubling iteration (stable T),
-% with a Kronecker-solve fallback. Matches the tsmodels implementation.
-    r = size(T,1);
-    A = T; P = Q; converged = false;
-    for it = 1:80
-        Pnew = P + A*P*A';
-        A    = A*A;
-        if norm(Pnew - P, 'fro') <= 1e-14*max(norm(Pnew,'fro'), 1)
-            P = Pnew; converged = true; break;
-        end
-        P = Pnew;
+function mustBeOneOf(value, allowed)
+% Case-insensitive membership, as v1.3.1's strcmpi validators.
+    if ~any(strcmpi(value, allowed))
+        error("timeSeriesPreparation:synthTimeSeries:badOption", ...
+            "Value must be one of: %s.", strjoin(allowed, ", "));
     end
-    if ~converged || any(~isfinite(P(:)))
-        P = reshape((eye(r*r) - kron(T,T)) \ Q(:), r, r);
-    end
-    P = 0.5*(P + P');
 end
