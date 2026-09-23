@@ -69,6 +69,13 @@ gracefoReading checkout (without it: 307 + 0 + 8, as before).
 (The first row is the X-01 + X-03 total, 280, less TestArc 20, TestConfig 5
 and TestHelpExamples 4 = 251, whose new counts are listed separately.)
 
+**Verdict, CI run 35824079077 on `046cfc8` (2026-09-23), MATLAB R2026a,
+gracefoReading `v1.1.0`:** `audit` green; `matlab` green, **315 + 0 + 0 =
+315** on the first run, every tag as predicted (precision 5, reference 39,
+robustness 39, speed 1, vectorisation 3). The MATLAB kernel matched the NumPy
+oracle within the stated bounds, and the output-epoch and piecewise
+evaluations were bit-identical. Gate time 954 s.
+
 **Debt.** Tier A (no local MATLAB). The tag `v0.1.0` and its GitHub release
 are made after the merge (GUIDE §3); this repository has no release workflow
 yet and a `.github/` change stands alone, so the tag is the owner's, or a
@@ -250,8 +257,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-04 (#7, release 0.1.0) on branch `claude/grace-timeseries-issues-28g3a4`,
-in review.** X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b merged (PR #36,
+**X-04 (#7, release 0.1.0) on branch `claude/grace-timeseries-issues-28g3a4`:
+CI green (run 35824079077, 315 + 0 + 0), awaiting review.** X-01 + X-03 merged (PR #37, `1b5c4ae`); X-00b merged (PR #36,
 `2ecf543`); X-00a merged (#2, `f26df8d`).
 
 **Phase 0 complete (2026-09-19):**
