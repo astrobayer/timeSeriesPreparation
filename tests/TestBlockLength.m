@@ -71,8 +71,10 @@ classdef TestBlockLength < matlab.unittest.TestCase
 
     methods (Test, TestTags = {'vectorisation'})
         function batchEqualsColumns(testCase)
-            X = [lcgSeries(testCase.Oracle.cases(2)), lcgSeries(testCase.Oracle.cases(5))];
-            X = X(1:1000, :);
+            % Cases 2 and 5 have 1000 and 3000 samples; the first 1000 of each.
+            a = lcgSeries(testCase.Oracle.cases(2));
+            b = lcgSeries(testCase.Oracle.cases(5));
+            X = [a(1:1000), b(1:1000)];
             b = timeSeriesPreparation.internal.blockLength(X);
             testCase.verifyEqual(b, [timeSeriesPreparation.internal.blockLength(X(:, 1)), ...
                 timeSeriesPreparation.internal.blockLength(X(:, 2))]);
