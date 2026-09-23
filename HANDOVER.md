@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.18 · 2026-09-23 · X-07 library `noiseReference` in review (sources supplied by the owner)**
+**Revision 0.18 · 2026-09-23 · X-07 library `noiseReference` in review, CI green 499 + 0 + 0 (sources supplied by the owner)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -55,6 +55,12 @@ the slopes to 1.4e-4 (2026-09-23).
 plus TestNoiseReference 9 plus TestHelpExamples 45 -> 46. Per tag:
 contract 154, reference 186, precision 14, robustness 101, metamorphic 29,
 vectorisation 12, speed 3.
+
+**Verdict, MATLAB R2026a, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:**
+CI run 35913104426 on `e275611` (2026-09-23): `audit` green; `matlab`
+green, **499 + 0 + 0 = 499**, every tag as predicted (contract 154,
+reference 186, precision 14, robustness 101, metamorphic 29,
+vectorisation 12, speed 3). TestNoiseReference 9 of 9. Gate time 1003 s.
 
 ---
 
