@@ -43,6 +43,12 @@ cannot pass silently.
 
 **Prediction** (before any run): **421 + 0 + 0 = 421**, unchanged.
 
+**Verdict, CI run 35897320406 on `bbf56ff` (2026-09-23), MATLAB R2026a:**
+- `audit` green.
+- The step "Check out lsqvce (test-only dependency)" is green: the token
+  reaches lsqvce.
+- `matlab` green: **421 + 0 + 0 = 421**, as predicted. Gate time 1002 s.
+
 ---
 
 ## Release workflow — merged 2026-09-23 (PR #42, `298b7cd`)
@@ -624,7 +630,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 ## A. Status
 
 **lsqvce CI dependency on branch `claude/grace-timeseries-issues-28g3a4`:
-CI pending.** Release workflow merged (PR #42, `298b7cd`); its first run
+CI green (run 35897320406, 421 + 0 + 0).** Release workflow merged (PR #42, `298b7cd`); its first run
 released nothing, as designed. `.github/` profile switch merged (PR #41,
 `7b94df4`). X-02 merged (PR #40, `7fe24f3`). X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
 `f969ecb`, release 0.1.0). The tag `v0.1.0` is lightweight and sits on
