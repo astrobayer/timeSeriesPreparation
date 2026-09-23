@@ -97,7 +97,11 @@ other tags as predicted. `constantUndetermined` and
 with `MATLAB:string:MissingNotSupported`: the undetermined warning built its
 message with `string(NaN)`, which is `<missing>`, and `warning` refuses
 it. Fixed by formatting the lag with `compose("%.4g", …)`. The two tests
-were the fault injection that found it. Expected next: 353 + 0 + 0.
+were the fault injection that found it.
+
+**Verdict, CI run 35831044729 on `d44d9b7` (2026-09-23), MATLAB R2026a,
+gracefoReading `v1.1.0`:** `audit` green; `matlab` green, **353 + 0 + 0 =
+353**, as predicted. Gate time 949 s.
 
 **Debt.**
 - Tier A: there is no local MATLAB, so the MATLAB verdict is CI's.
@@ -356,8 +360,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-06 (#9) on branch `claude/grace-timeseries-issues-28g3a4`: implemented,
-CI pending.** X-04 merged (PR #38, `f969ecb`, release 0.1.0; the annotated tag
+**X-06 (#9) on branch `claude/grace-timeseries-issues-28g3a4` (PR #39):
+CI green (run 35831044729, 353 + 0 + 0), awaiting review.** X-04 merged (PR #38, `f969ecb`, release 0.1.0; the annotated tag
 `v0.1.0` and its GitHub release are pending, GUIDE §3). X-01 + X-03 merged
 (PR #37, `1b5c4ae`); X-00b merged (PR #36, `2ecf543`); X-00a merged (#2,
 `f26df8d`).
