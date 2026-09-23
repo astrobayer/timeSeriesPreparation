@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.13 · 2026-09-23 · X-02 merged; the `.github/` profile switch in review**
+**Revision 0.14 · 2026-09-23 · `.github/` profile switch merged; the release workflow in review**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,56 @@ restates:
 
 ---
 
-## `.github/` profile switch after X-02 — 2026-09-23 (no WP; its own PR, GUIDE §1)
+## Release workflow — 2026-09-23 (no WP; its own PR, GUIDE §1)
+
+Tier B. Scope, frozen 2026-09-23 (owner: "prepare the release workflow PR
+after #41"): `.github/workflows/release.yml` and the records of `v0.1.0`.
+No code, no test.
+
+True after the merge:
+- **`release.yml`**: on a merged PR, `ci-actions/matlab-release@v1.3.2` with
+  `mode: file` reads `Contents.m`. If no tag names that version, it creates
+  an annotated tag on the merge commit, reads it back and publishes the
+  release (`--verify-tag`, so it can never make a lightweight one). Any
+  other merge releases nothing. Checkout is pinned as in `ci.yml`.
+- **`v0.1.0` recorded, not moved** (GUIDE §3 anomaly table):
+  - The owner created it in the release UI after the session's push was
+    refused (HTTP 403). It is **lightweight**, has generated notes, and
+    sits on **`7fe24f3`** (the X-02 merge), not on `f969ecb` (the X-04
+    merge).
+  - So 0.1.0 contains X-06 and X-02 as well. The CHANGELOG now lists them
+    under 0.1.0, with a note on the tag commit.
+  - The session's unpushed local annotated tag on `f969ecb` was deleted;
+    the remote tag is the only one.
+- GUIDE rev 1.11: §3 says the workflow does the tag and the release where
+  it exists; the hand steps stay as the fallback.
+
+**Fault injection (2026-09-23)**: the decision script of `matlab-release`
+(`release/nextversion.py`, ci-actions `v1.3.2`), run on this tree:
+
+| input | decision |
+|---|---|
+| real tags, `Contents.m` 0.1.0 | `bump=none`: no release (this PR's own merge) |
+| no tag `v0.1.0` (fault) | `bump=file`, `v0.1.0` |
+| `Contents.m` at 0.2.0 (fault) | `bump=file`, `v0.2.0`, previous `v0.1.0` |
+
+The YAML parses. The workflow runs only on `pull_request: closed`, so it
+first runs at this PR's merge, and must print "No release from this merge."
+The next PR records that run.
+
+**Prediction** (before any run): **421 + 0 + 0 = 421**, unchanged from
+the `.github/` profile switch, because no code or test changes.
+
+**Verdict, CI run 35858904692 on `b8d99d7` (2026-09-23), MATLAB R2026a,
+gracefoReading `v1.1.0`:**
+- `audit` green.
+- `matlab` green: **421 + 0 + 0 = 421**, every tag as predicted (contract
+  129). Gate time 999 s.
+- The release job has not run yet: it runs at the merge.
+
+---
+
+## `.github/` profile switch after X-02 — merged 2026-09-23 (PR #41, `7b94df4`)
 
 Tier B. This PR finishes what X-02 left to `.github/`, a change that stands
 alone. It touches only `.github/matlab-audit.json` and
@@ -535,12 +584,12 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**`.github/` profile switch on branch `claude/grace-timeseries-issues-28g3a4`:
-CI pending.** X-02 merged (PR #40, `7fe24f3`). X-06 merged (PR #39,
-`4f9e11e`). X-04 merged (PR #38, `f969ecb`, release 0.1.0). The annotated tag
-`v0.1.0` on `f969ecb` is the owner's: the session's push of it was refused
-(HTTP 403, 2026-09-23). X-01 + X-03 merged (PR #37); X-00b (PR #36); X-00a
-(#2).
+**Release workflow on branch `claude/grace-timeseries-issues-28g3a4`: CI
+green (run 35858904692, 421 + 0 + 0).** `.github/` profile switch merged (PR #41, `7b94df4`). X-02 merged
+(PR #40, `7fe24f3`). X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
+`f969ecb`, release 0.1.0). The tag `v0.1.0` is lightweight and sits on
+`7fe24f3` (owner, release UI; GUIDE §3 anomaly table). X-01 + X-03 merged
+(PR #37); X-00b (PR #36); X-00a (#2).
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
@@ -559,9 +608,9 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | repository | private, `main`; auto-delete head branches on; MIT licence (owner, 2026-09-18) |
 | ruleset `Main Protection` | no deletion, no force push; **no required checks yet** (see O-2) |
 | ruleset `Tag protection` | `~ALL`, no deletion, no force push |
-| content | `docs/CONCEPT.md` Rev 0.15, `docs/GUIDE.md` rev 1.10, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
+| content | `docs/CONCEPT.md` Rev 0.15, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
 | code, `Contents.m`, CI, audit | X-00b: setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config`. X-04: `crnKernel`, `crnApply`, `Contents.m` 0.1.0 |
-| `docs/GUIDE.md` | rev 1.10 (X-01 + X-03 batched) |
+| `docs/GUIDE.md` | rev 1.11 (release workflow; `v0.1.0` anomaly) |
 | `docs/CONCEPT.md` | Rev 0.15 (6.1 row 4 consistent with section 8) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 

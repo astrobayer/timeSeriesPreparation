@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.10 · 2026-09-22 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.11 · 2026-09-23 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.10: X-01 and X-03 run as one batch PR (owner, 2026-09-22); Phase 1 row updated. Rev 1.9: timeSeriesPreparation's static audit command and CI contexts measured at X-00b (section 2). Rev 1.8: tier B defined correctly (MATLAB through CI); N-02 waits for lsqvce#110. Rev 1.7: Phase 0 complete (lsqvce v6.1.0 released). Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.11: timeSeriesPreparation tags and releases through its release workflow (section 3); its `v0.1.0` recorded as an anomaly. Rev 1.10: X-01 and X-03 run as one batch PR (owner, 2026-09-22); Phase 1 row updated. Rev 1.9: timeSeriesPreparation's static audit command and CI contexts measured at X-00b (section 2). Rev 1.8: tier B defined correctly (MATLAB through CI); N-02 waits for lsqvce#110. Rev 1.7: Phase 0 complete (lsqvce v6.1.0 released). Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -138,6 +138,10 @@ This follows `ci-actions/VERSIONING.md`, which remains the authority.
   ```
 - **GitHub release** for the tag, with the CHANGELOG section as notes (web UI
   or `gh release create vX.Y.Z --notes-file <file>`).
+- **Where a repository has a release workflow** (`ci-actions/matlab-release`,
+  `mode: file`; timeSeriesPreparation since 2026-09-23), the merge does the
+  two steps above: an annotated tag on the merge commit, read back, then the
+  release. The hand steps remain the fallback when that job fails.
 - **Dependency minimums** (`MAJOR.MINOR`) move in the same PR as the
   dependency's version change that requires them.
 
@@ -150,6 +154,7 @@ immutable)**
 | lsqvce | `Contents.m` 6.1, newest tag `v5.2.1` | **resolved 2026-09-19:** `Contents.m` 6.1.0, annotated tag `v6.1.0` on `21e470d`, release published (lsqvce#108, #107 closed) |
 | NonGravForces | stray tag `v.0.10.0`; five lightweight tags | recorded in O-26; next tags annotated |
 | gracefoReading | `v1.0.0` and `v1.0.2` lightweight (`v1.0.1` annotated) | O-4; next tags annotated |
+| timeSeriesPreparation | `v0.1.0` lightweight, on `7fe24f3` (the X-02 merge) instead of the X-04 merge `f969ecb`; created in the release UI with generated notes | CHANGELOG 0.1.0 lists X-06 and X-02; next release 0.2.0 annotated, by the release workflow |
 | ci-actions | README says gracefoReading has no required contexts; the ruleset requires two | handled in C-01 (ci-actions#2) |
 
 ---

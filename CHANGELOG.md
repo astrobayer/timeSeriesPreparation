@@ -5,6 +5,23 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
 
 ## Unreleased
 
+- `.github/` profile switch (PR #41): `+spectral` and `+tsmodels` are audited
+  under the public help template and documented; the error catalogue lists
+  94 identifiers, warnings included; their 29 help examples run in the gate.
+- Release workflow: a merge whose `Contents.m` names an untagged version gets
+  an annotated tag on the merge commit and a GitHub release
+  (`ci-actions/matlab-release`, `mode: file`).
+
+## 0.1.0 — 2026-09-23
+
+First release (GUIDE section 7, Phase 2: X-04 → v0.1.0). Downstream may start
+NonGravForces N-04 and rangingPreparation L-00 → L-01 → L-04.
+
+The tag `v0.1.0` sits on `7fe24f3`, the X-02 merge, not on the X-04 merge
+`f969ecb`: it was created in the release UI after X-06 and X-02 had merged.
+So 0.1.0 contains them too, and they are listed here. Tags are never moved
+(GUIDE section 3).
+
 - **X-06** `align`: the reference moved onto the observation epochs. Values
   at coinciding epochs are copied bit for bit, and pchip interpolation runs
   inside contiguous stretches only, so no hole is bridged and nothing is
@@ -26,12 +43,6 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
   - `allanVariance` loses `doPlot` and gains `plotAllanVariance`;
   - `psd2arma` loses `Display` and gains `plotPsd2armaFit`;
   - `tsCheckResiduals` no longer draws; `plotResiduals` does.
-
-## 0.1.0 — 2026-09-23
-
-First release (GUIDE section 7, Phase 2: X-04 → v0.1.0). Downstream may start
-NonGravForces N-04 and rangingPreparation L-00 → L-01 → L-04.
-
 - **X-04** `crnKernel`: the CRN-class digital filter of the GRACE L1B ATBD
   (JPL D-27672, App. B) as printed — the power N_c on each passband term,
   normalised at f0, DC gain 1 + 1.1e-7 (ACC) — with derivative kernels;
