@@ -1,28 +1,24 @@
 classdef TestSigtoolsImport < matlab.unittest.TestCase
-%TESTSIGTOOLSIMPORT  The sigtools import is byte-identical to the archive, bar namespace.
+%TESTSIGTOOLSIMPORT  Every file of the sigtools v1.3.1 archive is imported or named as replaced.
 %
 %   DESCRIPTION
-%     X-01 moves sigtools v1.3.1 in unchanged (CONCEPT 12.5, 12.9). The only
-%     edit a namespace forces is qualifying calls between sigtools functions
-%     (tsAcf -> timeSeriesPreparation.tsmodels.tsAcf), plus the demos naming
-%     setupTimeSeriesPreparation instead of sigtools_setup. This test unzips
-%     the archived docs/inputs/sigtools_v1.3.1.zip into a temporary folder -
-%     never into the repository, which the audit walks - and requires every
-%     imported file to equal its original once exactly those edits are
-%     undone. A qualifier into the wrong subpackage is not undone and is a
-%     finding. Line endings are compared as LF, since a Windows checkout may
-%     write CRLF. Every .m file of the archive is either imported or named as
-%     replaced, with the replacement.
+%     X-01 moved sigtools v1.3.1 in unchanged (CONCEPT 12.5, 12.9), and
+%     until X-02 this test held every imported file byte-identical to the
+%     archive, apart from the namespace qualifiers. X-02 changed the
+%     conventions (arguments blocks, identifiers, help, the plotting split),
+%     so byte identity ended there. The numbers are now held by
+%     TestSigtoolsEquivalence, which runs the archive's functions against
+%     the converted ones bit for bit. What remains here is completeness:
+%     the archive docs/inputs/sigtools_v1.3.1.zip is unzipped into a
+%     temporary folder (never into the repository, which the audit walks),
+%     and every .m file in it must either exist at its imported place or
+%     be named as replaced, with its replacement.
 %
 %   COVERAGE
-%     reference   - every imported file equals the archive modulo the
-%                   namespace edits; the archive is covered completely.
-%     robustness  - the comparison fires on a changed digit and on a
-%                   qualifier into the wrong subpackage, and stays silent on
-%                   a correctly qualified line.
+%     contract  - the archive is covered completely.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         % Archive files not imported, each with what replaces it.
@@ -49,48 +45,12 @@ classdef TestSigtoolsImport < matlab.unittest.TestCase
         end
     end
 
-    methods (Test, TestTags = {'reference'})
-        function importedFilesEqualArchive(testCase)
-            [orig, imported] = importMap(testCase.Archive, testCase.Root);
-            testCase.assertNotEmpty(orig);
-            names = subpackageNames(testCase.Root);
-            bad = strings(0, 1);
-            for k = 1:numel(orig)
-                a = fileread(fullfile(testCase.Archive, orig(k)));
-                b = fileread(fullfile(testCase.Root, imported(k)));
-                if ~sameModuloNamespace(b, a, names)
-                    bad(end+1, 1) = imported(k); %#ok<AGROW>
-                end
-            end
-            testCase.verifyEmpty(bad, "Imported files differ from the archive beyond the namespace edits.");
-        end
-
+    methods (Test, TestTags = {'contract'})
         function archiveIsCoveredCompletely(testCase)
             archived = listM(testCase.Archive, "");
             orig = importMap(testCase.Archive, testCase.Root);
             missing = setdiff(archived, [orig; keys(testCase.NotImported)]);
             testCase.verifyEmpty(missing, "Archive files neither imported nor replaced.");
-        end
-    end
-
-    methods (Test, TestTags = {'robustness'})
-        function changedDigitFires(testCase)
-            names = subpackageNames(testCase.Root);
-            testCase.verifyFalse(sameModuloNamespace( ...
-                "y = timeSeriesPreparation.tsmodels.tsAcf(x, 21);", "y = tsAcf(x, 20);", names));
-        end
-
-        function wrongSubpackageFires(testCase)
-            names = subpackageNames(testCase.Root);
-            testCase.verifyFalse(sameModuloNamespace( ...
-                "y = timeSeriesPreparation.spectral.tsAcf(x, 20);", "y = tsAcf(x, 20);", names));
-        end
-
-        function correctQualifierIsSilent(testCase)
-            names = subpackageNames(testCase.Root);
-            testCase.verifyTrue(sameModuloNamespace( ...
-                "y = timeSeriesPreparation.tsmodels.tsAcf(x, 20);" + char(13) + newline + ...
-                "setupTimeSeriesPreparation", "y = tsAcf(x, 20);" + newline + "sigtools_setup", names));
         end
     end
 end
@@ -117,33 +77,6 @@ function [orig, imported] = importMap(archive, root)
             end
         end
     end
-end
-
-function names = subpackageNames(root)
-% "spectral" and "tsmodels" -> their function names, from the repository.
-    names = struct();
-    for sub = ["spectral" "tsmodels"]
-        files = dir(fullfile(root, "+timeSeriesPreparation", "+" + sub, "*.m"));
-        n = erase(string({files.name}), ".m");
-        names.(sub) = n(n ~= "Contents");
-    end
-end
-
-function tf = sameModuloNamespace(imported, original, names)
-% Undo exactly the X-01 edits in IMPORTED, then compare with ORIGINAL as LF text.
-    s = toLf(imported);
-    for sub = ["spectral" "tsmodels"]
-        for n = names.(sub)
-            s = replace(s, "timeSeriesPreparation." + sub + "." + n, n);
-        end
-    end
-    s = replace(s, "setupTimeSeriesPreparation", "sigtools_setup");
-    tf = (s == toLf(original));
-end
-
-function s = toLf(text)
-    s = replace(replace(string(text), string(char([13 10])), string(newline)), ...
-        string(char(13)), string(newline));
 end
 
 function rel = listM(root, sub)

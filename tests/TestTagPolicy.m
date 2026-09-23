@@ -9,9 +9,10 @@ classdef TestTagPolicy < matlab.unittest.TestCase
 %     category count; a misspelt tag ("vectorization") is a category nobody
 %     counts. Both are findings. The check is fault-injected: planted classes
 %     in a temporary folder must fire it, a healthy one must not.
-%     Exempt, with its reason: tests/sigtools/, the suites sigtools v1.3.1
-%     brought in unchanged at X-01. They carry no tags, and tagging them is a
-%     convention change, which is X-02's (CONCEPT 12.9).
+%     No folder is exempt. Until X-02, tests/sigtools/ was exempt: sigtools
+%     v1.3.1 brought its suites in untagged at X-01, and tagging them was a
+%     convention change (CONCEPT 12.9). X-02 tagged them. The exemption
+%     mechanism itself stays tested, so a future import can use it.
 %
 %   COVERAGE
 %     contract    - the repository's own tests/ has no finding.
@@ -20,13 +21,13 @@ classdef TestTagPolicy < matlab.unittest.TestCase
 %                   test in an exempt folder stays silent.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-22 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Allowed = ["contract" "reference" "precision" "speed" ...
                    "robustness" "vectorisation" "metamorphic"]
-        % Folders exempt until X-02, relative to tests/.
-        Exempt = "sigtools"
+        % Folders exempt from the policy, relative to tests/ (none since X-02).
+        Exempt = strings(1, 0)
     end
 
     methods (Test, TestTags = {'contract'})
@@ -35,7 +36,7 @@ classdef TestTagPolicy < matlab.unittest.TestCase
             suite = matlab.unittest.TestSuite.fromFolder(folder, "IncludingSubfolders", true);
             testCase.verifyNotEmpty(suite);
             testCase.verifyEmpty(tagFindings(suite, testCase.Allowed, ...
-                fullfile(folder, testCase.Exempt)), ...
+                string(folder) + filesep + testCase.Exempt), ...
                 "Tests in tests/ violate the tag policy of CONCEPT 9.");
         end
     end

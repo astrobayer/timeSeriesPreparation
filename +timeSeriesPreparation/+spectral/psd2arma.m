@@ -1,106 +1,129 @@
 function [b, a, results] = psd2arma(f, S, Fs, opts)
-%PSD2ARMA Fit a discrete-time ARMA (IIR) process to a target PSD or ASD.
+%PSD2ARMA  Fit a discrete-time ARMA (IIR) process to a target PSD or ASD.
 %
-%   ------------------------------------------------------------------
+%   SYNTAX
+%     [b, a] = timeSeriesPreparation.spectral.psd2arma(f, S, Fs)
+%     [b, a, results] = timeSeriesPreparation.spectral.psd2arma(f, S, Fs, Order = [8 8], InputType = "asd")
+%
+%   DESCRIPTION
+%     Finds B(z)/A(z) such that x[n] = filter(b, a, w[n]), with w white of
+%     variance NoiseVariance, has the target one-sided PSD S(f) of a process
+%     sampled at Fs. The scaling is sigtools' S(f) = (2 sigma_w^2/Fs)
+%     |H(f)|^2, the same as arma2psd, so the two are inverses. Steps:
+%       1. S is interpolated (log-log, InterpMethod) onto NFFT+1 uniform
+%          points from 0 to Fs/2, floored at 1e-12 of its peak.
+%       2. A minimum-phase complex response with that magnitude is built by
+%          the real-cepstrum (Hilbert) method. A complex target conditions
+%          the rational fit far better than a magnitude-only one.
+%       3. B/A is fitted with sinvfreqz (Sanathanan-Koerner, "invfreqz") or
+%          sstmcb (Steiglitz-McBride on the impulse response, "stmcb").
+%       4. Optionally, poles and zeros outside the unit circle are
+%          reflected inside, and the gain is corrected in the log
+%          least-squares sense.
+%       5. With Order "auto", na = nb = 1..MaxOrder is swept. It keeps the
+%          first order within Tol dB RMS ("tol") or the smallest AIC-like
+%          value ("aic").
+%     Base MATLAB only. Since X-02 the function no longer draws;
+%     plotPsd2armaFit draws results (owner decision 2026-09-23, clean
+%     break; its Display option is gone). The numbers are v1.3.1's.
+%
 %   INPUTS
-%   ------------------------------------------------------------------
-%     f       Mx1 double [double,finite]
-%       Frequency grid [Hz] of the target spectrum, within [0, Fs/2].
-%     S       Mx1 double [double,nonneg]
-%       Target spectral density on f (PSD by default; ASD via InputType).
-%     Fs      1x1 double [double,pos]
-%       Sample rate of the modelled process [Hz].
-%     opts    1x1 struct [name-value]
-%       Options: InputType, Sided, Order("auto"|[na nb]), MaxOrder,
-%       OrderCriterion ("tol"|"aic"), Tol, NFFT, InterpMethod,
-%       NoiseVariance, EnforceStability, EnforceMinPhaseZeros,
-%       Method("invfreqz"|"stmcb"), MaxIter, Display.
+%     f   (M,1) double   Hz   Frequencies of the target, finite; points
+%                             outside [0, Fs/2] are dropped with a warning.
+%     S   (M,1) double   -    Target PSD (unit^2/Hz) or ASD (unit/sqrt(Hz)),
+%                             finite, >= 0.
+%     Fs  (1,1) double   Hz   Sampling rate of the modelled process, > 0.
 %
-%   ------------------------------------------------------------------
+%   OPTIONS
+%     InputType             (1,1) string   ["psd"]       "psd" or "asd".
+%     Sided                 (1,1) string   ["one"]       "one" or "two"
+%                                                        (two-sided S is
+%                                                        doubled).
+%     Order                 (1,:) double   ["auto"]      [na nb], or "auto"
+%                                                        for the sweep.
+%     MaxOrder              (1,1) double   [30]          Largest order of the
+%                                                        sweep.
+%     OrderCriterion        (1,1) string   ["tol"]       "tol" or "aic".
+%     Tol                   (1,1) double   [0.5]         Target RMS fit error
+%                                                        in dB ("tol").
+%     NFFT                  (1,1) double   [2048]        Size of the uniform
+%                                                        grid.
+%     InterpMethod          (1,1) string   ["pchip"]     interp1 method of
+%                                                        the log-log
+%                                                        interpolation.
+%     NoiseVariance         (1,1) double   [1]           Variance of the
+%                                                        driving noise.
+%     EnforceStability      (1,1) logical  [true]        Reflect unstable
+%                                                        poles.
+%     EnforceMinPhaseZeros  (1,1) logical  [true]        Reflect zeros
+%                                                        outside the circle.
+%     Method                (1,1) string   ["invfreqz"]  "invfreqz" or
+%                                                        "stmcb".
+%     MaxIter               (1,1) double   [30]          Iterations of the
+%                                                        SK or SM
+%                                                        refinement.
+%
 %   OUTPUTS
-%   ------------------------------------------------------------------
-%     b        1x(nb+1) double [double]
-%       MA / numerator polynomial coefficients of B(z).
-%     a        1x(na+1) double [double]
-%       AR / denominator polynomial coefficients of A(z), a(1)=1.
-%     results  1x1 struct [struct]
-%       Diagnostics: b, a, Fs, NoiseVariance, fGrid, PSDtarget, PSDfit,
-%       RMSErrorDb, MaxErrorDb, OrderInfo, Poles, Zeros, IsStable,
-%       IsMinPhaseZeros.
+%     b        (1,nb+1) double   -   Numerator (MA) coefficients.
+%     a        (1,na+1) double   -   Denominator (AR) coefficients, a(1) = 1.
+%     results  (1,1) struct      -   Fields: b, a, Fs, NoiseVariance; fGrid
+%                                    (NFFT+1,1) Hz; PSDtarget and PSDfit
+%                                    (NFFT+1,1); RMSErrorDb, MaxErrorDb;
+%                                    OrderInfo (na, nb, searched, rmsErrDb,
+%                                    aic); Poles, Zeros; IsStable,
+%                                    IsMinPhaseZeros.
 %
-%   See also: spec2acv, arma2psd, plotPowerSpectrum, sfreqz, sinvfreqz, sstmcb.
+%   ACCURACY
+%     results.RMSErrorDb and MaxErrorDb measure the achieved fit on the
+%     grid. For known ARMA targets, sinvfreqz recovers the generating
+%     filter to about 1e-15, and a smooth 4th-order low-pass is fitted to
+%     0.0075 dB RMS (sigtools HANDOFF section 3, NumPy re-derivation).
+%     The numbers are unchanged from v1.3.1, and TestSigtoolsEquivalence
+%     holds them bit for bit.
 %
-%   ------------------------------------------------------------------
-%   Toolbox : sigtools (spectral)
-%   Author  : Generated by Claude Opus 4.8 (Anthropic)
-%   Date    : 2026-07-15  (build time-of-day not available in this environment)
-%   ------------------------------------------------------------------
+%   ERRORS
+%     Input:
+%       timeSeriesPreparation:psd2arma:sizeMismatch - f and S differ in
+%           length.
+%       timeSeriesPreparation:psd2arma:tooFewPoints - fewer than 2 points
+%           lie within [0, Fs/2].
+%       timeSeriesPreparation:psd2arma:zeroPSD - the target is identically
+%           zero.
+%     Fit:
+%       timeSeriesPreparation:psd2arma:fitDiverged - the fit gave
+%           non-finite coefficients.
+%       timeSeriesPreparation:psd2arma:fitFailed - no order up to MaxOrder
+%           could be fitted.
 %
-%   [b, a] = PSD2ARMA(f, S, Fs) fits a discrete-time ARMA process
-%       x[n] = filter(b, a, w[n])
-%   driven by white noise w[n] (unit variance by default), whose power
-%   spectral density matches the target one-sided PSD S(f) (units^2/Hz)
-%   sampled at frequencies f (Hz), for a process sampled at Fs (Hz).
-%
-%   [b, a] = PSD2ARMA(f, S, Fs, 'InputType', 'asd') treats S as an
-%   amplitude spectral density (units/sqrt(Hz)) instead of a PSD.
-%
-%   [b, a, results] = PSD2ARMA(...) also returns a struct RESULTS with
-%   diagnostic information (achieved PSD, fit error, chosen order,
-%   noise variance, poles/zeros, stability flags, etc).
-%
-%   METHOD
-%   ------
-%   1. The target PSD is interpolated (log-log by default) onto a
-%      uniform frequency grid of NFFT+1 points from 0 to Fs/2.
-%   2. A minimum-phase complex frequency response consistent with the
-%      target magnitude is reconstructed via the real-cepstrum /
-%      Hilbert-transform method. Fitting this complex target (instead
-%      of a magnitude-only target with e.g. zero phase) makes the
-%      rational fit dramatically better conditioned and accurate.
-%   3. B(z)/A(z) is fit to the complex response with INVFREQZ (default,
-%      iterative reweighted least squares) or Steiglitz-McBride (STMCB).
-%   4. Poles/zeros are optionally reflected inside the unit circle to
-%      guarantee a stable, invertible (minimum-phase) result, followed
-%      by a gain correction so the average level still matches target.
-%   5. If 'Order' is "auto", orders are swept and the smallest ARMA
-%      order meeting a fit-quality tolerance (or minimizing an AIC-like
-%      criterion) is selected.
-%
-%   NAME-VALUE OPTIONS
-%   -------------------
-%   'InputType'      "psd" (default) | "asd"
-%   'Sided'          "one" (default) | "two"   -- is S one- or two-sided
-%   'Order'          "auto" (default) | [na nb]  (na = pole/AR order,
-%                    nb = zero/MA order)
-%   'MaxOrder'       max order tried when Order = "auto" (default 30)
-%   'OrderCriterion' "tol" (default) | "aic"
-%   'Tol'            target RMS log-magnitude fit error in dB, used when
-%                    OrderCriterion = "tol" (default 0.5 dB)
-%   'NFFT'           internal uniform frequency grid size (default 2048)
-%   'InterpMethod'   interpolation method for log-log PSD interpolation
-%                    (default "pchip")
-%   'NoiseVariance'  variance of the driving white noise (default 1)
-%   'EnforceStability'     reflect unstable poles inside unit circle
-%                          (default true)
-%   'EnforceMinPhaseZeros' reflect zeros outside unit circle (default true)
-%   'Method'         "invfreqz" (default) | "stmcb"
-%   'MaxIter'        iterations for the SK reweighting / SM refinement (default 30)
-%   'Display'        plot target vs. achieved PSD (default false)
+%   WARNINGS
+%     Input:
+%       timeSeriesPreparation:psd2arma:freqRange - frequencies outside
+%           [0, Fs/2] were dropped.
+%     Fit:
+%       timeSeriesPreparation:psd2arma:toleranceNotMet - Tol not reached up
+%           to MaxOrder; the best order found is returned.
 %
 %   EXAMPLE
-%   -------
-%       f  = logspace(-2, 2, 500).';
-%       S  = 1 ./ (1 + (f/5).^2).^2;          % target PSD
-%       Fs = 500;
-%       [b, a, res] = psd2arma(f, S, Fs, 'Order', [8 8], 'Display', true);
-%       x = filter(b, a, randn(1e5,1) * sqrt(res.NoiseVariance));
+%     % A 4th-order low-pass PSD, fitted with an ARMA(8,8).
+%     f = logspace(-2, 2, 500)';
+%     S = 1 ./ (1 + (f/5).^2).^2;
+%     [b, a, res] = timeSeriesPreparation.spectral.psd2arma(f, S, 500, Order = [8 8]);
 %
-%   Base MATLAB only: the rational fit (Sanathanan-Koerner / Steiglitz-
-%   McBride) and the frequency response are implemented internally, so no
-%   Signal Processing Toolbox is required.
+%   LIMITATIONS
+%     The fit is to the log-log interpolated target, so structure between
+%     the given frequencies is invented by InterpMethod. Very steep or
+%     notched spectra need high orders. The "auto" sweep uses na = nb.
 %
-%   See also SPEC2ACV, ARMA2PSD, PLOTPOWERSPECTRUM, SFREQZ, SINVFREQZ, SSTMCB.
+%   REFERENCES
+%     C. K. Sanathanan, J. Koerner (1963), IEEE Trans. Autom. Control 8(1),
+%     56-58. K. Steiglitz, L. E. McBride (1965), IEEE Trans. Autom. Control
+%     10(4), 461-464. A. V. Oppenheim, R. W. Schafer (2010), Discrete-Time
+%     Signal Processing, 3rd ed., section 13 (real cepstrum).
+%
+%   See also timeSeriesPreparation.spectral.plotPsd2armaFit, timeSeriesPreparation.spectral.arma2psd, timeSeriesPreparation.spectral.sinvfreqz, timeSeriesPreparation.spectral.sstmcb.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 arguments
     f (:,1) double {mustBeFinite}
@@ -119,22 +142,21 @@ arguments
     opts.EnforceMinPhaseZeros (1,1) logical = true
     opts.Method (1,1) string {mustBeMember(opts.Method, ["invfreqz","stmcb"])} = "invfreqz"
     opts.MaxIter (1,1) double {mustBePositive, mustBeInteger} = 30
-    opts.Display (1,1) logical = false
 end
 
 %% ---- Input validation & housekeeping ----
 if numel(f) ~= numel(S)
-    error('psd2arma:sizeMismatch', 'f and S must have the same number of elements.');
+    error('timeSeriesPreparation:psd2arma:sizeMismatch', 'f and S must have the same number of elements.');
 end
 
 keep = f >= 0 & f <= Fs/2 + eps(Fs)*10;
 if ~all(keep)
-    warning('psd2arma:freqRange', ...
+    warning('timeSeriesPreparation:psd2arma:freqRange', ...
         'Some frequencies lie outside [0, Fs/2]; they are being clipped.');
     f = f(keep); S = S(keep);
 end
 if numel(f) < 2
-    error('psd2arma:tooFewPoints', 'Need at least 2 valid (f,S) samples within [0, Fs/2].');
+    error('timeSeriesPreparation:psd2arma:tooFewPoints', 'Need at least 2 valid (f,S) samples within [0, Fs/2].');
 end
 
 [f, ix] = sort(f);
@@ -172,7 +194,7 @@ fgrid = linspace(0, Fs/2, Nfft+1).';
 
 posS = S(S > 0);
 if isempty(posS)
-    error('psd2arma:zeroPSD', 'The target PSD/ASD is identically zero.');
+    error('timeSeriesPreparation:psd2arma:zeroPSD', 'The target PSD/ASD is identically zero.');
 end
 floorS = max(posS) * 1e-12;              % numerical floor, -120 dB below peak
 Sfl = max(S, floorS);
@@ -215,7 +237,7 @@ else
 end
 
 if any(~isfinite(b)) || any(~isfinite(a))
-    error('psd2arma:fitDiverged', ...
+    error('timeSeriesPreparation:psd2arma:fitDiverged', ...
         'The rational fit produced non-finite coefficients. Try a lower order, larger NFFT, or Method=''stmcb''.');
 end
 
@@ -255,22 +277,6 @@ results.Poles = roots(a);
 results.Zeros = roots(b);
 results.IsStable = all(abs(results.Poles) < 1);
 results.IsMinPhaseZeros = all(abs(results.Zeros) < 1);
-
-if opts.Display
-    figure('Name', 'psd2arma: fit diagnostics');
-    subplot(2,1,1);
-    loglog(fgrid(2:end), Sgrid(2:end), 'k-', 'LineWidth', 1.5); hold on;
-    loglog(fgrid(2:end), psdFit(2:end), 'r--', 'LineWidth', 1.2);
-    grid on; xlabel('Frequency [Hz]'); ylabel('PSD');
-    legend('Target', 'ARMA fit', 'Location', 'best');
-    title(sprintf('PSD fit  (na=%d, nb=%d, RMS err = %.2f dB, max err = %.2f dB)', ...
-        numel(a)-1, numel(b)-1, rmsErrDb, maxErrDb));
-
-    subplot(2,1,2);
-    semilogx(fgrid, errDb, 'b-');
-    grid on; xlabel('Frequency [Hz]'); ylabel('Error [dB]');
-    title('Fit error (fit - target)');
-end
 
 end % psd2arma
 
@@ -364,7 +370,7 @@ for n = 1:opts.MaxOrder
 end
 
 if isempty(best)
-    error('psd2arma:fitFailed', ...
+    error('timeSeriesPreparation:psd2arma:fitFailed', ...
         'Could not fit an ARMA model up to order %d. Try increasing MaxOrder or NFFT, or Method=''stmcb''.', ...
         opts.MaxOrder);
 end
@@ -374,7 +380,7 @@ info = struct('na', best.n, 'nb', best.n, 'searched', true, 'rmsErrDb', best.rms
 if isfield(best, 'aic'); info.aic = best.aic; end
 
 if opts.OrderCriterion == "tol"
-    warning('psd2arma:toleranceNotMet', ...
+    warning('timeSeriesPreparation:psd2arma:toleranceNotMet', ...
         ['Requested tolerance (%.2f dB) not reached within MaxOrder = %d; returning best ', ...
          'order found (n = %d, RMS error = %.2f dB). Increase MaxOrder or Tol.'], ...
         opts.Tol, opts.MaxOrder, best.n, best.rmsErrDb);

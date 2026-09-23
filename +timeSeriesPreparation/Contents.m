@@ -17,11 +17,13 @@
 %     crnApply        - Apply a CRN kernel to an arc, evaluated only at the
 %                       output epochs.
 %
-%   Spectra and time-series models (L0, sigtools v1.3.1, imported at X-01)
+%   Spectra and time-series models (L0, sigtools v1.3.1; conventions of X-02)
 %     spectral   - help timeSeriesPreparation.spectral
 %     tsmodels   - help timeSeriesPreparation.tsmodels
 %
 %   Internal
+%     internal.dlyap           - Stationary covariance P = T P T' + Q, the one
+%                                Lyapunov solver of the toolbox.
 %     internal.requirePackage  - Refuse at the point of use when an optional
 %                                dependency is not on the path.
 %     internal.resampleOnto    - Interpolate a series onto new epochs, never
