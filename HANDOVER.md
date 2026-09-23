@@ -91,6 +91,14 @@ gracefoReading checkout (without it: 345 + 0 + 8).
 (The first row is the X-04 total, 315, less TestConfig 7 and
 TestHelpExamples 6 = 302, whose new counts are listed separately.)
 
+**CI run 35829306740 on `b9fc10b` (2026-09-23): 351 + 2 + 2 = 353**, all
+other tags as predicted. `constantUndetermined` and
+`disjointSpansUndetermined` both errored (counted failed and incomplete)
+with `MATLAB:string:MissingNotSupported`: the undetermined warning built its
+message with `string(NaN)`, which is `<missing>`, and `warning` refuses
+it. Fixed by formatting the lag with `compose("%.4g", …)`. The two tests
+were the fault injection that found it. Expected next: 353 + 0 + 0.
+
 **Debt.**
 - Tier A: there is no local MATLAB, so the MATLAB verdict is CI's.
 - **Warning identifiers are not audited.** The profile `public` in

@@ -249,6 +249,8 @@ function warnFor(report, which, id, what)
     if which == "gross"
         bound = report.maxLag / 2;
     end
-    list = strjoin(report.names(hit) + " (" + string(report.lag(hit)) + " s)", ", ");
+    % compose, not string(): string(NaN) is <missing>, which warning refuses.
+    lags = compose("%.4g", reshape(report.lag(hit), [], 1))';   % one per row
+    list = strjoin(report.names(hit) + " (" + lags + " s)", ", ");
     warning(id, "checkAlignment: %s: " + what + ".", list, bound);
 end
