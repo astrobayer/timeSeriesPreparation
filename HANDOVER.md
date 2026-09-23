@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.16 · 2026-09-23 · X-07 in review; the reference noise-model library blocked on sources**
+**Revision 0.17 · 2026-09-23 · X-07 merged; the reference noise-model library blocked on sources**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,7 @@ restates:
 
 ---
 
-## X-07 — 2026-09-23 (issue #10); scope frozen 2026-09-23
+## X-07 — merged 2026-09-23 (PR #44, `f7d3518`; issue #10 open for the library); scope frozen 2026-09-23
 
 Tier B (no local MATLAB; the MATLAB verdict is CI's). Design: CONCEPT 10.1
 row X-07, 6.1 rows 5-7, 5.2 (minimum-data gate), 8 (seed per stage,
@@ -90,6 +90,17 @@ TestObservability 11, TestNoise 9, TestLsqvceAgreement 14; TestConfig +1;
 TestHelpExamples 39 -> 45. Per tag: contract 152, reference 182, precision
 13, robustness 100, metamorphic 28, vectorisation 11, speed 3. Without
 lsqvce: 475 + 0 + 14.
+
+**Verdict, MATLAB R2026a, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:**
+- CI run 35905806199 on `8cdb086` (2026-09-23): **488 + 1 + 1**. The one
+  failure was `TestBlockLength/batchEqualsColumns`, a bug in the test
+  (`MATLAB:catenate:dimensionMismatch`: oracle cases 2 and 5 have 1000
+  and 3000 samples). It was fixed in `726cdd7`.
+- CI run 35909976645 on `726cdd7`: `audit` green; `matlab` green,
+  **489 + 0 + 0 = 489**, every tag as predicted (contract 152, reference
+  182, precision 13, robustness 100, metamorphic 28, vectorisation 11,
+  speed 3). Q12 green against lsqvce; the PSD band of TestNoise held.
+  Gate time 1012 s.
 
 **Risk, stated:** nothing here ran in MATLAB before CI. The PSD-route
 band of TestNoise (0.05 on phi, 15 % on sigma2) is an expectation, not a
@@ -723,9 +734,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-07 on branch `claude/grace-timeseries-issues-28g3a4`: CI pending.**
-lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0). The
-reference noise-model library is blocked on sources (X-07 section).
+**X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0). Issue #10 stays open for the reference noise-model library, blocked on sources.**
+lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0).
 Release workflow merged (PR #42, `298b7cd`); its first run
 released nothing, as designed. `.github/` profile switch merged (PR #41,
 `7b94df4`). X-02 merged (PR #40, `7fe24f3`). X-06 merged (PR #39,
