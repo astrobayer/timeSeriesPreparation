@@ -49,7 +49,7 @@ function requirePackage(name, caller)
 %   See also meta.package.fromName.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.0.0 | 2026-09-22 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-22 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         name (1,1) string {mustBeTextScalar, mustBeNonzeroLengthText}

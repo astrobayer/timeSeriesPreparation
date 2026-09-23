@@ -10,7 +10,7 @@ classdef TestHelpExamples < matlab.unittest.TestCase
 %     generator's configuration.
 %
 %   COVERAGE
-%     'contract' - every documented EXAMPLE of timeSeriesPreparation v0.0.0 runs.
+%     'contract' - every documented EXAMPLE of timeSeriesPreparation v0.1.0 runs.
 
     methods (Test, TestTags = {'contract'})
         function timeSeriesPreparation_internal_requirePackage_example1(testCase)
@@ -35,6 +35,18 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.Config: The empty skeleton as a plain struct, e.g. for hashing.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_Config_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.Config did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_crnApply_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.crnApply: Filter a 10 Hz constant with the ACC kernel and keep 1 Hz samples.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_crnApply_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.crnApply did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_crnKernel_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.crnKernel: The ACC1B kernel: 1407 taps, DC gain 1 + 1.1e-7, unit gain at f0.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_crnKernel_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.crnKernel did not run cleanly.");
         end
     end
 end
@@ -61,4 +73,19 @@ function example_timeSeriesPreparation_Config_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.Config, verbatim from its help block.
     cfg = timeSeriesPreparation.Config();
     s = toStruct(cfg);
+end
+
+function example_timeSeriesPreparation_crnApply_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.crnApply, verbatim from its help block.
+    k = timeSeriesPreparation.crnKernel("ACC");
+    t = int64(0:36000-1)' * int64(1e8);
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACC1A_2020-01-01_C_04.txt", "product", "ACC1A");
+    arc = timeSeriesPreparation.Arc(t, ones(36000, 1), aux);
+    out = timeSeriesPreparation.crnApply(arc, k, OutputEpochs = t(1:10:end));
+end
+
+function example_timeSeriesPreparation_crnKernel_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.crnKernel, verbatim from its help block.
+    k = timeSeriesPreparation.crnKernel("ACC");
+    fprintf("Nf = %d, DC gain - 1 = %.3g\n", k.Nf, k.dcGain - 1);
 end

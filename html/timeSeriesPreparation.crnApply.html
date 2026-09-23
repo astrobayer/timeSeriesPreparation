@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.crnApply</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.crnApply</h1>
+<p>Apply a CRN kernel to an arc, evaluated only at the output epochs.</p>
+<h2>Syntax</h2>
+<pre><code>out = timeSeriesPreparation.crnApply(arc, kernel)
+out = timeSeriesPreparation.crnApply(arc, kernel, OutputEpochs = t1Hz, Derivative = 1)</code></pre>
+<h2>Description</h2>
+<p>Computes out_i = sum_{n=-Nh..Nh} K_n x_{i-n}, the filter of the GRACE L1B ATBD App. B with K the kernel&#x27;s F, dF or ddF (crnKernel), on the raw-rate grid of the arc, and evaluates the sum ONLY at the requested output epochs (CONCEPT 6.1, item 11). ACC1B at 1 Hz from 10 Hz input needs a tenth of the multiply-adds of convolving at the full rate and sampling afterwards - about 3.6e8 instead of 3.6e9 per day for three axes - and the numbers are the same bit for bit, because every output is the same sum over n in the same order whichever epochs are asked for. For the same reason a long arc evaluated in pieces with half-span overlap equals the arc evaluated whole, bit for bit. The output is sampled, never averaged.</p>
+<p>The arc must lie on the kernel&#x27;s grid: every epoch t0 + j/fs with j an integer (missing epochs are gaps, not an error). An output sample is NaN unless all Nf samples of its window exist, are not NaN and are not removed by a layer of the input: edges, gaps and masked samples never leak into a filtered value. Those samples form the layer &quot;crnWindow&quot; of the result, so a fit weights them zero. The result keeps names, mission, product, release and provenance (Arc.derive); units gain &quot;/s&quot; or &quot;/s^2&quot; for the derivatives.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Input on the raw-rate grid, e.g. 10 Hz ACC1A.</td></tr>
+<tr><td><code>kernel</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- From timeSeriesPreparation.crnKernel.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>OutputEpochs</code></td><td>:,1</td><td><code>int64</code></td><td>arc.t</td><td>Epochs to evaluate, on the input grid, strictly increasing; they may lie outside the arc (then NaN).</td></tr>
+<tr><td><code>Derivative</code></td><td>1,1</td><td><code>double</code></td><td>0</td><td>0 filtered value, 1 first and 2 second time derivative.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>out</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- On OutputEpochs; obs (K,M) double; layer crnWindow (K,1) logical, true where the window was incomplete (and obs is NaN).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Each output is one sum of Nf products in a fixed order, so its rounding is that of an Nf-term dot product, a few hundred eps of the largest term; it is independent of which or how many epochs are requested. A constant c comes out as c*kernel.dcGain, a sinusoid at f0 with unit gain; see crnKernel for the kernel&#x27;s own accuracy.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:crnApply:rate</code></td><td>Grid</td><td>1e9/kernel.fs is not a whole number of nanoseconds.</td></tr>
+<tr><td><code>timeSeriesPreparation:crnApply:notOnGrid</code></td><td>Grid</td><td>an input epoch is not a whole number of kernel sample intervals from the first.</td></tr>
+<tr><td><code>timeSeriesPreparation:crnApply:epochNotOnGrid</code></td><td>Grid</td><td>an output epoch is not on the input grid, or OutputEpochs is not strictly increasing.</td></tr>
+<tr><td><code>timeSeriesPreparation:crnApply:badKernel</code></td><td>Kernel</td><td>kernel lacks a field of crnKernel&#x27;s output, or its taps are not Nf x 1.</td></tr>
+<tr><td><code>timeSeriesPreparation:crnApply:emptyArc</code></td><td>Input</td><td>the arc holds no samples. An OutputEpochs that is not int64 is refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Filter a 10 Hz constant with the ACC kernel and keep 1 Hz samples.</p>
+<pre><code>k = timeSeriesPreparation.crnKernel(&quot;ACC&quot;);
+t = int64(0:36000-1)&#x27; * int64(1e8);
+aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACC1A_2020-01-01_C_04.txt&quot;, &quot;product&quot;, &quot;ACC1A&quot;);
+arc = timeSeriesPreparation.Arc(t, ones(36000, 1), aux);
+out = timeSeriesPreparation.crnApply(arc, k, OutputEpochs = t(1:10:end));</code></pre>
+<h2>Limitations</h2>
+<p>No time-tag correction and no interpolation: an input off the grid refuses instead of being resampled (X-12 applies the handbook&#x27;s time corrections for ACT1A). Lifting a model to 10 Hz is the caller&#x27;s.</p>
+<h2>References</h2>
+<p>R-1: GRACE L1B ATBD, JPL D-27672, App. B, PDF pp. 40-41. docs/CONCEPT.md sections 6.1 (row 4), 8.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.crnKernel</code>, <code>timeSeriesPreparation.Arc</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/crnApply.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

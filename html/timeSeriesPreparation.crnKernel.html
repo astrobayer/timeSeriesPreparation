@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.crnKernel</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.crnKernel</h1>
+<p>The CRN-class digital filter of the GRACE L1B ATBD, as printed.</p>
+<h2>Syntax</h2>
+<pre><code>kernel = timeSeriesPreparation.crnKernel(preset)
+kernel = timeSeriesPreparation.crnKernel(preset, Tf = 140.7, B = 0.035)</code></pre>
+<h2>Description</h2>
+<p>Builds the weights F_n with which JPL&#x27;s Level-1B processing turns 10 Hz Level-1A samples into ACC1B/ACT1B and KBR1B, and the weights of their first and second time derivatives, from Appendix B of the GRACE L1B ATBD (JPL D-27672, printed pp. 39-40, PDF pp. 40-41):</p>
+<p>H_k   = sum_{m=-NB..NB} ( sin[pi(k-m)/Nc] / sin[pi(k-m)/Nf] )^Nc F_n   = (1/FNorm) sum_{k=-Nh..Nh} H_k cos(2 pi k n/Nf),   |n| &lt;= Nh FNorm = sum_{i=-Nh..Nh} cos(2 pi f0 i/fs) sum_k H_k cos(2 pi k i/Nf)</p>
+<p>with Nf = fs*Tf (odd), NB = B*Tf rounded, Nh = (Nf-1)/2, and the removable singularity k = m set to its limit Nf/Nc. The power Nc stands on EACH passband term, as printed. Raising the SUM to Nc instead - the v2 port&#x27;s error - gives DC gain 1.0004533 (ACC), which real data refute: GRACE-C 2020-01-02, mean(ACT1B_y)/mean(ACT1A_x) = 1.000000064 (CONCEPT 8). The printed kernel gives 1 + 1.115e-7. The kernel is normalised to unit response at the J2 frequency f0, not at DC; renormalising to unit DC would change every calibrated scale by the DC gain.</p>
+<p>The page prints FNorm&#x27;s inner cosine with n inside a sum over i, and the derivative sums over i; both are read with the index of their sum. That reading makes the response at f0 exactly 1 and reproduces the numbers above. Filtered data are R_i = sum_n F_n R_{i-n} (crnApply).</p>
+<p>Presets (ATBD App. B): &quot;ACC&quot; fs 10 Hz, Nc 7, Tf 140.7 s, B 0.035 Hz; &quot;KBR&quot; fs 10 Hz, Nc 7, Tf 70.7 s, B 0.1 Hz; both f0 = 0.37 mHz. GRACE-FO ACT1B uses a CRN filter whose numbers its handbook (JPL D-56935, PDF p. 20) does not print; the GRACE values are consistent with the measured DC gain above, and the full frequency response is checked in X-12. &quot;LRI&quot; refuses: its numbers are open (V-2).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>preset</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- &quot;ACC&quot;, &quot;KBR&quot; or &quot;LRI&quot;.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Fs</code></td><td>1,1</td><td><code>double</code></td><td>preset</td><td>Raw data rate in Hz.</td></tr>
+<tr><td><code>Nc</code></td><td>1,1</td><td><code>double</code></td><td>preset</td><td>Self-convolution number, odd.</td></tr>
+<tr><td><code>Tf</code></td><td>1,1</td><td><code>double</code></td><td>preset</td><td>Fit interval in s; Fs*Tf must be an odd integer.</td></tr>
+<tr><td><code>B</code></td><td>1,1</td><td><code>double</code></td><td>preset</td><td>Target low-pass bandwidth in Hz.</td></tr>
+<tr><td><code>F0</code></td><td>1,1</td><td><code>double</code></td><td>preset</td><td>Normalisation frequency in Hz.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>kernel</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: preset (1,1) string; fs, Nc, Tf, B, f0, Nf, NB, Nh (1,1) double; lags (Nf,1) double, n = -Nh..Nh; F (Nf,1) double, dimensionless; dF (Nf,1) double, 1/s; ddF (Nf,1) double, 1/s^2; FNorm, dcGain, gainAtF0 (1,1) double; overridden (1,:) string, the options that replaced preset values; source (1,1) string.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>The taps equal the independent NumPy transcription of the page (tests/oracles/crn_atbd_asprinted.py, ORC-1) to 1e-12 of the largest tap: each tap is a sum of Nf terms rounded differently in the two programs, worst case Nf*eps = 3.1e-13 of it. gainAtF0 is 1 to rounding (2e-16 measured in the oracle). In the passband the derivative kernels reproduce i*2*pi*f and (i*2*pi*f)^2 times the filter response to 1e-12.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:crnKernel:unknownPreset</code></td><td>Preset</td><td>preset is not &quot;ACC&quot;, &quot;KBR&quot; or &quot;LRI&quot;.</td></tr>
+<tr><td><code>timeSeriesPreparation:crnKernel:unverifiedPreset</code></td><td>Preset</td><td>&quot;LRI&quot;: no CRN numbers for LRI1B are confirmed from a registered document yet.</td></tr>
+<tr><td><code>timeSeriesPreparation:crnKernel:badParameters</code></td><td>Parameters</td><td>Fs*Tf is not an odd integer, Nc is not a positive odd integer, or B*Tf rounds to a passband of zero bins or of Nh bins or more.</td></tr>
+</table>
+<h2>Example</h2>
+<p>The ACC1B kernel: 1407 taps, DC gain 1 + 1.1e-7, unit gain at f0.</p>
+<pre><code>k = timeSeriesPreparation.crnKernel(&quot;ACC&quot;);
+fprintf(&quot;Nf = %d, DC gain - 1 = %.3g\n&quot;, k.Nf, k.dcGain - 1);</code></pre>
+<h2>Limitations</h2>
+<p>The ATBD states B as approximate (&quot;~0.035 Hz&quot;); NB is B*Tf rounded to the nearest integer (ACC 4.92 -&gt; 5, KBR 7.07 -&gt; 7). The kernel is built in O(Nf^2) time and memory (16 MB for ACC); build it once and reuse it.</p>
+<h2>References</h2>
+<p>R-1: Wu, Kruizinga, Bertiger (2006), GRACE L1B ATBD V1.2, JPL D-27672, App. B, PDF pp. 40-41. R-2: Wen et al. (2019), GRACE-FO L1 Data Product User Handbook, JPL D-56935, PDF p. 20. docs/CONCEPT.md sections 8, 9.3.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.crnApply</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/crnKernel.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

@@ -1,13 +1,13 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.14 (DRAFT) · 2026-09-18 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.15 (DRAFT) · 2026-09-23 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
 truth for its own status, obligations and decisions and points here
 (gracefoReading O-13, NonGravForces O-45, referenceSystem #25).
 
-Nothing in this file is implemented yet.
+Implementation status lives in each repository's HANDOVER, not here.
 
 **Hosting (Q14, item 5).** Since X-00a (2026-09-18) this file lives in the
 timeSeriesPreparation repository, `docs/`. It came from gracefoReading at
@@ -35,6 +35,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.11 | Q16: the deep-research findings of 2026-09-18 are distributed to the repositories (W-1…W-15 → G-04…G-06, X-17, X-18, N-11, N-12, L-07…L-09; ORC-12, ORC-13; V-13…V-16); research answers to V-1…V-11 recorded as expected values (9.2); the global order and all procedures move to `GUIDE.md` |
 | 0.12 | moved to the timeSeriesPreparation repository (X-00a); no design change |
 | 0.13 | hosting paragraph corrected: gracefoReading #15 was merged with a merge commit, so the drafts and input zips are in gracefoReading's history |
+| 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | **0.14** | **Stage C done: verification items closed from the registered documents and real bytes (9.3). The v2 CRN oracle is wrong — the ATBD raises each passband term to the power N_c, the port raised the sum; real ACT1A→ACT1B data give DC gain 1 + 6.4e-8, not 1.0004533. Section 8 and ORC-1/ORC-2 corrected** |
 
 **Read at**
@@ -279,7 +280,7 @@ no positional fallback.
 | 1 | mask | `mask` | qualflg layers via `decodeQualFlags`, including the **L1B fill flags**: ACC gaps ≤ 100 s and ranging gaps < 21 s are cubic-filled in L1B processing (R-2, PDF pp. 18, 20), and LRI1B bits 6/7 mark interpolated points > 5 s / ≤ 5 s from the CRN centre. Also the **ACC large-range-mode** bit 4 (R-2, PDF p. 32); THR1B windows (margins justified by the CRN span); eclipse transitions from a driver series; CRN edges; a user layer; **official event lists** (G-05) as layers and calibration windows |
 | 2 | QC | `qc` | residual-based outliers; impulses (matched filter on the CRN impulse response, THR1B priors); jumps (reported and turned into parameters, never masked); after X-16, a **labelled template bank** (twang, heater, magnetic-torquer and thruster spikes) with one mask layer per type (X-17) |
 | 3 | align | `align`, `checkAlignment` | reference moved onto the observation epochs; lag diagnostic over ±60 s that warns above 1 s and never shifts silently (v3 F2) |
-| 4 | consistency | `crnKernel`, `crnApply` | exact ATBD kernel normalised at f0, DC gain 1.0004533 kept; chunked per file day with half-span overlap, bit-identical to unchunked; NaN edges. **The convolution sum is evaluated only at the output epochs** (1 Hz for ACC1B from the 10 Hz grid): about 3.6e8 instead of 3.6e9 multiply-adds per day for 3 axes, pinned equal to full-rate convolution followed by sampling |
+| 4 | consistency | `crnKernel`, `crnApply` | exact ATBD kernel **as printed** (section 8), normalised at f0, DC gain 1 + 1.1e-7 (ACC) kept, never renormalised to unit DC; chunked per file day with half-span overlap, bit-identical to unchunked; NaN edges. **The convolution sum is evaluated only at the output epochs** (1 Hz for ACC1B from the 10 Hz grid): about 3.6e8 instead of 3.6e9 multiply-adds per day for 3 axes, pinned equal to full-rate convolution followed by sampling |
 | 5 | noise | `tsmodels`, `spectral` | residual noise model (AR/ARMA/SARIMA exact ML with gaps, or PSD → ARMA), Ljung-Box, Allan deviation; the model feeds `fill` and the applications' lsqvce covariance; a **reference noise-model library** (ACC 1/f, KBR CNR-limited, LRI design ASD) as priors and validation targets (W-12, X-07) |
 | 6 | gate | `observability` | metrics an application uses to refuse or downgrade unidentifiable parameters before its fit |
 | 7 | uncertainty | `bootstrap`, `crossval` | moving-block bootstrap with substreamed RNG; blocked CV |
