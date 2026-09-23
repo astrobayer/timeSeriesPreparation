@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.14 · 2026-09-23 · `.github/` profile switch merged; the release workflow in review**
+**Revision 0.15 · 2026-09-23 · release workflow merged; lsqvce as a test-only CI dependency in review**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,42 @@ restates:
 
 ---
 
-## Release workflow — 2026-09-23 (no WP; its own PR, GUIDE §1)
+## lsqvce in CI, before X-07 — 2026-09-23 (no WP; its own PR, GUIDE §1)
+
+Tier B. Scope, frozen 2026-09-23. The owner decided X-07 comes in two PRs
+(asked in session, 2026-09-23): this `.github/` PR, then all of X-07.
+
+Owner decisions for X-07, the same day:
+- **Minimum-data gate: 0.5** in every product preset (ACC, KBR, LRI),
+  provisional until ORC-10.
+- **Block length:** automatic, Politis & White (2004) with the Patton,
+  Politis & White (2009) correction; an explicit option overrides it.
+- **Reference noise-model library:** the session fetches the published
+  sources, registers them, and pins every constant to a page; a constant
+  without a source stays out.
+
+True after the merge:
+- `ci.yml` checks out **lsqvce `v6.1.3`** (an annotated tag, `b25bb11`)
+  into `deps/lsqvce` when `REFERENCE_READ_TOKEN` is visible. This is the
+  gracefoReading pattern and the token GUIDE §2 already names for lsqvce
+  (tests only).
+- Nothing uses it yet: the gate puts `deps/lsqvce` on the path in X-07,
+  together with the Q12 agreement test, whose tests are incomplete (never
+  passed) when lsqvce is absent.
+- All five counterparts exist in `v6.1.3`: `+lsqvce/+kernel/armaACV`,
+  `psd2acv`, `whitenessCorr`, `levinsonDurbin`, `whittle`.
+
+**Checks:** the YAML parses and the steps are in order (checkout, probe,
+gracefoReading, lsqvce, gate, report). The tag `v6.1.3` exists on the remote.
+There is nothing to inject a fault into until X-07 adds the test that
+uses the checkout. A checkout the token cannot reach fails the step, so it
+cannot pass silently.
+
+**Prediction** (before any run): **421 + 0 + 0 = 421**, unchanged.
+
+---
+
+## Release workflow — merged 2026-09-23 (PR #42, `298b7cd`)
 
 Tier B. Scope, frozen 2026-09-23 (owner: "prepare the release workflow PR
 after #41"): `.github/workflows/release.yml` and the records of `v0.1.0`.
@@ -46,6 +81,10 @@ True after the merge:
 The YAML parses. The workflow runs only on `pull_request: closed`, so it
 first runs at this PR's merge, and must print "No release from this merge."
 The next PR records that run.
+
+**First run, measured:** release run 35896679070 at the merge of #42
+(2026-09-23 17:35 UTC). `matlab-release` decided `bump=none` and printed
+"No release from this merge."; the tag step was skipped. No tag was made.
 
 **Prediction** (before any run): **421 + 0 + 0 = 421**, unchanged from
 the `.github/` profile switch, because no code or test changes.
@@ -584,9 +623,10 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**Release workflow on branch `claude/grace-timeseries-issues-28g3a4`: CI
-green (run 35858904692, 421 + 0 + 0).** `.github/` profile switch merged (PR #41, `7b94df4`). X-02 merged
-(PR #40, `7fe24f3`). X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
+**lsqvce CI dependency on branch `claude/grace-timeseries-issues-28g3a4`:
+CI pending.** Release workflow merged (PR #42, `298b7cd`); its first run
+released nothing, as designed. `.github/` profile switch merged (PR #41,
+`7b94df4`). X-02 merged (PR #40, `7fe24f3`). X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
 `f969ecb`, release 0.1.0). The tag `v0.1.0` is lightweight and sits on
 `7fe24f3` (owner, release UI; GUIDE §3 anomaly table). X-01 + X-03 merged
 (PR #37); X-00b (PR #36); X-00a (#2).
