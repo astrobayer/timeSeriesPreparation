@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.bootstrap</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.bootstrap</h1>
+<p>Moving-block bootstrap of a statistic, one RNG substream per replicate.</p>
+<h2>Syntax</h2>
+<pre><code>[stat, info] = timeSeriesPreparation.bootstrap(x, statFcn)
+[stat, info] = timeSeriesPreparation.bootstrap(x, statFcn, NBoot = 1000, BlockLength = [], Seed = 0, Stage = &quot;bootstrap&quot;, Level = 0.6827)</code></pre>
+<h2>Description</h2>
+<p>Uncertainty of a statistic of serially correlated samples (CONCEPT 6.1, row 7). v2 measured naive sigmas 5-14 times too optimistic on GRACE residuals (CONCEPT 8), because resampling single samples destroys the correlation. The moving-block bootstrap (Kuensch 1989) resamples blocks of BlockLength consecutive rows instead: each replicate joins ceil(N/b) blocks, whose starts are drawn uniformly from 1..N-b+1, and keeps the first N rows. Rows move together, so the correlation between columns is kept.</p>
+<p>BlockLength [] takes the automatic rule of internal.blockLength (Politis &amp; White 2004, Patton et al. 2009) per column, rounded up, and the largest over the columns (a longer block keeps more of the dependence; owner decision 2026-09-23).</p>
+<p>Replicate r draws from substream r of an mrg32k3a stream seeded by internal.stageSeed(Stage, Seed). The result therefore depends on neither the order nor the number of workers that compute the replicates, and a different stage name gives independent draws (CONCEPT 8).</p>
+<p>statFcn maps an N x M matrix to a 1 x K row. It sees NaN where x has NaN (NaN is the only missing value, CONCEPT 5.2), so it must treat them, e.g. mean(z, 1, &quot;omitnan&quot;). No least-squares estimator lives here (CONCEPT 3.2): an application passes its own fit as statFcn.</p>
+<p>sigma is the standard deviation of the replicates over those whose statistic is finite; ci the percentile interval at Level, by the linear-interpolation quantile (Hyndman &amp; Fan type 7).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>N,M</td><td><code>double</code></td><td>&mdash;</td><td>- Samples in rows; NaN marks a missing sample.</td></tr>
+<tr><td><code>statFcn</code></td><td>1,1</td><td><code>function_handle</code></td><td>&mdash;</td><td>- z (N,M) -&gt; (1,K) double.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>NBoot</code></td><td>1,1</td><td><code>double</code></td><td>1000</td><td>Replicates, integer &gt;= 2.</td></tr>
+<tr><td><code>BlockLength</code></td><td>1,1</td><td><code>double</code></td><td>auto</td><td>Block length in rows, integer 1..N; [] (auto) = the Politis-White rule.</td></tr>
+<tr><td><code>Seed</code></td><td>1,1</td><td><code>double</code></td><td>0</td><td>Caller&#x27;s seed, integer &gt;= 0.</td></tr>
+<tr><td><code>Stage</code></td><td>1,1</td><td><code>string</code></td><td>&quot;bootstrap&quot;</td><td>Stage name the seed derives from.</td></tr>
+<tr><td><code>Level</code></td><td>1,1</td><td><code>double</code></td><td>0.6827</td><td>Coverage of ci, in (0,1); 0.6827 = 1 sigma.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>stat</code></td><td>1,K</td><td><code>double</code></td><td>&mdash;</td><td>- statFcn(x).</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: sigma (1,K), ci (2,K) lower and upper bound, replicates (NBoot,K), nFinite (1,K) finite replicates per column, blockLength, nBoot, seed (the stream seed), stage, level.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Monte-Carlo accuracy. For the mean of an AR(1) (phi 0.5, N 4000), 200 NumPy realisations with the automatic block and 1000 replicates gave sigma between 0.85 and 1.16 times the exact standard error (mean 0.96; the known small downward bias), where resampling single samples gave 0.53-0.61 (measured 2026-09-23). TestBootstrap holds one realisation to 0.8-1.25.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:bootstrap:badStatistic</code></td><td>Input</td><td>statFcn does not return a 1 x K double row of the same K for every replicate.</td></tr>
+<tr><td><code>timeSeriesPreparation:bootstrap:blockTooLong</code></td><td>Input</td><td>BlockLength exceeds the number of rows.</td></tr>
+<tr><td><code>timeSeriesPreparation:blockLength:tooShort</code></td><td>Input</td><td>automatic block length on too few rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>sigma of the mean of an AR(1): larger than the naive 1/sqrt(N).</p>
+<pre><code>x = filter(1, [1 -0.5], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 3), 2000, 1));
+[m, info] = timeSeriesPreparation.bootstrap(x, @(z) mean(z, 1, &quot;omitnan&quot;), NBoot = 200);</code></pre>
+<h2>Limitations</h2>
+<p>Blocks are stationary in the index, not in time: rows are assumed equally spaced. The percentile interval is first-order accurate; no BCa correction. A statistic with a leading bias is not corrected.</p>
+<h2>References</h2>
+<p>Kuensch, H. R. (1989). The jackknife and the bootstrap for general stationary observations. Ann. Statist. 17(3), 1217-1241. Lahiri, S. N. (2003). Resampling Methods for Dependent Data. Springer, ch. 2. Hyndman, R. J., Fan, Y. (1996). Sample quantiles in statistical packages. Amer. Statistician 50(4), 361-365. L&#x27;Ecuyer, P. (1999). Good parameters and implementations for combined multiple recursive random number generators. Oper. Res. 47(1), 159-164 (mrg32k3a). docs/CONCEPT.md sections 6.1 (row 7) and 8.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.crossval</code>, <code>timeSeriesPreparation.internal.blockLength</code>, <code>timeSeriesPreparation.internal.stageSeed</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/bootstrap.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

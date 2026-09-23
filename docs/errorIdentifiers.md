@@ -26,6 +26,11 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:arma2acv:zeroVariance` | `+timeSeriesPreparation/+spectral/arma2acv.m` | Model | Output "acf" with R(0) <= 0. |
 | `timeSeriesPreparation:arma2psd:badOption` | `+timeSeriesPreparation/+spectral/arma2psd.m` | Options | Output or Sided is not one of its values (case-insensitive), or Frequencies is not empty or a vector of values >= 0. Other options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:arma2psd:freqRange` | `+timeSeriesPreparation/+spectral/arma2psd.m` | Input | a Frequencies entry exceeds Fs/2. |
+| `timeSeriesPreparation:blockLength:tooShort` | `+timeSeriesPreparation/+internal/blockLength.m` | Input | fewer than 2 (m_max + 1) samples, so step 1 has too few pairs. |
+| `timeSeriesPreparation:blockLength:tooShort` | `+timeSeriesPreparation/bootstrap.m` | Input | automatic block length on too few rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:blockLength:tooShort` | `+timeSeriesPreparation/crossval.m` | Input | automatic Gap on too few rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:bootstrap:badStatistic` | `+timeSeriesPreparation/bootstrap.m` | Input | statFcn does not return a 1 x K double row of the same K for every replicate. |
+| `timeSeriesPreparation:bootstrap:blockTooLong` | `+timeSeriesPreparation/bootstrap.m` | Input | BlockLength exceeds the number of rows. |
 | `timeSeriesPreparation:checkAlignment:badGrid` | `+timeSeriesPreparation/checkAlignment.m` | Input | Step is not a whole number of nanoseconds, or MaxLag is not a whole multiple of Step. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:checkAlignment:columnMismatch` | `+timeSeriesPreparation/checkAlignment.m` | Input | obs and ref have different numbers of columns. |
 | `timeSeriesPreparation:checkAlignment:grossOffset` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column lags by more than MaxLag/2, or its peak lies on the search edge. |
@@ -39,6 +44,14 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:crnKernel:badParameters` | `+timeSeriesPreparation/crnKernel.m` | Parameters | Fs*Tf is not an odd integer, Nc is not a positive odd integer, or B*Tf rounds to a passband of zero bins or of Nh bins or more. |
 | `timeSeriesPreparation:crnKernel:unknownPreset` | `+timeSeriesPreparation/crnKernel.m` | Preset | preset is not "ACC", "KBR" or "LRI". |
 | `timeSeriesPreparation:crnKernel:unverifiedPreset` | `+timeSeriesPreparation/crnKernel.m` | Preset | "LRI": no CRN numbers for LRI1B are confirmed from a registered document yet. |
+| `timeSeriesPreparation:crossval:badLoss` | `+timeSeriesPreparation/crossval.m` | Input | lossFcn does not return a 1 x L double row of the same L for every fold. |
+| `timeSeriesPreparation:crossval:noTraining` | `+timeSeriesPreparation/crossval.m` | Input | Folds and Gap leave a fold without a training row or without a test row. |
+| `timeSeriesPreparation:noise:gapsInPsd` | `+timeSeriesPreparation/noise.m` | Input | Method "psd" on an axis with missing rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:noise:irregularGrid` | `+timeSeriesPreparation/noise.m` | Input | the epochs are not uniformly spaced; resample first (align) and mark missing rows NaN. |
+| `timeSeriesPreparation:noise:tooFewSamples` | `+timeSeriesPreparation/noise.m` | Input | an axis has fewer than 10 (p + q + 1) usable samples. |
+| `timeSeriesPreparation:observability:insufficientData` | `+timeSeriesPreparation/observability.m` | Gate | an axis keeps less than MinWeightFraction of its weight. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:observability:noThreshold` | `+timeSeriesPreparation/observability.m` | Input | no MinWeightFraction given and none in the product's preset. |
+| `timeSeriesPreparation:observability:sizeMismatch` | `+timeSeriesPreparation/observability.m` | Input | X does not have one row per epoch of arc, or Names not one name per column. |
 | `timeSeriesPreparation:plotAllanVariance:sizeMismatch` | `+timeSeriesPreparation/+spectral/plotAllanVariance.m` | Input | adev, info.adevLow or info.adevHigh is not numel(tau) x P. Inputs outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:plotPowerSpectrum:badOption` | `+timeSeriesPreparation/+spectral/plotPowerSpectrum.m` | Options | XScale or YScale is neither "log" nor "linear" (case-insensitive). Other options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:plotPowerSpectrum:badSpec` | `+timeSeriesPreparation/+spectral/plotPowerSpectrum.m` | Input | spec is empty, lacks a field of powerSpectrum's output, or mixes "psd" and "amplitude" series. |
@@ -101,4 +114,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-94 identifier(s).
+107 identifier(s).

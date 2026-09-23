@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.crossval</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.crossval</h1>
+<p>Blocked cross-validation with a buffer, for serially correlated rows.</p>
+<h2>Syntax</h2>
+<pre><code>[loss, info] = timeSeriesPreparation.crossval(x, lossFcn)
+[loss, info] = timeSeriesPreparation.crossval(x, lossFcn, Folds = 5, Gap = [])</code></pre>
+<h2>Description</h2>
+<p>Out-of-sample loss of a model on dependent samples (CONCEPT 6.1, row 7). Random K-fold splits leak information when neighbouring rows are correlated: a test row&#x27;s neighbours sit in the training set. Here the rows are cut into Folds contiguous blocks of near-equal length (the first rem(N, Folds) blocks one row longer). For fold k the test rows are block k; the training rows are all others except the Gap rows on either side of the block, which neither set uses (hv-block cross-validation, Racine 2000, with v = 0).</p>
+<p>lossFcn(xTrain, xTest) returns a 1 x L row. Both arguments are N x M, the full grid, with every row outside the set NaN. The time index therefore stays intact, and NaN is the only missing value (CONCEPT 5.2). lossFcn must treat NaN. No least-squares estimator lives here (CONCEPT 3.2): the application fits on xTrain and scores on xTest.</p>
+<p>Gap [] takes the automatic block length of internal.blockLength (Politis &amp; White 2004, Patton et al. 2009) per column, rounded up, the largest over the columns: the range over which rows are still dependent (owner decision 2026-09-23). No random numbers are used.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>x</code></td><td>N,M</td><td><code>double</code></td><td>&mdash;</td><td>- Samples in rows; NaN marks a missing sample.</td></tr>
+<tr><td><code>lossFcn</code></td><td>1,1</td><td><code>function_handle</code></td><td>&mdash;</td><td>- (xTrain, xTest) -&gt; (1,L) double.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Folds</code></td><td>1,1</td><td><code>double</code></td><td>5</td><td>Number of blocks, integer &gt;= 2.</td></tr>
+<tr><td><code>Gap</code></td><td>1,1</td><td><code>double</code></td><td>auto</td><td>Rows left out on each side of the test block, integer &gt;= 0; [] (auto) = the Politis-White block length.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>loss</code></td><td>1,L</td><td><code>double</code></td><td>&mdash;</td><td>- Mean over the folds whose loss is finite.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: foldLoss (Folds,L), se (1,L) standard error of loss, std/sqrt(folds); testRows (Folds,2) first and last row of each test block; gap, folds.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact partition: every row is tested exactly once, and no training row lies within Gap rows of its test block (TestCrossval checks both). se treats the fold losses as independent, which the buffer makes approximately true; it is a guide, not a confidence bound.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:crossval:badLoss</code></td><td>Input</td><td>lossFcn does not return a 1 x L double row of the same L for every fold.</td></tr>
+<tr><td><code>timeSeriesPreparation:crossval:noTraining</code></td><td>Input</td><td>Folds and Gap leave a fold without a training row or without a test row.</td></tr>
+<tr><td><code>timeSeriesPreparation:blockLength:tooShort</code></td><td>Input</td><td>automatic Gap on too few rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Loss of the training mean as a predictor of the test rows.</p>
+<pre><code>x = filter(1, [1 -0.5], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 4), 1000, 1));
+mse = @(tr, te) mean((te - mean(tr, &quot;omitnan&quot;)).^2, &quot;omitnan&quot;);
+[loss, info] = timeSeriesPreparation.crossval(x, mse, Folds = 5);</code></pre>
+<h2>Limitations</h2>
+<p>Rows are assumed equally spaced. Folds are contiguous in the row order; a test block at the start or end has a buffer on one side only. The training set is not required to precede the test block (no forward-chaining).</p>
+<h2>References</h2>
+<p>Racine, J. (2000). Consistent cross-validatory model-selection for dependent data: hv-block cross-validation. J. Econometrics 99(1), 39-61. Burman, P., Chow, E., Nolan, D. (1994). A cross-validatory method for dependent data. Biometrika 81(2), 351-358. Bergmeir, C., Hyndman, R. J., Koo, B. (2018). A note on the validity of cross-validation for evaluating autoregressive time series prediction. Comput. Stat. Data Anal. 120, 70-83. docs/CONCEPT.md section 6.1 (row 7).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.bootstrap</code>, <code>timeSeriesPreparation.internal.blockLength</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/crossval.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

@@ -11,6 +11,23 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
 - Release workflow: a merge whose `Contents.m` names an untagged version gets
   an annotated tag on the merge commit and a GitHub release
   (`ci-actions/matlab-release`, `mode: file`).
+- CI checks out lsqvce `v6.1.3` as a test-only dependency (PR #43).
+- **X-07** `bootstrap`: moving-block bootstrap of any statistic; one RNG
+  substream per replicate, the seed derived from the stage name (FNV-1a),
+  so results do not depend on worker count or stage order; automatic block
+  length by Politis & White (2004) with the Patton et al. (2009)
+  correction, pinned against Patton's reference code.
+- **X-07** `crossval`: blocked (hv-block) cross-validation with a buffer of
+  the automatic block length; rows outside each set are NaN.
+- **X-07** `observability`: condition number, estimate correlations and VIF
+  of a design before the fit; the minimum-data gate refuses an axis below
+  `Config.unc.minWeightFraction` (0.5 in the ACC, KBR and LRI presets).
+- **X-07** `noise`: ARMA(p,q) per axis by exact ML with gaps or through the
+  Welch PSD, its autocovariance and a Ljung-Box check.
+- **X-07** Q12: `TestLsqvceAgreement` holds `arma2acv`, `spec2acv`,
+  `tsLjungBox` and `tsFitAR` to lsqvce's `armaACV`, `psd2acv`,
+  `whitenessCorr`, `levinsonDurbin` and `whittle`.
+- `Config.unc` (minWeightFraction, blockLength, nBoot, level, folds).
 
 ## 0.1.0 — 2026-09-23
 
