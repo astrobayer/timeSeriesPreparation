@@ -50,6 +50,13 @@ The next PR records that run.
 **Prediction** (before any run): **421 + 0 + 0 = 421**, unchanged from
 the `.github/` profile switch, because no code or test changes.
 
+**Verdict, CI run 35858904692 on `b8d99d7` (2026-09-23), MATLAB R2026a,
+gracefoReading `v1.1.0`:**
+- `audit` green.
+- `matlab` green: **421 + 0 + 0 = 421**, every tag as predicted (contract
+  129). Gate time 999 s.
+- The release job has not run yet: it runs at the merge.
+
 ---
 
 ## `.github/` profile switch after X-02 — merged 2026-09-23 (PR #41, `7b94df4`)
@@ -578,7 +585,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 ## A. Status
 
 **Release workflow on branch `claude/grace-timeseries-issues-28g3a4`: CI
-pending.** `.github/` profile switch merged (PR #41, `7b94df4`). X-02 merged
+green (run 35858904692, 421 + 0 + 0).** `.github/` profile switch merged (PR #41, `7b94df4`). X-02 merged
 (PR #40, `7fe24f3`). X-06 merged (PR #39, `4f9e11e`). X-04 merged (PR #38,
 `f969ecb`, release 0.1.0). The tag `v0.1.0` is lightweight and sits on
 `7fe24f3` (owner, release UI; GUIDE §3 anomaly table). X-01 + X-03 merged
