@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.23 · 2026-09-24 · X-05 PR-B (`qc` port, unchanged) in review; X-05 PR-A merged (PR #51, `dcc185a`)**
+**Revision 0.24 · 2026-09-24 · X-05 PR-C (`mask`, D-9 tests, release 0.2.0) in review; X-05 PR-B merged (PR #52, `b5633c0`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -89,7 +89,7 @@ metamorphic 44, vectorisation 16, vectorization 5, speed 8.
 
 ---
 
-## X-05 PR-B — `qc` port, unchanged (issue #8); scope frozen 2026-09-24 (X-05 PR-A)
+## X-05 PR-B — `qc` port, unchanged (issue #8) — merged 2026-09-24 (PR #52, `b5633c0`); scope was frozen 2026-09-24 (X-05 PR-A)
 
 Tier B. Scope, decisions and pin: X-05 PR-A below.
 
@@ -1399,7 +1399,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-05 PR-B in review.**
+**X-05 PR-C in review.**
+X-05 PR-B merged (PR #52, `b5633c0`; CI 598 + 0 + 0).
 X-05 PR-A merged (PR #51, `dcc185a`; CI 553 + 0 + 0).
 X-09 PR 2 merged (PR #48, `ffe0164`; CI 553 + 0 + 0; issue #12 closed).
 X-09 PR 1 merged (PR #47, `8182010`; CI 534 + 0 + 0).
