@@ -271,6 +271,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.crossval did not run cleanly.");
         end
 
+        function timeSeriesPreparation_fill_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.fill: An AR(1) at 1 Hz with a 5 s gap, modelled and filled.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_fill_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.fill did not run cleanly.");
+        end
+
         function timeSeriesPreparation_noise_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.noise: An AR(1) at 1 Hz with a gap: phi near 0.7, residuals white.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_noise_1(), ...
@@ -566,6 +572,16 @@ function example_timeSeriesPreparation_crossval_1()  %#ok<DEFNU>
     x = filter(1, [1 -0.5], randn(RandStream("twister", "Seed", 4), 1000, 1));
     mse = @(tr, te) mean((te - mean(tr, "omitnan")).^2, "omitnan");
     [loss, info] = timeSeriesPreparation.crossval(x, mse, Folds = 5);
+end
+
+function example_timeSeriesPreparation_fill_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.fill, verbatim from its help block.
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-01_C_04.txt", "product", "ACT1B");
+    x = filter(1, [1 -0.7], randn(RandStream("twister", "Seed", 5), 1500, 1));
+    x(700:704) = NaN;
+    arc = timeSeriesPreparation.Arc(int64(0:1499)' * int64(1e9), x, aux);
+    nm = timeSeriesPreparation.noise(arc, [1 0], MaxLag = 50);
+    [filledArc, info] = timeSeriesPreparation.fill(arc, Method = "collocation", Model = nm, MaxGap = 10);
 end
 
 function example_timeSeriesPreparation_noise_1()  %#ok<DEFNU>

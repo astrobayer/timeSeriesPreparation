@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.17 (DRAFT) · 2026-09-23 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.18 (DRAFT) · 2026-09-24 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.18 | X-08: V-7 closed from the code (the sigtools Kalman filter only predicts). `collocation` is covariance collocation on the model's autocovariance, never extrapolated beyond its largest lag, not a Kalman smoother; `reference` follows X-09 (owner decisions 2026-09-24; 6.5, 9.3) |
 | **0.14** | **Stage C done: verification items closed from the registered documents and real bytes (9.3). The v2 CRN oracle is wrong — the ATBD raises each passband term to the power N_c, the port raised the sum; real ACT1A→ACT1B data give DC gain 1 + 6.4e-8, not 1.0004533. Section 8 and ORC-1/ORC-2 corrected** |
 
 **Read at**
@@ -363,11 +364,16 @@ are estimated by `lsqvce.fit`.
 | method | fills | use |
 |---|---|---|
 | `none` (**default**) | nothing; gaps are reported (`findGaps`) and arcs split there | estimation, and every run that does not ask |
-| `collocation` (on request) | optimal prediction under the fitted noise model (ARMA state space; V-7), gaps ≤ `maxGap` | consumers needing continuity |
-| `reference` (explicit request) | calibrated reference plus collocated residual | continuity beyond what collocation can bridge |
+| `collocation` (on request) | optimal prediction under the noise model, x_g = mu + C_go C_oo⁻¹ (x_o − mu), from its autocovariance and the observed samples within a window; interior gaps ≤ `maxGap` | consumers needing continuity |
+| `reference` (explicit request; after X-09) | calibrated reference plus collocated residual | continuity beyond what collocation can bridge |
 
 - `maxGap` has no default; a fill without it refuses
   (`timeSeriesPreparation:fill:maxGapMissing`).
+- The covariance is taken only where the model states it: the window is
+  capped so that every lag in it is at most the model's largest lag. For
+  AR(p) with a window of at least p the fill equals the prediction from the
+  whole record; gaps at the arc edges (extrapolation) are reported, not
+  filled.
 - Filled samples are flagged in `arc.filled`, weigh 0 in every fit, and never
   re-enter an estimate.
 
@@ -584,6 +590,7 @@ page, or real bytes with the file named.
 | V-4 | **closed** | ITSG `nonConservativeForces` is **calibrated accelerometer data**, not a model. Against ACT1B (GRACE-C, 2020-01-02, 8 640 epochs), a bias + scale fit gives correlation 0.984 / 0.973 / 0.955, scales 1.066 / 0.915 / 0.864 and residual rms 2.8 / 3.1 / 2.5e-9 m/s². The README says only "accelerations due to non-conservative forces, SRF, 10 s" | R-9; ITSG file vs ACT1B |
 | V-5 | **closed** | The ACT1B header does **not** say "transplant": source "Transformed Accelerometer data for GRACE D", input ACT1A. D uses the GRACE-C transplant on and after 2018-06-21, per R-3. So the D report derives transplant status from the date | R-3 PDF p. 2; `ACT1B_2020-01-02_D_04.txt` header |
 | V-6 | **closed** (lsqvce#108, §12.31) | One `lsqvce.fit` call on **kind A** (streaming) carries local parameters (arc/day/system, pre-eliminated), common and local priors, temporal laws per stream (`diag`, `acf`, `psd` via AR/ARMA/Toeplitz, `arma`, `var`, `custom`, with `Cep`) and robust IRLS (alone or inside `Estimate="noise"`). Not on kinds B/C (laws, VCE) or nonlinear `x0` (robust). **N-02 and L-03 therefore declare kind A.** Gap: no lsqvce test combines robust + priors + law + local parameters in one run; the source suggests stand-alone `adjustRobust` puts local-prior pseudo-rows into its IRLS bookkeeping (scale, counts, collapse check) — **lsqvce#110**, blocks N-02 | lsqvce `fit`/`covModel`/`adjustRobust` help; `test_fit.m` `testRobustRunsOnTheStreamingKind` (local params + ARMA + Huber) |
+| V-7 | **closed** 2026-09-24 | The sigtools Kalman filter **only filters and forecasts**: `tsFitArima`/`tsFitSarima` run it forward for the likelihood and only predict at a gap; `tsForecast` filters to the end of the record and projects. No backward pass exists. `fill` therefore interpolates by covariance collocation (6.5) | `+tsmodels/tsFitArima.m`, `tsFitSarima.m`, `tsForecast.m` (sigtools v1.3.1) |
 | V-8 | **partly closed** | Classic L1B: an ASCII header of 80-byte records ending "END OF HEADER"; `.dat` binary, `.asc` ASCII; KBR1B qualflg bit 0 threshold 0.2 cycle. RL02 holds the full set, RL03 only KBR1B/SCA1B. The binary record layouts are read in G-02 | R-4 PDF pp. 18, 34–35; real RL02/RL03 files |
 | V-9 | **closed** | GRACE macro model: R-5 §I.5.3.3 mass, §I.5.3.4 exterior dimensions, §I.5.3.5 surface properties (emissivity, absorptivity/reflectivity), §I.5.3.6 antenna locations | R-5 PDF pp. 20–23 |
 | V-11 | **closed** | ZARM (R-13) for GRACE A/B and C; TN-02 a-priori scales for GRACE (A: 0.9595 / 0.9797 / …, convention bias + scale·f) | R-13, R-10 PDF p. 1 |
@@ -598,7 +605,7 @@ page, or real bytes with the file named.
 - **LRI phase-jump processing changed for products from 2020-06-27** (R-7). The
   reference month 2020-01 uses the older deglitching, which matters for L-02 and
   ORC-13.
-- **Still open:** V-2 (LRI numbers), V-7 (sigtools smoother), V-10
+- **Still open:** V-2 (LRI numbers), V-10
   (classic thermal history, R-12/P-19), V-12 (defect days).
 
 ---

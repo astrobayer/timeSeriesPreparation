@@ -10,8 +10,8 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:Arc:badLayer` | `+timeSeriesPreparation/Arc.m` | Layers | the layer is not N x 1 logical, its name is not a field name, or a layer of that name exists. |
 | `timeSeriesPreparation:Arc:mixedProduct` | `+timeSeriesPreparation/Arc.m` | Metadata | the files hold different products or satellites. |
 | `timeSeriesPreparation:Arc:mixedRelease` | `+timeSeriesPreparation/Arc.m` | Metadata | the files, or the arcs of a campaign, come from more than one L1B release. |
-| `timeSeriesPreparation:Arc:notFinite` | `+timeSeriesPreparation/Arc.m` | Observations | obs holds Inf (NaN is allowed). |
-| `timeSeriesPreparation:Arc:sizeMismatch` | `+timeSeriesPreparation/Arc.m` | Observations | obs is not a real double, or its rows differ from numel(t) or its columns from numel(aux.obsNames). |
+| `timeSeriesPreparation:Arc:notFinite` | `+timeSeriesPreparation/Arc.m` | Observations | obs holds Inf (NaN is allowed); for fillSamples, a value under mask is NaN or Inf. |
+| `timeSeriesPreparation:Arc:sizeMismatch` | `+timeSeriesPreparation/Arc.m` | Observations | obs is not a real double, or its rows differ from numel(t) or its columns from numel(aux.obsNames); for fillSamples, values or mask is not the size of obs, or not double and logical. |
 | `timeSeriesPreparation:Arc:timeFormat` | `+timeSeriesPreparation/Arc.m` | Time | t is not an int64 column vector (read with 'TimeFormat', "gpsns"). |
 | `timeSeriesPreparation:Arc:timeNotIncreasing` | `+timeSeriesPreparation/Arc.m` | Time | t is not strictly increasing. |
 | `timeSeriesPreparation:Arc:unknownColumn` | `+timeSeriesPreparation/Arc.m` | Observations | Columns names an observation the file does not have, or names one twice. |
@@ -46,6 +46,12 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:crnKernel:unverifiedPreset` | `+timeSeriesPreparation/crnKernel.m` | Preset | "LRI": no CRN numbers for LRI1B are confirmed from a registered document yet. |
 | `timeSeriesPreparation:crossval:badLoss` | `+timeSeriesPreparation/crossval.m` | Input | lossFcn does not return a 1 x L double row of the same L for every fold. |
 | `timeSeriesPreparation:crossval:noTraining` | `+timeSeriesPreparation/crossval.m` | Input | Folds and Gap leave a fold without a training row or without a test row. |
+| `timeSeriesPreparation:fill:irregularGrid` | `+timeSeriesPreparation/fill.m` | Input | the epochs are not uniformly spaced; resample first (align). |
+| `timeSeriesPreparation:fill:maxGapMissing` | `+timeSeriesPreparation/fill.m` | Input | "collocation" without MaxGap (it has no default, Q3). |
+| `timeSeriesPreparation:fill:modelMismatch` | `+timeSeriesPreparation/fill.m` | Input | Model lacks acv, dt or mu, or its columns or dt differ from the arc's. |
+| `timeSeriesPreparation:fill:modelMissing` | `+timeSeriesPreparation/fill.m` | Input | "collocation" without Model. |
+| `timeSeriesPreparation:fill:notPositiveDefinite` | `+timeSeriesPreparation/fill.m` | Numerical | C_oo is not positive definite: Model.acv is not an autocovariance. |
+| `timeSeriesPreparation:fill:referenceDeferred` | `+timeSeriesPreparation/fill.m` | Input | Method "reference", which follows the drivers (X-09). Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:noise:gapsInPsd` | `+timeSeriesPreparation/noise.m` | Input | Method "psd" on an axis with missing rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:noise:irregularGrid` | `+timeSeriesPreparation/noise.m` | Input | the epochs are not uniformly spaced; resample first (align) and mark missing rows NaN. |
 | `timeSeriesPreparation:noise:tooFewSamples` | `+timeSeriesPreparation/noise.m` | Input | an axis has fewer than 10 (p + q + 1) usable samples. |
@@ -116,4 +122,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-109 identifier(s).
+115 identifier(s).

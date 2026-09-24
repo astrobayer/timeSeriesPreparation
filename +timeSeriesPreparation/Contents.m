@@ -20,6 +20,8 @@
 %                       output epochs.
 %     noise           - Residual noise model per axis: ARMA by exact ML with
 %                       gaps, or PSD -> ARMA.
+%     fill            - Report the gaps of an arc, or fill the short ones by
+%                       covariance collocation.
 %     observability   - Identifiability metrics of a design before the fit,
 %                       and the minimum-data gate.
 %     bootstrap       - Moving-block bootstrap of a statistic, one RNG
