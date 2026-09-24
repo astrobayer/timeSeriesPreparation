@@ -1,5 +1,5 @@
 % timeSeriesPreparation - physics-free preparation of GRACE and GRACE-FO time series
-% Version 0.1.0  2026-09-23
+% Version 0.2.0  2026-09-24
 %
 %   Design: docs/CONCEPT.md. Order of work: docs/GUIDE.md.
 %
@@ -12,6 +12,8 @@
 %                  KBR, ACC).
 %
 %   Stages (L2)
+%     mask            - Named removal layers from qualflg, SNR, THR1B,
+%                       eclipse, official event lists and the caller.
 %     align           - Move a reference series onto the epochs of an
 %                       observation, units checked.
 %     checkAlignment  - Report a time lag between observation and reference;

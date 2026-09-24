@@ -123,7 +123,7 @@ classdef Arc
 %   See also timeSeriesPreparation.Config, gracefoReading.readL1b, gracefoReading.readL1bMulti.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (SetAccess = private)
         t = int64.empty(0, 1)

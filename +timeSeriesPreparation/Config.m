@@ -21,6 +21,17 @@ classdef Config
 %     Config as 'Preproc' and hash it with their own options; toStruct gives
 %     them a plain struct to hash.
 %
+%     mask (X-05): fields removeBits (qualflg bits that remove), snrFraction
+%     (the "snr" threshold as a fraction of the median), thrMargin and
+%     eclipseMargin ([] = half the CRN fit interval of the crn preset) and
+%     crnEdge (false). Presets (owner decisions 2026-09-24, from the RL04
+%     file headers): ACT1B removes bits 5-7, the L1B fill flags; KBR1B and
+%     LRI1B remove bit 0 (phase break) and bits 6-7 (fill flags) and set
+%     snrFraction 0.5, provisional until real data refine it. Every other
+%     bit - ACT1B clock-offset extrapolation (3/4), KBR1B time-tag bias
+%     correction (5) - is reported by mask, not removed. Any other product
+%     removes no bit and has no snr layer unless told.
+%
 %     crn (X-04): field preset, the crnKernel preset the product was filtered
 %     with in L1B processing - "ACC" for ACC1B (GRACE) and ACT1B (GRACE-FO),
 %     "KBR" for KBR1B (R-1 App. B; R-2 PDF p. 20). Any other product leaves
@@ -79,17 +90,17 @@ classdef Config
 %     s = toStruct(cfg);
 %
 %   LIMITATIONS
-%     Only crn, align, fill, unc and drivers have fields so far; set
+%     Only mask, crn, align, fill, unc and drivers have fields so far; set
 %     refuses every other field until the stages define theirs.
 %
 %   REFERENCES
 %     docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults). R-1: GRACE
 %     L1B ATBD, JPL D-27672, App. B. R-2: GRACE-FO L1 Handbook, JPL D-56935.
 %
-%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
+%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.mask, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
@@ -98,7 +109,8 @@ classdef Config
     properties (SetAccess = private)
         mission = ""
         product = ""
-        mask = struct()
+        mask = struct("removeBits", zeros(1, 0), "snrFraction", [], "thrMargin", [], ...
+            "eclipseMargin", [], "crnEdge", false)
         qc = struct()
         crn = struct("preset", "")
         align = struct("method", "pchip", "maxGap", [], "maxLag", 60, "threshold", 1)
@@ -128,6 +140,13 @@ classdef Config
             end
             if any(cfg.product == ["ACC1B" "ACT1B" "KBR1B" "LRI1B"])
                 cfg.unc.minWeightFraction = 0.5;
+            end
+            switch cfg.product
+                case "ACT1B"
+                    cfg.mask.removeBits = [5 6 7];
+                case {"KBR1B", "LRI1B"}
+                    cfg.mask.removeBits = [0 6 7];
+                    cfg.mask.snrFraction = 0.5;
             end
         end
 
@@ -169,6 +188,8 @@ end
 function known = schema(section)
 % Fields SECTION accepts; each stage adds its own case in its work package.
     switch section
+        case "mask"
+            known = ["removeBits" "snrFraction" "thrMargin" "eclipseMargin" "crnEdge"];
         case "crn"
             known = "preset";
         case "align"

@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.23 · 2026-09-24 · X-05 PR-B (`qc` port, unchanged) in review; X-05 PR-A merged (PR #51, `dcc185a`)**
+**Revision 0.24 · 2026-09-24 · X-05 PR-C (`mask`, D-9 tests, release 0.2.0) in review; X-05 PR-B merged (PR #52, `b5633c0`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,103 @@ restates:
 
 ---
 
-## X-05 PR-B — `qc` port, unchanged (issue #8); scope frozen 2026-09-24 (X-05 PR-A)
+## X-05 PR-C — `mask`, D-9 tests, release 0.2.0 (closes issue #8); scope frozen 2026-09-24 (X-05 PR-A)
+
+Tier B. Scope: X-05 PR-A below.
+
+**Owner decisions 2026-09-24 (third round):**
+- **qualflg: the header decides.** `decodeQualFlags` supplies each bit's
+  meaning from the file header. The presets remove the L1B fill flags
+  (ACT1B 5–7, KBR1B and LRI1B 6–7) and the phase break (KBR1B and LRI1B
+  bit 0); every other bit is reported and removes nothing. CONCEPT's "ACC
+  large-range mode, bit 4 (R-2 p. 32)" is corrected: in the GRACE-FO
+  ACT1B RL04 header, bit 4 is the CLK1B clock-offset extrapolation.
+- **SNR layer.** A sample is removed where an SNR column falls below a
+  fraction of its median: `Config.mask.snrFraction`, 0.5 for KBR1B and
+  LRI1B, provisional.
+- **Event lists.** Callers state their windows; a TN-01 helper is built
+  in. TN-01 MANV rows become [epoch, epoch + values(1) s]. The duration
+  reading was measured: the first GRACE-C row, 127 s, equals TN-01a's
+  "06:19:26 to 06:21:33" on 2018-05-24. TN-01a prose is never parsed.
+- **THR1B margin.** Half the CRN fit interval (70.35 s ACC, 35.35 s KBR).
+  Eclipse transitions use the same margin. LRI has no CRN preset, so its
+  margins must be given (`mask:marginMissing`).
+
+True after the merge:
+- **`mask(arc, ...)`** (L2) adds one named layer per source:
+  - `qualflg_b<k>`, `snr`, `thr`, `eclipse`, `events`, `crnEdge` (off by
+    default) and `user`;
+  - `info` returns the qualflg report, the SNR thresholds, the firing and
+    transition counts, and the calibration windows (`info.windows`).
+- `Config.mask`: `removeBits`, `snrFraction`, `thrMargin`,
+  `eclipseMargin`, `crnEdge`, with the presets above.
+- `TestMask`: every count is written out from the definition. The TN-01
+  window is checked on gracefoReading's fixture.
+- `TestDefectCatalogue` covers DC-1 … DC-8 on their real days in the
+  DATAPOOL. Each test first checks the recorded numbers, then the verdict.
+  The three synthetic classes behave as follows:
+  - a duplicated epoch is refused by `Arc`;
+  - an LRI1B phase break is removed;
+  - a 10-sigma level jump is reported by `qc.screen`, never masked.
+- Release **0.2.0**: `Contents.m`, every footer, README, CHANGELOG. The
+  release workflow tags the merge commit.
+- CONCEPT Rev 0.21: 6.1 row 1 as above; V-12 answered.
+
+**Measured before the push (2026-09-24, ci-actions `v1.3.2`):**
+- `matlab-audit`: 125 files at 0.2.0, **clean**.
+- `matlab-docs --check`: 61 files, **in sync**; the mask EXAMPLE is new.
+
+**Fault injection:**
+- The refusals each fire on a planted defect: wrong size, THR1B on-times
+  in seconds, eclipse value 2, a window ending before it starts, LRI1B
+  with no margin, and mask run twice.
+- DC-6 and DC-7 hold the negative: a reported bit must not remove.
+- DC-4 holds 2020-07-12 as a dip that must stay.
+
+**Prediction** (before any run): **622 + 0 + 0 = 622**. That is 598 (PR-B)
+plus:
+- TestMask 11 (contract 3, reference 5, metamorphic 2, robustness 1).
+- TestDefectCatalogue 11 (reference 8, robustness 3).
+- TestConfig +1 (contract).
+- TestHelpExamples 54 -> 55 (contract).
+
+Per tag: contract 187, reference 220, precision 23, robustness 119,
+metamorphic 44, vectorisation 16, vectorization 5, speed 8.
+- Without READING_DATA_POOL the eight DC tests are incomplete: 614 + 0 + 8.
+- Without gracefoReading as well, the qualflg and TN-01 tests of TestMask
+  and the synthetic LRI test are also incomplete.
+
+**Risks, stated:**
+- The DC tests read the DATAPOOL for the first time from the `matlab`
+  job.
+- DC-8 builds an `Arc` from a real THR1B day, which needs strictly
+  increasing epochs. That holds on gracefoReading's THR1B fixture (471 of
+  471), but 2020-01-04 D has not been checked.
+- A red here is a test or `mask` fix in this PR. The recorded D-9 numbers
+  change only on evidence.
+
+**Debt:** Tier A (no local MATLAB).
+
+**Verdict, CI run 36033100696 on `a2dcbff` (2026-09-24), MATLAB R2026a
+Update 5, gracefoReading `v1.1.0`, lsqvce `v6.1.3`, READING_DATA_POOL set:**
+- `audit` green.
+- `matlab` green on the first run: **622 + 0 + 0 = 622**, every tag as
+  predicted (contract 187, reference 220, precision 23, robustness 119,
+  metamorphic 44, vectorisation 16, vectorization 5, speed 8).
+- TestMask 11/11 and TestDefectCatalogue 11/11. The DC tests ran on the
+  real days, with nothing incomplete.
+- DC-5 logged its phase breaks: 2020-07-01 at 13590 s and 2020-07-09 at
+  82645 s, now in the D-9 table.
+- No new warning in the gate step. Gate time 1541 s.
+
+**Finding: the `matlab` job ran 27 min 7 s against its 30-min
+`timeout-minutes`.** The gate grew from 1159 s (PR-A) to 1541 s, and the
+DATAPOOL reads add to it. The next WP's tests may cross the limit. Raising
+it is a `.github/` change and stands alone (O-6).
+
+---
+
+## X-05 PR-B — `qc` port, unchanged (issue #8) — merged 2026-09-24 (PR #52, `b5633c0`); scope was frozen 2026-09-24 (X-05 PR-A)
 
 Tier B. Scope, decisions and pin: X-05 PR-A below.
 
@@ -160,7 +256,7 @@ ones the file headers themselves print (2020-07 headers).
 | DC-2 | gap across the day boundary | KBR1B Y 2020-01-14 → 2020-01-15 | last sample 01-14 82235 s; first sample 01-15 4675 s | one gap spanning both files; longer than the 21-s L1B fill limit, so the arc splits there |
 | DC-3 | gaps inside a day | KBR1B Y 2020-01-08; KBR1B Y 2020-07-09 | 01-08: starts 70170 s (+740 s), 78290 s (+610), 79215 s (+75), 82025 s (+100); 07-09: 81680 s (+965) | four (one) gap segments; each longer than 21 s, so none is an L1B fill |
 | DC-4 | KBR SNR drop | KBR1B Y 2020-01-14, `K_B_SNR` | minimum 288 at 82150 s (median of the day 774), just before DC-2's gap | flagged by the SNR layer (PR-C sets the threshold); smaller dips 2020-07-12 (723 at 61455 s) and 2020-07-17 (732 at 19145 s) stay unflagged |
-| DC-5 | KBR phase break (qualflg bit 0) | KBR1B Y 2020-07-01; KBR1B Y 2020-07-09 | one flagged sample each day (the scan counted, it did not print the epoch; PR-C's test locates and records it) | masked by the qualflg layer (bit 0) |
+| DC-5 | KBR phase break (qualflg bit 0) | KBR1B Y 2020-07-01; KBR1B Y 2020-07-09 | one flagged sample each day: 07-01 at 13590 s, 07-09 at 82645 s (logged by `TestDefectCatalogue`, CI run 36033100696) | masked by the qualflg layer (bit 0) |
 | DC-6 | ACT1B clock-offset extrapolation (qualflg bits 3/4) | ACT1B C 2020-01-08; ACT1B C 2020-07-16 | 01-08: bits 3/4 on ~16 200 samples; 07-16: bit 3 on 10 750 samples | a qualflg layer, **reported, not masked by default**: the header reads "extrapolated CLK1B clock offset, > 5 s (bit 3) / ≤ 5 s (bit 4) from the CRN centre" — a time-tag quality statement, not a data defect. (Corrects this session's first reading, "large-range mode", which was wrong.) |
 | DC-7 | KBR time-tag bias correction (qualflg bit 5) | KBR1B Y 2020-01-09 | all 17 182 samples | informational layer, **not masked**: the header reads "data corrected for time-tag bias in K or Ka phase" |
 | DC-8 | thruster-heavy day | THR1B D 2020-01-04 (with ACT1B D 2020-01-04) | 727 THR1B records against ~440 on a typical day | THR1B windows layer; `qc` impulses assigned to THR1B with confidence 1 |
@@ -1320,7 +1416,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-05 PR-B in review.**
+**X-05 PR-C in review.**
+X-05 PR-B merged (PR #52, `b5633c0`; CI 598 + 0 + 0).
 X-05 PR-A merged (PR #51, `dcc185a`; CI 553 + 0 + 0).
 X-09 PR 2 merged (PR #48, `ffe0164`; CI 553 + 0 + 0; issue #12 closed).
 X-09 PR 1 merged (PR #47, `8182010`; CI 534 + 0 + 0).
@@ -1421,6 +1518,7 @@ This explains the ITSG gap. It is the first real entry for the defect catalogue
 | O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | **closed 2026-09-22** (PR #36 merged, `2ecf543`) | — | — |
 | O-2 | add the required checks `audit` and `matlab` to `Main Protection`; both contexts exist since run 35771631191 (2026-09-22) | open | owner | now |
 | O-4 | GUIDE A3 steps 6 and 7: gracefoReading #15 merged (`de87fbf`, merge commit, see F), NonGravForces #57 merged (`10c8504`) | **closed 2026-09-18** | owner | — |
+| O-6 | raise the `matlab` job's `timeout-minutes` (30) before the gate outgrows it: 27 min 7 s at X-05 PR-C (run 36033100696). A `.github/` change, its own PR | open | Session, owner merges | before the next WP that adds real-data tests |
 | O-5 | Regression month (CONCEPT ORC-10): keep 2020-01 and mask GRACE-D's safe mode 2020-01-18 05:05 … 2020-01-22 12:05 from the baseline (proposal; it then also tests event masking), or choose another month | open | owner | before N-10 |
 
 ---

@@ -21,6 +21,7 @@
         <tocitem target="timeSeriesPreparation.internal.resampleOnto.html">timeSeriesPreparation.internal.resampleOnto</tocitem>
         <tocitem target="timeSeriesPreparation.internal.stageSeed.html">timeSeriesPreparation.internal.stageSeed</tocitem>
         <tocitem target="timeSeriesPreparation.internal.toolboxVersion.html">timeSeriesPreparation.internal.toolboxVersion</tocitem>
+        <tocitem target="timeSeriesPreparation.mask.html">timeSeriesPreparation.mask</tocitem>
         <tocitem target="timeSeriesPreparation.noise.html">timeSeriesPreparation.noise</tocitem>
         <tocitem target="timeSeriesPreparation.noiseReference.html">timeSeriesPreparation.noiseReference</tocitem>
         <tocitem target="timeSeriesPreparation.observability.html">timeSeriesPreparation.observability</tocitem>

@@ -59,7 +59,7 @@ function map = binnedMap(value, a, b, edgesA, edgesB)
 %   See also timeSeriesPreparation.drivers, timeSeriesPreparation.regressDrivers, discretize, accumarray.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         value double
