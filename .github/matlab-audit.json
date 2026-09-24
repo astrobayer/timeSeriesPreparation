@@ -51,6 +51,21 @@
       "seeAlso": false
     },
     {
+      "name": "qc-ported",
+      "reason": "NonGravForces.qc 0.12.0 (3cc0123) moves in unchanged at X-05 PR-B (CONCEPT 10.1 X-05, 12.9); its help style, identifiers raised through fail and its test classes keep NonGravForces' conventions until a conventions WP brings them to this template. Only the presence of a help block is checked until then.",
+      "match": [
+        "+timeSeriesPreparation/+qc/*.m",
+        "tests/qc/*.m"
+      ],
+      "sections": [],
+      "optionsSection": null,
+      "entries": "off",
+      "footer": "off",
+      "errorGroups": false,
+      "identifiers": false,
+      "seeAlso": false
+    },
+    {
       "name": "public",
       "match": [
         "+timeSeriesPreparation/*.m",

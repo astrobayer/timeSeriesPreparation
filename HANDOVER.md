@@ -13,7 +13,8 @@ restates:
 ## X-05 PR-A — DATAPOOL for the `matlab` job, D-9 catalogue, X-05 scope (issue #8); scope frozen 2026-09-24
 
 Tier B. A `.github/` change, so it stands alone: it touches only
-`.github/workflows/ci.yml` and this file.
+`.github/workflows/ci.yml`, `.github/matlab-audit.json`,
+`.github/matlab-docs.json` and this file.
 
 **Owner decisions 2026-09-24:**
 - D-9 is recorded from **two scanned months**, 2020-01 (throwaway PR #49)
@@ -41,8 +42,28 @@ True after the merge:
   `READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}`, the DATAPOOL root
   (HANDOVER F, 2026-09-19). Nothing reads it yet. PR-C's D-9 tests will,
   and a test that finds it empty is counted incomplete, never passed.
+- **Audit profile `qc-ported`** for `+timeSeriesPreparation/+qc/*.m` and
+  `tests/qc/*.m`: only a help block is required, as `sigtools-imported`
+  did for X-01. The reason is stated in the profile. The ported help keeps
+  NonGravForces' style, identifiers are raised through `fail` (not visible
+  to the static check), and the ported tests keep their own layout. A
+  conventions WP lifts it. Until then the six `qc` units are **not in the
+  identifier catalogue**, which is debt.
+- **Docs:** `+timeSeriesPreparation/+qc/*.m` is excluded from the generator
+  until then. The ported EXAMPLEs call NonGravForces' readers and cannot run
+  here.
 - The D-9 catalogue below. GUIDE D-9 names this file as the place to
   record it.
+
+**Fault injection (2026-09-24, ci-actions `v1.3.2`)**, on a copy of the
+tree with PR-B's ported files in place:
+
+| tree | finding |
+|---|---|
+| PR-B files, old configuration | A0 on all 9 ported files; docs D1 on 6 pages + TestHelpExamples |
+| PR-B files, this configuration | audit **clean** (118 files); docs **in sync** (58) |
+| the same, `hampel.m` without its help block | A1 |
+| this repository as it is (no `+qc` yet) | audit **clean** (109); docs **in sync** (58) |
 
 ### D-9 — the defect catalogue (V-12, CONCEPT ORC-11)
 
