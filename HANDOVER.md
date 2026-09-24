@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.25 · 2026-09-24 · O-6 (`matlab` job timeout 30 → 60 min, `.github/` only) in review; X-05 merged (PR #53, `f448f78`), release v0.2.0**
+**Revision 0.26 · 2026-09-24 · X-05b (`qc` conventions, numbers unchanged) in review; O-6 merged (PR #54, `7c7fb7b`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -78,7 +78,7 @@ touched.
 
 ---
 
-## O-6 — `matlab` job timeout 30 → 60 min (`.github/` only); 2026-09-24
+## O-6 — `matlab` job timeout 30 → 60 min (`.github/` only) — merged 2026-09-24 (PR #54, `7c7fb7b`)
 
 A `.github/` change, so it stands alone: `.github/workflows/ci.yml` and this
 file. The gate grew from 953 s (X-01) to 1541 s (X-05 PR-C, 622 tests, the
@@ -1501,7 +1501,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**O-6 in review (`.github/` only).**
+**X-05b in review.**
+O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
 X-05 PR-C merged (PR #53, `f448f78`; CI 622 + 0 + 0); **release v0.2.0** tagged on the merge by the release workflow; issue #8 closed.
 X-05 PR-B merged (PR #52, `b5633c0`; CI 598 + 0 + 0).
 X-05 PR-A merged (PR #51, `dcc185a`; CI 553 + 0 + 0).
@@ -1604,7 +1605,7 @@ This explains the ITSG gap. It is the first real entry for the defect catalogue
 | O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | **closed 2026-09-22** (PR #36 merged, `2ecf543`) | — | — |
 | O-2 | add the required checks `audit` and `matlab` to `Main Protection`; both contexts exist since run 35771631191 (2026-09-22) | open | owner | now |
 | O-4 | GUIDE A3 steps 6 and 7: gracefoReading #15 merged (`de87fbf`, merge commit, see F), NonGravForces #57 merged (`10c8504`) | **closed 2026-09-18** | owner | — |
-| O-6 | raise the `matlab` job's `timeout-minutes` (30) before the gate outgrows it: 27 min 7 s at X-05 PR-C (run 36033100696). A `.github/` change, its own PR | **in review**: 30 → 60 min | Session, owner merges | before the next WP that adds real-data tests |
+| O-6 | raise the `matlab` job's `timeout-minutes` (30) before the gate outgrows it: 27 min 7 s at X-05 PR-C (run 36033100696). A `.github/` change, its own PR | **closed 2026-09-24**: 30 → 60 min (PR #54) | Session, owner merges | before the next WP that adds real-data tests |
 | O-5 | Regression month (CONCEPT ORC-10): keep 2020-01 and mask GRACE-D's safe mode 2020-01-18 05:05 … 2020-01-22 12:05 from the baseline (proposal; it then also tests event masking), or choose another month | open | owner | before N-10 |
 
 ---
