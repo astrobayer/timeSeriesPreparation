@@ -42,11 +42,11 @@ id, citation, where the owner's copy lives, what it is needed for.
 | P-6 | Peterseim, N., Flury, J., Schlicht, A. (2012): Magnetic torquer induced disturbing signals within GRACE accelerometer data, Adv. Space Res., doi:10.1016/j.asr.2012.02.013 | X-17, N-11 |
 | P-7 | Pan, Xiao (2024): Sensors 24:4286, doi:10.3390/s24134286 | X-17 |
 | P-8 | Yan, Y., Müller, V., Heinzel, G., Zhong, M. (2021): Revisiting the light time correction in gravimetric missions like GRACE and GRACE Follow-On, J. Geod. 95:48, doi:10.1007/s00190-021-01498-5 | L-01 |
-| P-9 | Müller, V. et al. (2022): Comparing GRACE-FO KBR and LRI ranging data with focus on carrier frequency variations, Remote Sens. 14:4335, doi:10.3390/rs14174335 | L-03, L-07, L-08 |
+| P-9 | Müller, V. et al. (2022): Comparing GRACE-FO KBR and LRI ranging data with focus on carrier frequency variations, Remote Sens. 14:4335, doi:10.3390/rs14174335 — arXiv:2205.08862v1 read 2026-09-23 (sect. 6.3: KBR white noise about 0.6 um/sqrt(Hz)), SHA-256 `d3596aaae91f6f3ec4bd74d448227e2f3189d163fef2185efa285e322cce421d` | L-03, L-07, L-08, X-07 |
 | P-10 | Müller, V., Yan, Y. et al. (2025): Re-analysing the data processing of the K-band ranging system on GRACE Follow-On, J. Geod. 99, doi:10.1007/s00190-025-01988-w | L-08 |
-| P-11 | Misfeldt, M. et al. (2023): Scale factor determination for the GRACE Follow-On laser ranging interferometer including thermal coupling, Remote Sens. 15:570, doi:10.3390/rs15030570 — **local copy** `<ROOT>\GRACEFO\L1B\AEI_v52\Misfeldt2023_ScaleFactor_LRI_ThermalCorrection.pdf` | L-09 |
+| P-11 | Misfeldt, M. et al. (2023): Scale factor determination for the GRACE Follow-On laser ranging interferometer including thermal coupling, Remote Sens. 15:570, doi:10.3390/rs15030570 — **local copy** `<ROOT>\GRACEFO\L1B\AEI_v52\Misfeldt2023_ScaleFactor_LRI_ThermalCorrection.pdf` ; arXiv:2207.11470v2 supplied 2026-09-23, SHA-256 `6ebd682eec0535ef8b3416d9988dc0ca3bb4aa2e0e667f5fa5da51f5c6bdff8c` | L-09 |
 | P-12 | Wegener, H. et al. (2020): Tilt-to-length coupling in the GRACE Follow-On LRI, J. Spacecraft Rockets 57:1362, doi:10.2514/1.A34790 | L-07 |
-| P-13 | Abich, K. et al. (2019): In-orbit performance of the GRACE Follow-On laser ranging interferometer, Phys. Rev. Lett. 123:031101, doi:10.1103/PhysRevLett.123.031101 | L-02 |
+| P-13 | Abich, K. et al. (2019): In-orbit performance of the GRACE Follow-On laser ranging interferometer, Phys. Rev. Lett. 123:031101, doi:10.1103/PhysRevLett.123.031101 — arXiv:1907.00104v1 read 2026-09-23 (p. 4: LRI requirement), SHA-256 `3ecac265154f919fa3bff2cbbf44a233f381db9354e101dd40d7ea0e45ae6f8d` | L-02, X-07 `noiseReference` |
 | P-14 | Harvey, N., Sakumura, C. (2019): Results from a GRACE/GRACE-FO attitude reconstruction Kalman filter | N-12 |
 | P-15 | Ren et al. (2022): Remote Sens. 14:126, doi:10.3390/rs14010126 | N-12 |
 | P-16 | Hu et al. (2022): Remote Sens. 14:3395; Li et al. (2025): Remote Sens. 17:353, doi:10.3390/rs17030353 | L-07 |
@@ -54,6 +54,7 @@ id, citation, where the owner's copy lives, what it is needed for.
 | P-18 | Vielberg, K. et al. (2020): Extended forward and inverse modeling of radiation pressure accelerations for LEO satellites, J. Geod. 94, doi:10.1007/s00190-020-01368-6 | N-07 |
 | P-19 | Tapley, B. D. et al. (2015): The GRACE mission: status and performance assessment (thermal-control history) | V-10 |
 | P-20 | Jacobs, F., Hładczuk, N., van den IJssel, J., Siemes, C., Visser, P. (2026): Joint optimization of a GRACE radiation pressure model, the accelerometer scale factors, and an empirical magnetic-field-induced accelerometer bias, Adv. Space Res. 77(12):12096–12121, doi:10.1016/j.asr.2026.04.043 | N-07, N-11 |
+| P-21 | Darbeheshti, N., Wegener, H., Müller, V., Naeimi, M., Heinzel, G., Hewitson, M. (2017): Instrument data simulations for GRACE Follow-on: observation and noise models, Earth Syst. Sci. Data 9:833–848, doi:10.5194/essd-9-833-2017 (CC BY 3.0) — read 2026-09-23: Eq. 9 p. 838 (ACC), Eq. 15 p. 839 (KBR), Eq. 21 p. 841 (LRI laser), SHA-256 `6e8da511f0eb3b95c5674f4234f84d9c4c41e9a706a22c34db0ce8c37e01380d`; local copy to be placed in the DATAPOOL | X-07 `noiseReference` |
 
 Full-text copies of papers are not fetched automatically. Where a paper is
 open access and a work package needs its equations, the Session adds the copy

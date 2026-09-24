@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.16 · 2026-09-23 · X-07 in review; the reference noise-model library blocked on sources**
+**Revision 0.18 · 2026-09-23 · X-07 library `noiseReference` in review, CI green 499 + 0 + 0 (sources supplied by the owner)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,61 @@ restates:
 
 ---
 
-## X-07 — 2026-09-23 (issue #10); scope frozen 2026-09-23
+## X-07, the reference noise-model library — 2026-09-23 (issue #10); scope frozen 2026-09-23
+
+Tier B. The owner supplied the sources on 2026-09-23. These are arXiv
+copies of P-11, P-9 and P-13, and the ESSD paper P-21. Every constant below
+was read from the rendered page image, not from the text layer, which
+garbles the formulas.
+
+True after the merge:
+- **`noiseReference`** (L1, beside `crnKernel`; CONCEPT 0.17) gives
+  one-sided ASDs:
+
+  | model | ASD | stated band | status | source |
+  |---|---|---|---|---|
+  | `LRI` | 80 nm/sqrt(Hz) sqrt(1+(3 mHz/f)^2) sqrt(1+(10 mHz/f)^2) | 2–100 mHz | requirement | P-13 p. 4 |
+  | `LRI-laser` | 5e-9 sqrt(1+(0.0182 Hz/f)^2) m/sqrt(Hz), 238 km | none stated; 1e-4–1e-1 Hz as plotted in its Fig. 12 | simulation model | P-21 Eq. 21 p. 841 |
+  | `KBR` | 1e-6 sqrt(1+(0.0018 Hz/f)^4) m/sqrt(Hz), 238 km | 1e-5–1e-1 Hz | simulation model (after Kim 2000) | P-21 Eq. 15 p. 839 |
+  | `ACC` x, z | 1e-10 sqrt(1+0.005 Hz/f) m s^-2/sqrt(Hz) | 1e-5–1e-1 Hz | simulation model (after Kim 2000) | P-21 Eq. 9 p. 838 |
+  | `ACC` y | 1e-9 sqrt(1+0.1 Hz/f) m s^-2/sqrt(Hz) | 1e-5–1e-1 Hz | simulation model | P-21 Eq. 9 p. 838 |
+
+  `Derivative` 1 or 2 multiplies by (2 pi f)^n. `info.inBand` marks the
+  stated band.
+- For scale, measured values: the in-orbit LRI is about 1 nm/sqrt(Hz)
+  above 100 mHz (P-13, abstract), and the KBR white noise is about
+  0.6 um/sqrt(Hz) (P-9 sect. 6.3). Both are below the model and the
+  requirement.
+- REFERENCES: P-21 added. P-9, P-11 and P-13 carry the SHA-256 of the
+  copies that were read. The PDFs are not committed; the owner places them
+  in the DATAPOOL.
+
+**Not found in the supplied sources:** a KBR "CNR-limited" formula as
+such. P-21 Eq. 15 is the system-plus-oscillator model, and P-9 gives a
+measured level. The LRI entry is the requirement; P-21 Eq. 21 gives the
+laser-frequency part.
+
+**Fault injection:** the reference tests pin each formula at its corner
+frequency against a value written from the page. Changing any printed
+constant (for example 3 mHz to 2 mHz, or the KBR exponent 4 to 2) moves the
+corner value by more than 1e-15 relative, so the test fails. A Python
+evaluation of the printed formulas matches the expected values to 0 and
+the slopes to 1.4e-4 (2026-09-23).
+
+**Prediction** (before any run): **499 + 0 + 0 = 499**. That is 489
+plus TestNoiseReference 9 plus TestHelpExamples 45 -> 46. Per tag:
+contract 154, reference 186, precision 14, robustness 101, metamorphic 29,
+vectorisation 12, speed 3.
+
+**Verdict, MATLAB R2026a, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:**
+CI run 35913104426 on `e275611` (2026-09-23): `audit` green; `matlab`
+green, **499 + 0 + 0 = 499**, every tag as predicted (contract 154,
+reference 186, precision 14, robustness 101, metamorphic 29,
+vectorisation 12, speed 3). TestNoiseReference 9 of 9. Gate time 1003 s.
+
+---
+
+## X-07 — merged 2026-09-23 (PR #44, `f7d3518`; issue #10 open for the library); scope frozen 2026-09-23
 
 Tier B (no local MATLAB; the MATLAB verdict is CI's). Design: CONCEPT 10.1
 row X-07, 6.1 rows 5-7, 5.2 (minimum-data gate), 8 (seed per stage,
@@ -90,6 +144,17 @@ TestObservability 11, TestNoise 9, TestLsqvceAgreement 14; TestConfig +1;
 TestHelpExamples 39 -> 45. Per tag: contract 152, reference 182, precision
 13, robustness 100, metamorphic 28, vectorisation 11, speed 3. Without
 lsqvce: 475 + 0 + 14.
+
+**Verdict, MATLAB R2026a, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:**
+- CI run 35905806199 on `8cdb086` (2026-09-23): **488 + 1 + 1**. The one
+  failure was `TestBlockLength/batchEqualsColumns`, a bug in the test
+  (`MATLAB:catenate:dimensionMismatch`: oracle cases 2 and 5 have 1000
+  and 3000 samples). It was fixed in `726cdd7`.
+- CI run 35909976645 on `726cdd7`: `audit` green; `matlab` green,
+  **489 + 0 + 0 = 489**, every tag as predicted (contract 152, reference
+  182, precision 13, robustness 100, metamorphic 28, vectorisation 11,
+  speed 3). Q12 green against lsqvce; the PSD band of TestNoise held.
+  Gate time 1012 s.
 
 **Risk, stated:** nothing here ran in MATLAB before CI. The PSD-route
 band of TestNoise (0.05 on phi, 15 % on sigma2) is an expectation, not a
@@ -723,9 +788,9 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-07 on branch `claude/grace-timeseries-issues-28g3a4`: CI pending.**
-lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0). The
-reference noise-model library is blocked on sources (X-07 section).
+**X-07 library on branch `claude/grace-timeseries-issues-28g3a4`: CI pending.**
+X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0).
+lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0).
 Release workflow merged (PR #42, `298b7cd`); its first run
 released nothing, as designed. `.github/` profile switch merged (PR #41,
 `7b94df4`). X-02 merged (PR #40, `7fe24f3`). X-06 merged (PR #39,
@@ -750,10 +815,10 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | repository | private, `main`; auto-delete head branches on; MIT licence (owner, 2026-09-18) |
 | ruleset `Main Protection` | no deletion, no force push; **no required checks yet** (see O-2) |
 | ruleset `Tag protection` | `~ALL`, no deletion, no force push |
-| content | `docs/CONCEPT.md` Rev 0.16, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
+| content | `docs/CONCEPT.md` Rev 0.17, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
 | code, `Contents.m`, CI, audit | X-00b: setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config`. X-04: `crnKernel`, `crnApply`, `Contents.m` 0.1.0 |
 | `docs/GUIDE.md` | rev 1.11 (release workflow; `v0.1.0` anomaly) |
-| `docs/CONCEPT.md` | Rev 0.16 (X-07: the L2 unit `noise`) |
+| `docs/CONCEPT.md` | Rev 0.17 (X-07: `noise` L2, `noiseReference` L1) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was
