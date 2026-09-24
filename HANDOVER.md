@@ -123,6 +123,13 @@ KBR1B, LRI1B), no read error.
 **Prediction for PR-A** (before any run): **553 + 0 + 0 = 553**, unchanged
 from X-09 PR 2 (no test is added; the new variable is not read yet).
 
+**Verdict, CI run 36010094684 on `06b20dd` (2026-09-24), MATLAB R2026a
+Update 5, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:** `audit` green;
+`matlab` green, **553 + 0 + 0 = 553** as predicted, every tag unchanged
+(contract 174, reference 198, precision 18, robustness 108, metamorphic
+36, vectorisation 16, speed 3). No new warning in the gate step. Gate time
+1159 s.
+
 ---
 
 ## X-09 PR 2 — regression with VIF gate, partial correlation, binned maps — merged 2026-09-24 (PR #48, `ffe0164`; issue #12 closed); scope was frozen 2026-09-24
