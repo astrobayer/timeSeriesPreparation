@@ -81,6 +81,14 @@ gracefoReading, the three THR1B/ACT1B-dependent tests are incomplete: 595 +
 identifier catalogue and the generated docs until a conventions WP (audit
 profile `qc-ported`).
 
+**Verdict, CI run 36017541577 on `4f1abf0` (2026-09-24), MATLAB R2026a
+Update 5, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:** `audit` green;
+`matlab` green on the first run, **598 + 0 + 0 = 598**, every tag as
+predicted (contract 182, reference 207, precision 23, robustness 115,
+metamorphic 42, vectorisation 16, vectorization 5, speed 8). tNgfQc 10/10,
+tNgfQcScreen 28/28 (the seven speed bounds held on the runner), TestQcPort
+5/5. No new warning in the gate step. Gate time 1387 s.
+
 ---
 
 ## X-05 PR-A — DATAPOOL for the `matlab` job, D-9 catalogue, X-05 scope (issue #8) — merged 2026-09-24 (PR #51, `dcc185a`); scope was frozen 2026-09-24
