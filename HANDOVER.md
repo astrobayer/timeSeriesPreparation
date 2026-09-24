@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.18 · 2026-09-23 · X-07 library `noiseReference` in review, CI green 499 + 0 + 0 (sources supplied by the owner)**
+**Revision 0.19 · 2026-09-24 · X-08 `fill` scope frozen; X-07 library merged (PR #45, `fae4071`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,77 @@ restates:
 
 ---
 
-## X-07, the reference noise-model library — 2026-09-23 (issue #10); scope frozen 2026-09-23
+## X-08 — `fill` (issue #11); scope frozen 2026-09-24
+
+Tier B (no local MATLAB; the MATLAB verdict is CI's). Design: CONCEPT
+6.5, 3.2 (no least-squares estimator; `fill` takes a covariance model),
+10.1 row X-08, Q3 (default `none`). Needs X-07 (merged) and V-7.
+
+**V-7 answered from the code (2026-09-24).** The sigtools gap-aware
+Kalman filter only filters and forecasts. `tsFitSarima`/`tsFitArima` run
+the missing-data filter to get the likelihood, where "the Kalman filter only
+predicts at a gap". `tsForecast` "runs the missing-data Kalman filter to the
+end of the history" and then projects forward. No routine runs a backward
+(smoothing) pass. So `fill` supplies the interpolation itself.
+
+**Owner decisions 2026-09-24:**
+- **Covariance collocation**, not an RTS smoother. This takes any
+  autocovariance, including one from lsqvce (CONCEPT 3.2).
+- **`reference` is deferred** until after X-09 (drivers). In X-08 it
+  refuses with its own identifier.
+
+True after the merge:
+- **`fill`** (L2): `[arc, info] = fill(arc, Method = "none" | "collocation",
+  Model = <struct>, MaxGap = <s>, Window = <samples>)`.
+  - A missing sample is NaN, weight 0 or already filled; each axis is
+    treated separately. The grid must be uniform (as for `noise`).
+  - `none` (default) changes nothing and only reports the gaps.
+  - `collocation` predicts each interior gap of at most `MaxGap` seconds.
+    It uses x_g = mu + C_go C_oo^-1 (x_o - mu), where the observed samples
+    are those within `Window` samples on either side of the gap (default:
+    the model's largest lag). The covariance is Toeplitz from `Model.acv`,
+    and is zero beyond it. `info.sigma` is the prediction standard
+    deviation, sqrt(diag(C_gg - C_go C_oo^-1 C_og)).
+  - Not filled, but reported: runs at the arc edges (extrapolation) and
+    runs longer than `MaxGap`.
+  - `Model` is `noise`'s output or any struct with `acv` (L+1, M), `dt`
+    (s) and `mu` (1, M).
+  - The arc keeps its epochs. Filled values enter `obs`, and the row is
+    flagged in `arc.filled` (N x 1, CONCEPT 5). A row is flagged when any
+    of its axes was filled, so every fit weighs the whole row 0.
+- `Arc`: a new method writes the filled values and the flag, and appends
+  the `fill` provenance entry. This is the only way a stage can change
+  `obs` on the same epochs.
+- `Config.fill`: `method` ("none"), `maxGap` ([] s, no default, Q3),
+  `window` ([] = the model's largest lag).
+- Errors:
+  - `fill:maxGapMissing`, `fill:modelMissing`, `fill:modelMismatch`
+    (dt or column count);
+  - `fill:irregularGrid`, `fill:notPositiveDefinite` (a truncated ACV that
+    is not a covariance);
+  - `fill:referenceDeferred`.
+- Records: CONCEPT (V-7 closed, 6.5, the X-08 row), Contents, CHANGELOG,
+  generated docs, TestLayering (L2 gains `fill`).
+
+**Tests planned (TestFill):**
+- Reference: an AR(1) one-sample gap gives
+  phi/(1 + phi^2) (x_(t-1) + x_(t+1)), with variance sigma2/(1 + phi^2).
+- Reference: an AR(1) bridge of k samples against the closed form. An AR(p)
+  gap with Window >= p equals the full-record conditional expectation to
+  rounding, because the AR precision matrix is banded (Markov).
+- Precision: an ARMA(1,1) window converges to the full conditional
+  expectation. The tolerance comes from a NumPy run.
+- Contract: gap report, edges, MaxGap, flags, provenance, Config.
+- Metamorphic: filling twice gives the same result; scaling x scales the
+  fill.
+- Vectorisation: a batched call equals per-axis calls.
+- Robustness: every error above.
+
+The count is predicted in the code commit.
+
+---
+
+## X-07, the reference noise-model library — merged 2026-09-24 (PR #45, `fae4071`; issue #10 closed); scope was frozen 2026-09-23
 
 Tier B. The owner supplied the sources on 2026-09-23. These are arXiv
 copies of P-11, P-9 and P-13, and the ESSD paper P-21. Every constant below
@@ -788,7 +858,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-07 library on branch `claude/grace-timeseries-issues-28g3a4`: CI pending.**
+**X-08 on branch `claude/grace-timeseries-issues-28g3a4`: scope frozen.**
+X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
 X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0).
 lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0).
 Release workflow merged (PR #42, `298b7cd`); its first run
@@ -805,7 +876,7 @@ released nothing, as designed. `.github/` profile switch merged (PR #41,
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
 C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
-`v1.3.2`). Next: X-07 (#10); X-05
+`v1.3.2`). Next: X-08 (#11); X-05
 (#8) also waits on V-12 (defect catalogue, D-9).
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).
