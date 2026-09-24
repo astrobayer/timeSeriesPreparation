@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.qc.eventTable</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.qc.eventTable</h1>
+<p>Canonical event table (schema authority) for quality-control results.</p>
+<h2>Syntax</h2>
+<pre><code>T = timeSeriesPreparation.qc.eventTable()
+T = timeSeriesPreparation.qc.eventTable(tStart, tEnd, class, axis, amplitude, sigma, source, confidence)</code></pre>
+<h2>Description</h2>
+<p>Every detector returns this table, so the mask builder and the calibration read one schema. Without arguments it returns the empty table (the schema). Classes and their downstream use: &quot;outlier&quot; (isolated samples, masked), &quot;impulse&quot; (CRN-shaped pulse, masked, assigned to THR1B or a twang), &quot;jump&quot; (step in level or slope, a Heaviside column in the calibration, never masked). An amplitude and sigma of NaN mean not estimated, which is what a THR1B firing carries; confidence is a probability and never NaN. Ported from NonGravForces.qc 0.12.0 (X-05); unchanged (X-05b).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>tStart</code></td><td>N,1</td><td><code>datetime</code></td><td>&mdash;</td><td>- UTC, first affected sample.</td></tr>
+<tr><td><code>tEnd</code></td><td>N,1</td><td><code>datetime</code></td><td>&mdash;</td><td>- UTC, last affected sample (tStart for a point).</td></tr>
+<tr><td><code>class</code></td><td>N,1</td><td><code>string</code></td><td>&mdash;</td><td>- &quot;outlier&quot;, &quot;impulse&quot; or &quot;jump&quot;.</td></tr>
+<tr><td><code>axis</code></td><td>N,1</td><td><code>string</code></td><td>&mdash;</td><td>- &quot;x&quot;, &quot;y&quot;, &quot;z&quot; or &quot;all&quot;.</td></tr>
+<tr><td><code>amplitude</code></td><td>N,1</td><td><code>double</code></td><td>&mdash;</td><td>- Estimated size (step size for jumps), units of the data; NaN = not estimated.</td></tr>
+<tr><td><code>sigma</code></td><td>N,1</td><td><code>double</code></td><td>&mdash;</td><td>- 1-sigma of amplitude, &gt;= 0; NaN with the amplitude.</td></tr>
+<tr><td><code>source</code></td><td>N,1</td><td><code>string</code></td><td>&mdash;</td><td>- &quot;THR1B&quot;, &quot;MAS1B&quot;, &quot;eclipse&quot;, &quot;heater&quot;, &quot;magnetorquer&quot; or &quot;unassigned&quot;.</td></tr>
+<tr><td><code>confidence</code></td><td>N,1</td><td><code>double</code></td><td>&mdash;</td><td>- In [0, 1], finite.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>T</code></td><td>N,8</td><td><code>table</code></td><td>&mdash;</td><td>- Variables tStart, tEnd, class, axis, amplitude, sigma, source, confidence, in that order.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Not applicable, because the function computes no number; values are stored as given.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:eventTable:inputArity</code></td><td>Input</td><td>not 0 or 8 arguments.</td></tr>
+<tr><td><code>timeSeriesPreparation:eventTable:inputClass</code></td><td>Input</td><td>class, axis or source outside its set, sigma negative, or confidence outside [0, 1].</td></tr>
+<tr><td><code>timeSeriesPreparation:eventTable:inputLength</code></td><td>Input</td><td>columns of different length.</td></tr>
+<tr><td><code>timeSeriesPreparation:eventTable:numericNaN</code></td><td>Input</td><td>amplitude or sigma Inf, or confidence not finite.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A jump and an outlier.</p>
+<pre><code>t = datetime(2020, 1, 1, &quot;TimeZone&quot;, &quot;UTC&quot;) + seconds([10; 20]);
+T = timeSeriesPreparation.qc.eventTable(t, t, [&quot;outlier&quot;; &quot;jump&quot;], [&quot;x&quot;; &quot;all&quot;], [1e-8; 2e-9], [1e-9; 1e-9], [&quot;unassigned&quot;; &quot;eclipse&quot;], [0.9; 0.5]);</code></pre>
+<h2>Limitations</h2>
+<p>The source set is closed; a new source is a schema change.</p>
+<h2>References</h2>
+<p>NonGravForces.qc 0.12.0 (3cc0123).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.qc.screen</code>, <code>timeSeriesPreparation.qc.hampel</code>, <code>timeSeriesPreparation.qc.detectImpulses</code>, <code>timeSeriesPreparation.qc.detectJumps</code></p>
+<p class="footer">timeSeriesPreparation v0.2.0 - generated from the help block of +timeSeriesPreparation/+qc/eventTable.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

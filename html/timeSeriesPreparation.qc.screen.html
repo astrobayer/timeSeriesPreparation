@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.qc.screen</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.qc.screen</h1>
+<p>Quality-control orchestrator: residuals, outliers, impulses, jumps, then the mask and the event table.</p>
+<h2>Syntax</h2>
+<pre><code>[mask, events, info] = timeSeriesPreparation.qc.screen(y_meas, y_model, epoch)
+[mask, events, info] = timeSeriesPreparation.qc.screen(y_meas, y_model, epoch, Response = crn, Thrusters = thr, Priors = ecl)</code></pre>
+<h2>Description</h2>
+<p>1. r = qc.residuals(y_meas, y_model, Bias, Scale, Whitening, Window). 2. Outliers: qc.hampel(r, HampelWindow, HampelThreshold). 3. Impulses, skipped (and said so in info) without a Response, since no pulse shape is assumed: qc.detectImpulses on the residual with only the isolated outliers (runs of at most 2 samples) replaced by the local median. Hampel also flags the peaks of a strong pulse, in runs of several samples; replacing those would destroy the pulse, while a one- or two-sample spike must not reach the matched filter. Detected pulses claim their samples (their outlier flags are withdrawn) and are blanked before the jump search. 4. Jumps: qc.detectJumps with JumpModel, JumpPenalty, JumpMinSegment and Priors, on the residual with outliers replaced and pulses blanked. mask marks outliers and the samples spanned by impulses; jumps are reported, never masked. events is the three detectors&#x27; event table, sorted by tStart. Ported from NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>y_meas</code></td><td>K,M</td><td><code>double</code></td><td>&mdash;</td><td>- Measured observable, M = 1 or 3.</td></tr>
+<tr><td><code>y_model</code></td><td>K,M</td><td><code>double</code></td><td>&mdash;</td><td>- Modelled observable.</td></tr>
+<tr><td><code>epoch</code></td><td>K,1</td><td><code>datetime</code></td><td>&mdash;</td><td>- Sample epochs, UTC.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Bias</code></td><td>1,M</td><td><code>double</code></td><td>zeros</td><td>As qc.residuals.</td></tr>
+<tr><td><code>Scale</code></td><td>M,M</td><td><code>double</code></td><td>eye</td><td>As qc.residuals.</td></tr>
+<tr><td><code>Whitening</code></td><td>1,1</td><td><code>string</code></td><td>&quot;none&quot;</td><td>As qc.residuals.</td></tr>
+<tr><td><code>Window</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>As qc.residuals.</td></tr>
+<tr><td><code>HampelWindow</code></td><td>1,1</td><td><code>double</code></td><td>61</td><td>Samples.</td></tr>
+<tr><td><code>HampelThreshold</code></td><td>1,1</td><td><code>double</code></td><td>4</td><td>Sigma.</td></tr>
+<tr><td><code>Response</code></td><td>L,1</td><td><code>double</code></td><td>&mdash;</td><td>Pulse template; [] skips the impulse step.</td></tr>
+<tr><td><code>Thrusters</code></td><td>N,8</td><td><code>table</code></td><td>&mdash;</td><td>Impulse priors (qc.eventTable).</td></tr>
+<tr><td><code>ImpulseThreshold</code></td><td>1,1</td><td><code>double</code></td><td>5</td><td>Sigma.</td></tr>
+<tr><td><code>Priors</code></td><td>N,8</td><td><code>table</code></td><td>&mdash;</td><td>Jump priors (eclipse, MAS1B).</td></tr>
+<tr><td><code>JumpModel</code></td><td>1,1</td><td><code>string</code></td><td>&quot;level&quot;</td><td>&quot;level&quot; or &quot;slope&quot;.</td></tr>
+<tr><td><code>JumpPenalty</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Default BIC.</td></tr>
+<tr><td><code>JumpMinSegment</code></td><td>1,1</td><td><code>double</code></td><td>30</td><td>Samples: the CRN width; shorter level changes are pulses or outliers.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>mask</code></td><td>K,M</td><td><code>logical</code></td><td>&mdash;</td><td>- True = do not use the sample.</td></tr>
+<tr><td><code>events</code></td><td>N,8</td><td><code>table</code></td><td>&mdash;</td><td>- qc.eventTable of all detections.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: residual (whitened, untouched); residualClean (outliers replaced, pulses NaN); residualInfo; outliers (after the pulses claimed theirs); isolatedOutliers; impulses, jumps (detector infos, or &quot;skipped: ...&quot;); counts (outlier, impulse, jump); provenance.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>The composition of the four units; see theirs. A level step may register once as an impulse candidate at its edge; the jump is then located at the end of that window, up to L samples late. On the ported tests&#x27; synthetic day (2 pulses, 1 step, 1 spike in 3000 white samples) the spike and both pulses are masked and the step is reported once.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:screen:inputShape</code></td><td>Input</td><td>y_meas and y_model are not Kx1 or Kx3 of one size, or epoch is not a Kx1 datetime.</td></tr>
+<tr><td><code>timeSeriesPreparation:screen:inputEpoch</code></td><td>Input</td><td>epoch is not UTC. The identifiers of qc.residuals, qc.hampel, qc.detectImpulses and qc.detectJumps propagate.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A spike and a step in white noise, no pulse template.</p>
+<pre><code>x = 1e-9 * randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 4), 3000, 1);
+x(700) = 3e-8; x(2500:end) = x(2500:end) + 5e-9;
+t = datetime(2020, 1, 1, &quot;TimeZone&quot;, &quot;UTC&quot;) + seconds((0:2999)&#x27;);
+[mask, events] = timeSeriesPreparation.qc.screen(x, zeros(3000, 1), t);</code></pre>
+<h2>Limitations</h2>
+<p>One arc at a time; the order of the steps is fixed.</p>
+<h2>References</h2>
+<p>NonGravForces.qc 0.12.0 (3cc0123); docs/CONCEPT.md 6.1, row 2.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.qc.residuals</code>, <code>timeSeriesPreparation.qc.hampel</code>, <code>timeSeriesPreparation.qc.detectImpulses</code>, <code>timeSeriesPreparation.qc.detectJumps</code>, <code>timeSeriesPreparation.qc.eventTable</code>, <code>timeSeriesPreparation.mask</code></p>
+<p class="footer">timeSeriesPreparation v0.2.0 - generated from the help block of +timeSeriesPreparation/+qc/screen.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

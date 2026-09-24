@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.qc.detectJumps</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.qc.detectJumps</h1>
+<p>Change points in level or slope of whitened residuals by PELT with a BIC penalty; priors are assigned.</p>
+<h2>Syntax</h2>
+<pre><code>[events, info] = timeSeriesPreparation.qc.detectJumps(r, Epoch = t)
+[events, info] = timeSeriesPreparation.qc.detectJumps(r, Epoch = t, Model = &quot;slope&quot;, Priors = ecl, Penalty = beta, MinSegment = 30)</code></pre>
+<h2>Description</h2>
+<p>Minimises, per channel, the sum over segments of the least-squares cost plus a penalty beta per change point, by Pruned Exact Linear Time (Killick, Fearnhead and Eckley 2012), which equals the exhaustive optimum. The segment cost is the residual sum of squares about a constant (&quot;level&quot;) or a straight line (&quot;slope&quot;). The default penalty is the BIC value (p + 1) sigma^2 log K, p = 1 (level) or 2 (slope) parameters per segment plus one for the change point&#x27;s location, sigma the robust scale of the first differences (1.4826 MAD / sqrt(2)); Penalty replaces it (squared residual units). Each change point is a &quot;jump&quot; row: tStart = tEnd = first sample of the new segment, amplitude = new minus old level at the boundary (fitted lines for &quot;slope&quot;), sigma = sigma sqrt(1/n1 + 1/n2). A jump within PriorWindow_s of a prior row (eclipse, MAS1B tank event) takes its source and confidence 1; the others are &quot;unassigned&quot; with confidence erf(|amplitude|/sigma/sqrt(2)). Jumps are never cut from the data. NaN samples are removed before the segmentation and the indices mapped back. Ported from NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>r</code></td><td>K,M</td><td><code>double</code></td><td>&mdash;</td><td>- Whitened residuals, M = 1 (axis &quot;all&quot;) or 3.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Epoch</code></td><td>K,1</td><td><code>datetime</code></td><td>&mdash;</td><td>Sample epochs, UTC; required.</td></tr>
+<tr><td><code>Model</code></td><td>1,1</td><td><code>string</code></td><td>&quot;level&quot;</td><td>&quot;level&quot; or &quot;slope&quot;.</td></tr>
+<tr><td><code>Penalty</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Per change point; [] = BIC.</td></tr>
+<tr><td><code>MinSegment</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Shortest segment in samples; [] = 2 (level) or 3 (slope).</td></tr>
+<tr><td><code>Priors</code></td><td>N,8</td><td><code>table</code></td><td>&mdash;</td><td>qc.eventTable rows to assign.</td></tr>
+<tr><td><code>PriorWindow_s</code></td><td>1,1</td><td><code>double</code></td><td>60</td><td>Assignment window, s.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>events</code></td><td>N,8</td><td><code>table</code></td><td>&mdash;</td><td>- qc.eventTable rows of class &quot;jump&quot;, sorted by tStart.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: changePoints (1,M cell, first sample of each new segment); penalty, sigma, cost (1,M); segments (1,M cell of [first last level|intercept slope]); model; provenance.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact optimisation for the stated cost and penalty; the ported tests hold it to the exhaustive optimum of an independent Python oracle, bitwise in the indices. A step h in white noise sigma is found when h^2 n1 n2/(n1 + n2) &gt; beta. Coloured noise without whitening gives spurious level changes: whiten first.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:detectJumps:inputShape</code></td><td>Input</td><td>r is not Kx1 or Kx3, or Epoch is not Kx1.</td></tr>
+<tr><td><code>timeSeriesPreparation:detectJumps:inputEpoch</code></td><td>Input</td><td>Epoch is missing, not a datetime, or not UTC.</td></tr>
+<tr><td><code>timeSeriesPreparation:detectJumps:inputRange</code></td><td>Input</td><td>Penalty is not positive, MinSegment is below 2 (3 for slope) or not an integer, or PriorWindow_s is not positive.</td></tr>
+<tr><td><code>timeSeriesPreparation:detectJumps:inputPriors</code></td><td>Input</td><td>Priors is not a qc.eventTable.</td></tr>
+<tr><td><code>timeSeriesPreparation:detectJumps:dataEmpty</code></td><td>Data</td><td>a channel has fewer than 2 MinSegment finite samples.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A 4-sigma step in 1000 white samples.</p>
+<pre><code>x = randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 5), 1000, 1); x(601:end) = x(601:end) + 4;
+t = datetime(2020, 1, 1, &quot;TimeZone&quot;, &quot;UTC&quot;) + seconds((0:999)&#x27;);
+[events, info] = timeSeriesPreparation.qc.detectJumps(x, Epoch = t);</code></pre>
+<h2>Limitations</h2>
+<p>Quadratic in the worst case when pruning keeps many candidates; X-16 vectorises the bookkeeping.</p>
+<h2>References</h2>
+<p>Killick, R., Fearnhead, P., Eckley, I. A. (2012). Optimal detection of changepoints with a linear computational cost. J. Am. Stat. Assoc. 107, 1590-1598. Schwarz, G. (1978). Estimating the dimension of a model. Ann. Stat. 6, 461-464.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.qc.residuals</code>, <code>timeSeriesPreparation.qc.eventTable</code>, <code>timeSeriesPreparation.qc.screen</code></p>
+<p class="footer">timeSeriesPreparation v0.2.0 - generated from the help block of +timeSeriesPreparation/+qc/detectJumps.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

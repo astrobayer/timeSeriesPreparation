@@ -54,15 +54,31 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:crnKernel:unverifiedPreset` | `+timeSeriesPreparation/crnKernel.m` | Preset | "LRI": no CRN numbers for LRI1B are confirmed from a registered document yet. |
 | `timeSeriesPreparation:crossval:badLoss` | `+timeSeriesPreparation/crossval.m` | Input | lossFcn does not return a 1 x L double row of the same L for every fold. |
 | `timeSeriesPreparation:crossval:noTraining` | `+timeSeriesPreparation/crossval.m` | Input | Folds and Gap leave a fold without a training row or without a test row. |
+| `timeSeriesPreparation:detectImpulses:inputEpoch` | `+timeSeriesPreparation/+qc/detectImpulses.m` | Input | Epoch is missing, not a datetime, or not UTC. |
+| `timeSeriesPreparation:detectImpulses:inputPriors` | `+timeSeriesPreparation/+qc/detectImpulses.m` | Input | Priors is not a qc.eventTable. |
+| `timeSeriesPreparation:detectImpulses:inputRange` | `+timeSeriesPreparation/+qc/detectImpulses.m` | Input | Threshold or PriorWindow_s is not positive. |
+| `timeSeriesPreparation:detectImpulses:inputResponse` | `+timeSeriesPreparation/+qc/detectImpulses.m` | Input | Response is missing, shorter than 2, longer than K, not finite or constant. |
+| `timeSeriesPreparation:detectImpulses:inputShape` | `+timeSeriesPreparation/+qc/detectImpulses.m` | Input | r is not Kx1 or Kx3, or Epoch is not Kx1. |
+| `timeSeriesPreparation:detectJumps:dataEmpty` | `+timeSeriesPreparation/+qc/detectJumps.m` | Data | a channel has fewer than 2 MinSegment finite samples. |
+| `timeSeriesPreparation:detectJumps:inputEpoch` | `+timeSeriesPreparation/+qc/detectJumps.m` | Input | Epoch is missing, not a datetime, or not UTC. |
+| `timeSeriesPreparation:detectJumps:inputPriors` | `+timeSeriesPreparation/+qc/detectJumps.m` | Input | Priors is not a qc.eventTable. |
+| `timeSeriesPreparation:detectJumps:inputRange` | `+timeSeriesPreparation/+qc/detectJumps.m` | Input | Penalty is not positive, MinSegment is below 2 (3 for slope) or not an integer, or PriorWindow_s is not positive. |
+| `timeSeriesPreparation:detectJumps:inputShape` | `+timeSeriesPreparation/+qc/detectJumps.m` | Input | r is not Kx1 or Kx3, or Epoch is not Kx1. |
 | `timeSeriesPreparation:drivers:badSeries` | `+timeSeriesPreparation/drivers.m` | Input | series lacks a field, or a driver's name is not a field name, its t is not an int64 strictly increasing column, or its value is not a real double column of t's size without Inf. |
 | `timeSeriesPreparation:drivers:duplicateName` | `+timeSeriesPreparation/drivers.m` | Input | two drivers share a name. |
 | `timeSeriesPreparation:drivers:unitUnknown` | `+timeSeriesPreparation/drivers.m` | Input | a driver states no unit. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:eventTable:inputArity` | `+timeSeriesPreparation/+qc/eventTable.m` | Input | not 0 or 8 arguments. |
+| `timeSeriesPreparation:eventTable:inputClass` | `+timeSeriesPreparation/+qc/eventTable.m` | Input | class, axis or source outside its set, sigma negative, or confidence outside [0, 1]. |
+| `timeSeriesPreparation:eventTable:inputLength` | `+timeSeriesPreparation/+qc/eventTable.m` | Input | columns of different length. |
+| `timeSeriesPreparation:eventTable:numericNaN` | `+timeSeriesPreparation/+qc/eventTable.m` | Input | amplitude or sigma Inf, or confidence not finite. |
 | `timeSeriesPreparation:fill:irregularGrid` | `+timeSeriesPreparation/fill.m` | Input | the epochs are not uniformly spaced; resample first (align). |
 | `timeSeriesPreparation:fill:maxGapMissing` | `+timeSeriesPreparation/fill.m` | Input | "collocation" without MaxGap (it has no default, Q3). |
 | `timeSeriesPreparation:fill:modelMismatch` | `+timeSeriesPreparation/fill.m` | Input | Model lacks acv, dt or mu, or its columns or dt differ from the arc's. |
 | `timeSeriesPreparation:fill:modelMissing` | `+timeSeriesPreparation/fill.m` | Input | "collocation" without Model. |
 | `timeSeriesPreparation:fill:notPositiveDefinite` | `+timeSeriesPreparation/fill.m` | Numerical | C_oo is not positive definite: Model.acv is not an autocovariance. |
 | `timeSeriesPreparation:fill:referenceDeferred` | `+timeSeriesPreparation/fill.m` | Input | Method "reference", which follows the drivers (X-09). Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:hampel:inputShape` | `+timeSeriesPreparation/+qc/hampel.m` | Input | x is not a real 2-D array. |
+| `timeSeriesPreparation:hampel:inputWindow` | `+timeSeriesPreparation/+qc/hampel.m` | Input | Window is even, below 3 or not an integer. |
 | `timeSeriesPreparation:mask:badEclipse` | `+timeSeriesPreparation/mask.m` | Inputs | Eclipse lacks t or value, t is not an increasing int64 column, or value is outside [0, 1]. |
 | `timeSeriesPreparation:mask:badEvents` | `+timeSeriesPreparation/mask.m` | Inputs | Events or Soe lacks a variable, or a window ends before it starts. |
 | `timeSeriesPreparation:mask:badThrusters` | `+timeSeriesPreparation/mask.m` | Inputs | Thrusters has no on_time_* column or its unit is not milliseconds. |
@@ -100,6 +116,10 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:regressDrivers:collinear` | `+timeSeriesPreparation/regressDrivers.m` | Numerical | a driver's VIF exceeds MaxVif, or the drivers are linearly dependent. |
 | `timeSeriesPreparation:regressDrivers:sizeMismatch` | `+timeSeriesPreparation/regressDrivers.m` | Input | P and Z have different rows, or Names or DriverNames the wrong length. |
 | `timeSeriesPreparation:regressDrivers:tooFewRows` | `+timeSeriesPreparation/regressDrivers.m` | Input | fewer than K + 2 complete rows for a parameter. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:residuals:inputShape` | `+timeSeriesPreparation/+qc/residuals.m` | Input | y_meas and y_model are not KxM of one size, or Bias or Scale has the wrong size. |
+| `timeSeriesPreparation:residuals:inputWindow` | `+timeSeriesPreparation/+qc/residuals.m` | Input | "highpass" without an odd Window >= 3. |
+| `timeSeriesPreparation:screen:inputEpoch` | `+timeSeriesPreparation/+qc/screen.m` | Input | epoch is not UTC. The identifiers of qc.residuals, qc.hampel, qc.detectImpulses and qc.detectJumps propagate. |
+| `timeSeriesPreparation:screen:inputShape` | `+timeSeriesPreparation/+qc/screen.m` | Input | y_meas and y_model are not Kx1 or Kx3 of one size, or epoch is not a Kx1 datetime. |
 | `timeSeriesPreparation:setupTimeSeriesPreparation:noGracefoReading` | `setupTimeSeriesPreparation.m` | Input domain | GracefoReading names a folder that does not hold +gracefoReading. |
 | `timeSeriesPreparation:spec2acv:badBins` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Input | NanPolicy "error" and non-finite bins, or fewer than 2 valid bins to interpolate. |
 | `timeSeriesPreparation:spec2acv:badDOF` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Options | DOF is not positive. Other options outside their domain are refused by the arguments block (case-sensitive values), and a non-positive gauss or exp WindowParam by validateattributes, with a MATLAB: identifier. |
@@ -144,4 +164,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-137 identifier(s).
+157 identifier(s).

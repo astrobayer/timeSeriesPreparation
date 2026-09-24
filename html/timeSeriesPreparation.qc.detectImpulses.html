@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.qc.detectImpulses</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.qc.detectImpulses</h1>
+<p>Matched-filter detection of pulses of a known shape in whitened residuals; thruster priors are assigned first.</p>
+<h2>Syntax</h2>
+<pre><code>[events, info] = timeSeriesPreparation.qc.detectImpulses(r, Epoch = t, Response = h)
+[events, info] = timeSeriesPreparation.qc.detectImpulses(r, Epoch = t, Response = h, Priors = thr, Threshold = 5, PriorWindow_s = 5)</code></pre>
+<h2>Description</h2>
+<p>Each channel is correlated with the zero-mean, unit-norm template hz = (h - mean h)/|h - mean h| (L samples, the pulse starting at its first sample): c(t) = sum_i r(t+i-1) hz(i), score = c/sigma_c, with sigma_c the robust (1.4826 MAD) scale of c. The zero-mean template is blind to an offset or a level jump inside the window; only a step&#x27;s edge can register, once at most. The last L-1 samples are not evaluable. Local maxima of |score| above Threshold, at least L samples apart (the strongest wins), are pulses with amplitude a = c/(hz.h), sigma_a = sigma_c/(hz.h), tStart at the peak and tEnd L-1 samples later. A pulse within PriorWindow_s of a prior row (e.g. THR1B firings) takes the prior&#x27;s source and confidence 1; the others are &quot;unassigned&quot; with confidence erf(|score|/sqrt(2)). NaN samples count as zero in the correlation and are reported. Ported from NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>r</code></td><td>K,M</td><td><code>double</code></td><td>&mdash;</td><td>- Whitened residuals (qc.residuals), M = 1 (axis &quot;all&quot;) or 3 (x, y, z).</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Epoch</code></td><td>K,1</td><td><code>datetime</code></td><td>&mdash;</td><td>Sample epochs, UTC; required.</td></tr>
+<tr><td><code>Response</code></td><td>L,1</td><td><code>double</code></td><td>&mdash;</td><td>Pulse template, 2 &lt;= L &lt;= K, finite, not constant; required (no shape is assumed).</td></tr>
+<tr><td><code>Priors</code></td><td>N,8</td><td><code>table</code></td><td>&mdash;</td><td>qc.eventTable rows to assign.</td></tr>
+<tr><td><code>Threshold</code></td><td>1,1</td><td><code>double</code></td><td>5</td><td>On |score|, in sigma (Gaussian false alarm 6e-7 per sample).</td></tr>
+<tr><td><code>PriorWindow_s</code></td><td>1,1</td><td><code>double</code></td><td>5</td><td>Assignment window around a prior epoch, s.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>events</code></td><td>N,8</td><td><code>table</code></td><td>&mdash;</td><td>- qc.eventTable rows of class &quot;impulse&quot;, sorted by tStart.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: score, amplitude (K,M); sigmaCorr, nanCount (1,M); templateGain (hz.h); templateLength; unmatchedPriors (rows of Priors without a detection); provenance.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Planted pulses are recovered to +-1 sample and their amplitude to 3 sigma_a above Threshold (measured in the ported tests). Two pulses closer than L samples merge into the stronger one. A template that does not match the true shape lowers the score by the cosine between the shapes, never raises it.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:detectImpulses:inputShape</code></td><td>Input</td><td>r is not Kx1 or Kx3, or Epoch is not Kx1.</td></tr>
+<tr><td><code>timeSeriesPreparation:detectImpulses:inputEpoch</code></td><td>Input</td><td>Epoch is missing, not a datetime, or not UTC.</td></tr>
+<tr><td><code>timeSeriesPreparation:detectImpulses:inputResponse</code></td><td>Input</td><td>Response is missing, shorter than 2, longer than K, not finite or constant.</td></tr>
+<tr><td><code>timeSeriesPreparation:detectImpulses:inputPriors</code></td><td>Input</td><td>Priors is not a qc.eventTable.</td></tr>
+<tr><td><code>timeSeriesPreparation:detectImpulses:inputRange</code></td><td>Input</td><td>Threshold or PriorWindow_s is not positive.</td></tr>
+</table>
+<h2>Example</h2>
+<p>One raised-cosine pulse of 8 sigma in white noise.</p>
+<pre><code>x = 1e-9 * randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 3), 3000, 1);
+h = sin(pi * (0:29)&#x27; / 30).^2; x(1000:1029) = x(1000:1029) + 8e-9 * h;
+t = datetime(2020, 1, 1, &quot;TimeZone&quot;, &quot;UTC&quot;) + seconds((0:2999)&#x27;);
+events = timeSeriesPreparation.qc.detectImpulses(x, Epoch = t, Response = h);</code></pre>
+<h2>Limitations</h2>
+<p>Pulses shorter than the template are unresolvable in L1B. The template is the caller&#x27;s; the CRN impulse response is crnKernel&#x27;s.</p>
+<h2>References</h2>
+<p>Turin, G. L. (1960). An introduction to matched filters. IRE Trans. Inf. Theory 6, 311-329. Bandikova, T. et al. (2019) and Meyer, U. et al. (2012), cited as the port cites them, not re-read.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.qc.residuals</code>, <code>timeSeriesPreparation.qc.eventTable</code>, <code>timeSeriesPreparation.qc.screen</code>, <code>timeSeriesPreparation.crnKernel</code></p>
+<p class="footer">timeSeriesPreparation v0.2.0 - generated from the help block of +timeSeriesPreparation/+qc/detectImpulses.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>
