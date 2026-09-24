@@ -58,7 +58,8 @@ True after the merge:
     `bootstrap` (automatic block length, seed from Stage).
   - maxLag has no default (R5).
   - Errors: `correlate:epochMismatch`, `correlate:modelMismatch`,
-    `correlate:irregularGrid`, `correlate:tooFewPairs`.
+    `correlate:irregularGrid`, `correlate:tooFewPairs` (and
+    `correlate:badBootLag`, see the amendment).
 - `Config.drivers`: method ("pchip"), maxGap ([]) and maxLag ([], no
   default).
 - Records: CONCEPT 7 (the pre-whitening rule and the lag convention),
@@ -74,8 +75,43 @@ True after the merge:
 - `drivers` equals `align` on a same-unit driver, bitwise.
 - Contract, vectorisation and robustness as usual.
 
-Tolerances will be measured in NumPy before coding, and the count
-predicted in the code commit.
+**Measured before coding (NumPy, 2026-09-24):**
+- AR(1) pre-whitening returns the innovations to 4e-16.
+- x_t = e_t + 0.5 d_(t-7), n = 4000: the peak lands at +7 in every
+  realisation. The scatter of r - 0.447 is 0.0122 (theory 0.0126), and the
+  worst of 300 is 0.038. Tests hold it to 0.065.
+- Two independent AR(0.95) series, n = 3000, lags -50..50. Before
+  pre-whitening, nEff/n is 0.039–0.069; after, 0.986–1.010. After
+  pre-whitening, max |r| sqrt(n) is at most 4.18 over 200 realisations.
+  Tests hold these to < 0.1, 0.95–1.05 and 5.5.
+- Lag-0 block-bootstrap sigma over (1 - r^2)/sqrt(n): 0.90–1.10 over 100
+  realisations. Tests hold it to 0.75–1.3.
+- Raw max |r| can be as small as 0.028, so no test asserts that the raw
+  correlation exceeds the band.
+
+**Amendment:** a new error, `correlate:badBootLag`, for a BootLags entry
+beyond maxLag. It replaces silent clamping.
+
+**Fault injection:**
+- The reference tests compute r independently with corrcoef, and the
+  pre-whitened reference with a direct `filter`.
+- Filtering only the residual (not the driver), or the wrong lag sign,
+  moves the transfer peak to -7 or changes r by O(0.1).
+- Each identifier's test plants its own trigger.
+
+**Prediction** (before any run): **534 + 0 + 0 = 534**. That is 515 plus:
+- TestDrivers 7 (reference 1, precision 1, contract 2, metamorphic 1,
+  vectorisation 1, robustness 1).
+- TestCorrelate 9 (reference 3, precision 1, contract 2, metamorphic 1,
+  vectorisation 1, robustness 1).
+- TestConfig +1 (contract).
+- TestHelpExamples 47 -> 49 (contract).
+
+Per tag: contract 168, reference 193, precision 17, robustness 105,
+metamorphic 33, vectorisation 15, speed 3.
+
+**Cited from memory, not re-read** (debt): Box et al. 2015 ch. 12,
+Bartlett 1946 and Fisher 1921, all named in `correlate`'s help.
 
 ---
 
@@ -972,7 +1008,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-09 PR 1 on branch `claude/grace-timeseries-issues-28g3a4`: scope frozen.**
+**X-09 PR 1 on branch `claude/grace-timeseries-issues-28g3a4`: CI pending (predicted 534 + 0 + 0).**
 X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
 X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0).
@@ -1004,7 +1040,7 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | content | `docs/CONCEPT.md` Rev 0.17, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
 | code, `Contents.m`, CI, audit | X-00b: setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config`. X-04: `crnKernel`, `crnApply`, `Contents.m` 0.1.0 |
 | `docs/GUIDE.md` | rev 1.11 (release workflow; `v0.1.0` anomaly) |
-| `docs/CONCEPT.md` | Rev 0.18 (X-08: V-7 closed, `fill` collocation, 6.5) |
+| `docs/CONCEPT.md` | Rev 0.19 (X-09: `drivers`, Box–Jenkins `correlate`, 7) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was
