@@ -76,6 +76,16 @@ metamorphic 44, vectorisation 21, speed 8.
 test bug or a conversion slip, fixed in this PR; the numbers are never
 touched.
 
+**Verdict, CI run 36055437030 on `160f0ea` (2026-09-24), MATLAB R2026a:**
+- `audit` green.
+- `matlab` green on the first run: **637 + 0 + 0 = 637**, every tag as
+  predicted (contract 187, reference 234, precision 23, robustness 120,
+  metamorphic 44, vectorisation 21, speed 8; no `vectorization` any
+  more).
+- TestQcEquivalence 17/17: the converted `qc` equals the frozen port in
+  all 15 cases. TestQcPort 4/4.
+- Gate time 1199 s.
+
 ---
 
 ## O-6 — `matlab` job timeout 30 → 60 min (`.github/` only) — merged 2026-09-24 (PR #54, `7c7fb7b`)
