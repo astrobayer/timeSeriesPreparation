@@ -74,7 +74,8 @@ around 1e-16). Both `regressDrivers` and `partialCorrelation` use 1e-12.
 - Dropping the demeaning changes coef(1) away from mean(P).
 - The VIF gate refuses at 50 against 10 and passes at MaxVif 100.
 
-**Prediction** (before any run): **554 + 0 + 0 = 554**. That is 534 plus:
+**Prediction** (before any run): **554 + 0 + 0 = 554**. (Corrected below:
+553.) That is 534 plus:
 - TestRegressDrivers 7 (reference 3, contract 1, metamorphic 1,
   vectorisation 1, robustness 1).
 - TestPartialCorrelation 5 (reference 1, precision 1, contract 1,
@@ -85,6 +86,18 @@ around 1e-16). Both `regressDrivers` and `partialCorrelation` use 1e-12.
 
 Per tag: contract 175, reference 198, precision 18, robustness 108,
 metamorphic 36, vectorisation 16, speed 3.
+
+**Verdict, first run:** CI run 35980346146 on `2958261` (2026-09-24):
+`audit` green; `matlab` **552 + 1 + 0 = 553**.
+- **The failure was a bug in the test.**
+  `TestRegressDrivers/refusalsAndGate` planted too few rows on the u, v
+  pair with rho 0.99. The VIF gate (50 > 10) runs first, so it raised
+  `collinear` instead of `tooFewRows`. The fix passes MaxVif = 100 in that
+  call, so the row check is what fires. The function is unchanged.
+- **The prediction was wrong by one.** TestConfig gained no test: its
+  drivers test was extended, not added. The correct prediction is **553
+  + 0 + 0**: contract 174, reference 198, precision 18, robustness 108,
+  metamorphic 36, vectorisation 16, speed 3. Every other tag matched.
 
 **Cited from memory, not re-read** (debt): Kutner et al. 2005 sect. 10.5,
 Kuensch 1989 and Whittaker 1990.
@@ -1097,7 +1110,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-09 PR 2 on branch `claude/grace-timeseries-issues-28g3a4`: CI pending (predicted 554 + 0 + 0).**
+**X-09 PR 2 in review (PR #48): first run 552 + 1 + 0, a test bug; fix pushed, predicted 553 + 0 + 0.**
 X-09 PR 1 merged (PR #47, `8182010`; CI 534 + 0 + 0).
 X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).

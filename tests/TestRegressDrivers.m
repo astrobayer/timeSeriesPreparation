@@ -126,7 +126,8 @@ classdef TestRegressDrivers < matlab.unittest.TestCase
                 "timeSeriesPreparation:regressDrivers:sizeMismatch");
             sparse = NaN(200, 1);
             sparse(1:2) = 1;
-            testCase.verifyError(@() timeSeriesPreparation.regressDrivers(sparse, [u v], NBoot = 10), ...
+            % MaxVif lifted so the row check, not the gate, is what fires.
+            testCase.verifyError(@() timeSeriesPreparation.regressDrivers(sparse, [u v], NBoot = 10, MaxVif = 100), ...
                 "timeSeriesPreparation:regressDrivers:tooFewRows");
         end
     end
