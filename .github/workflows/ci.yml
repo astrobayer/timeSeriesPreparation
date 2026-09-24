@@ -75,7 +75,9 @@ jobs:
   matlab:
     name: matlab
     runs-on: [self-hosted, Windows]
-    timeout-minutes: 30
+    # 60: the gate took 27 min 7 s at X-05 PR-C (run 36033100696, 622 tests
+    # with the D-9 DATAPOOL reads) against the former 30 (HANDOVER O-6).
+    timeout-minutes: 60
     env:
       # A secret cannot be tested in a step's `if:` directly; its presence can.
       HAVE_REFERENCE_TOKEN: ${{ secrets.REFERENCE_READ_TOKEN != '' }}
