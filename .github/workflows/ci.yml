@@ -22,6 +22,11 @@
 #   lsqvce is a TEST-ONLY dependency (CONCEPT 10.1 X-07, Q12): checked out
 #   into deps/lsqvce the same way, for the agreement test between the
 #   sigtools numerics and lsqvce's kernels. No toolbox function calls it.
+#   READING_DATA_POOL (organisation variable, HANDOVER F 2026-09-19) is the
+#   DATAPOOL root on the runner. Only the defect-catalogue tests (D-9, X-05)
+#   read it; a test that needs a real day is counted incomplete when the
+#   variable is empty, never silently passed. Read-only: no test writes
+#   below it.
 #
 # PINS
 #   ci-actions by immutable tag (its README: a moving tag would change this
@@ -74,6 +79,8 @@ jobs:
     env:
       # A secret cannot be tested in a step's `if:` directly; its presence can.
       HAVE_REFERENCE_TOKEN: ${{ secrets.REFERENCE_READ_TOKEN != '' }}
+      # The DATAPOOL root for the D-9 real-day tests (X-05); read-only.
+      READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
