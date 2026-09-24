@@ -21,6 +21,10 @@ room for the WPs that add real-data tests (X-10 on).
 No check is added, so nothing is fault-injected.
 **Prediction:** 622 + 0 + 0, unchanged.
 
+**Verdict, CI run 36047997902 on `1f99fd2` (2026-09-24), MATLAB R2026a:**
+`audit` green; `matlab` green, **622 + 0 + 0 = 622** as predicted, every
+tag unchanged. Gate time 1171 s; job 20 min 47 s of the new 60.
+
 ---
 
 ## X-05 PR-C — `mask`, D-9 tests, release 0.2.0 — merged 2026-09-24 (PR #53, `f448f78`; issue #8 closed; v0.2.0 released by the workflow); scope was frozen 2026-09-24 (X-05 PR-A)
