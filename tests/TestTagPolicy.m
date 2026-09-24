@@ -9,10 +9,11 @@ classdef TestTagPolicy < matlab.unittest.TestCase
 %     category count; a misspelt tag ("vectorization") is a category nobody
 %     counts. Both are findings. The check is fault-injected: planted classes
 %     in a temporary folder must fire it, a healthy one must not.
-%     No folder is exempt. Until X-02, tests/sigtools/ was exempt: sigtools
-%     v1.3.1 brought its suites in untagged at X-01, and tagging them was a
-%     convention change (CONCEPT 12.9). X-02 tagged them. The exemption
-%     mechanism itself stays tested, so a future import can use it.
+%     tests/qc/ is exempt since X-05: NonGravForces.qc 0.12.0 brought its
+%     suites in with their own spelling ("vectorization") and the spelling
+%     is a convention change (CONCEPT 12.9), left to a conventions WP. The
+%     gate counts that tag under its own name meanwhile. Until X-02,
+%     tests/sigtools/ was exempt in the same way; X-02 tagged it.
 %
 %   COVERAGE
 %     contract    - the repository's own tests/ has no finding.
@@ -21,13 +22,13 @@ classdef TestTagPolicy < matlab.unittest.TestCase
 %                   test in an exempt folder stays silent.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-24 16:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Allowed = ["contract" "reference" "precision" "speed" ...
                    "robustness" "vectorisation" "metamorphic"]
-        % Folders exempt from the policy, relative to tests/ (none since X-02).
-        Exempt = strings(1, 0)
+        % Folders exempt from the policy, relative to tests/ (X-05: the qc port).
+        Exempt = "qc"
     end
 
     methods (Test, TestTags = {'contract'})

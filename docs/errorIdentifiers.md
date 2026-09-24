@@ -56,6 +56,8 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:drivers:badSeries` | `+timeSeriesPreparation/drivers.m` | Input | series lacks a field, or a driver's name is not a field name, its t is not an int64 strictly increasing column, or its value is not a real double column of t's size without Inf. |
 | `timeSeriesPreparation:drivers:duplicateName` | `+timeSeriesPreparation/drivers.m` | Input | two drivers share a name. |
 | `timeSeriesPreparation:drivers:unitUnknown` | `+timeSeriesPreparation/drivers.m` | Input | a driver states no unit. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:fail:inputHint` | `+timeSeriesPreparation/+internal/fail.m` | Contract | the message lacks the " -> " correction hint. |
+| `timeSeriesPreparation:fail:inputMnemonic` | `+timeSeriesPreparation/+internal/fail.m` | Contract | the mnemonic does not start with one of the six classes. |
 | `timeSeriesPreparation:fill:irregularGrid` | `+timeSeriesPreparation/fill.m` | Input | the epochs are not uniformly spaced; resample first (align). |
 | `timeSeriesPreparation:fill:maxGapMissing` | `+timeSeriesPreparation/fill.m` | Input | "collocation" without MaxGap (it has no default, Q3). |
 | `timeSeriesPreparation:fill:modelMismatch` | `+timeSeriesPreparation/fill.m` | Input | Model lacks acv, dt or mu, or its columns or dt differ from the arc's. |
@@ -138,4 +140,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-131 identifier(s).
+133 identifier(s).

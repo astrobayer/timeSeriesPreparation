@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.22 · 2026-09-24 · X-05 PR-A (`.github/`: DATAPOOL for the `matlab` job; D-9 defect catalogue recorded; X-05 scope frozen) in review; X-09 merged (PR #48, `ffe0164`; issue #12 closed)**
+**Revision 0.23 · 2026-09-24 · X-05 PR-B (`qc` port, unchanged) in review; X-05 PR-A merged (PR #51, `dcc185a`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,88 @@ restates:
 
 ---
 
-## X-05 PR-A — DATAPOOL for the `matlab` job, D-9 catalogue, X-05 scope (issue #8); scope frozen 2026-09-24
+## X-05 PR-B — `qc` port, unchanged (issue #8); scope frozen 2026-09-24 (X-05 PR-A)
+
+Tier B. Scope, decisions and pin: X-05 PR-A below.
+
+True after the merge:
+- `+timeSeriesPreparation/+qc/`: `residuals`, `hampel`, `detectImpulses`,
+  `detectJumps`, `eventTable`, `screen`, from NonGravForces `3cc0123`. Four
+  text substitutions are the only change: `NonGravForces.qc.` →
+  `timeSeriesPreparation.qc.`, `NonGravForces.fail(` →
+  `timeSeriesPreparation.internal.fail(`, `NonGravForces.provenance(` →
+  `timeSeriesPreparation.internal.provenance(`, `NonGravForces:` →
+  `timeSeriesPreparation:`. None of the replacements occurs in the
+  originals, so the map inverts; references to NonGravForces' readers in
+  the help text stay as written.
+- `internal.fail` (same classes, hint marker and throwAsCaller) and
+  `internal.provenance` (same fields). `dependencies` is empty, because
+  the qc units call no toolbox.
+  - **Finding in NonGravForces:** its FNV-1a `localHash` multiplies in
+    double. The product reaches 2^56, beyond the 53-bit mantissa, so the
+    hash is not the FNV-1a of its text. Here it is exact
+    (`internal.stageSeed`), so the two hashes can differ. It affects no
+    qc number; to be reported to NonGravForces.
+- Tests: `tests/qc/` holds `NgfTestCase`, `tNgfQc` and `tNgfQcScreen`.
+  Their oracles are byte copies in `tests/tools/pyxcheck/`, and the 600-s
+  ACT1B sample is in `tests/data/samples/`. These paths keep the originals'
+  `fileparts(fileparts(mfilename))` lines valid.
+  - `tNgfQcScreen` reads THR1B from gracefoReading's `tests/realdata`
+    (byte-identical to NonGravForces' copy; `TestQcPort` checks it) and
+    ACT1B with `gracefoReading.readL1b`. The two static readers rebuild
+    `io.readTHR1B` (UTC = GPS − 18 s) and `io.readACC1B` for the fields
+    the tests use.
+- `TestQcPort`: every ported file, after the map is undone, has the
+  SHA-256 of its original. `tNgfQcScreen` additionally has its reader
+  block removed and its two lines restored. The copies are byte-equal. CR
+  is dropped first, because the originals hold LF only.
+- `TestTagPolicy` exempts `tests/qc` for its spelling "vectorization". The
+  gate counts that tag under its own name until a conventions WP.
+
+**Measured before the push (2026-09-24, ci-actions `v1.3.2`):**
+- The same round trip in Python matches all 14 files and the screen test.
+- `matlab-audit`: 122 files, **clean**. Catalogue: 133 identifiers,
+  including `fail`'s 2.
+- `matlab-docs --check`: 60 files, **in sync**. Two new help examples:
+  `internal.fail` and `internal.provenance`.
+
+**Fault injection:** `TestQcPort/changedCharacterBreaksEquality` turns
+`1.4826` into `1.5826` in `hampel` and requires the hash to break, while
+the unmodified file still matches.
+
+**Prediction** (before any run): **598 + 0 + 0 = 598**. That is 553 plus:
+- tNgfQc 10 (contract 2, reference 1, precision 1, vectorization 1,
+  robustness 2, metamorphic 2, speed 1).
+- tNgfQcScreen 28 (4 in each of the seven categories).
+- TestQcPort 5 (reference 4, robustness 1).
+- TestHelpExamples 52 -> 54 (contract).
+
+Per tag: contract 182, reference 207, precision 23, robustness 115,
+metamorphic 42, vectorisation 16, **vectorization 5**, speed 8. Without
+gracefoReading, the three THR1B/ACT1B-dependent tests are incomplete: 595 +
+0 + 3.
+
+**Risks, stated:**
+- The seven speed bounds were measured on the owner's host. If a bound
+  fails on the runner, the failure is recorded, never widened.
+- The rebuilt readers run for the first time. A red in `detectImpulsesReference` or
+  `screenReference` is a reader fix in this PR, not a qc change.
+
+**Debt:** Tier A (no local MATLAB). The six units are outside the
+identifier catalogue and the generated docs until a conventions WP (audit
+profile `qc-ported`).
+
+**Verdict, CI run 36017541577 on `4f1abf0` (2026-09-24), MATLAB R2026a
+Update 5, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:** `audit` green;
+`matlab` green on the first run, **598 + 0 + 0 = 598**, every tag as
+predicted (contract 182, reference 207, precision 23, robustness 115,
+metamorphic 42, vectorisation 16, vectorization 5, speed 8). tNgfQc 10/10,
+tNgfQcScreen 28/28 (the seven speed bounds held on the runner), TestQcPort
+5/5. No new warning in the gate step. Gate time 1387 s.
+
+---
+
+## X-05 PR-A — DATAPOOL for the `matlab` job, D-9 catalogue, X-05 scope (issue #8) — merged 2026-09-24 (PR #51, `dcc185a`); scope was frozen 2026-09-24
 
 Tier B. A `.github/` change, so it stands alone: it touches only
 `.github/workflows/ci.yml`, `.github/matlab-audit.json`,
@@ -1239,7 +1320,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-05 PR-A in review.**
+**X-05 PR-B in review.**
+X-05 PR-A merged (PR #51, `dcc185a`; CI 553 + 0 + 0).
 X-09 PR 2 merged (PR #48, `ffe0164`; CI 553 + 0 + 0; issue #12 closed).
 X-09 PR 1 merged (PR #47, `8182010`; CI 534 + 0 + 0).
 X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
