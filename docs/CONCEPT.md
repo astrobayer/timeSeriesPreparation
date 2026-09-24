@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.19 (DRAFT) · 2026-09-24 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.20 (DRAFT) · 2026-09-24 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.20 | X-09 PR 2: the remaining methods of 7 are three L2 units, `regressDrivers` (OLS on demeaned drivers, VIF gate 10 as a provisional Config default, block-bootstrap sigmas), `partialCorrelation` (inverse correlation matrix, block-bootstrap sigmas) and `binnedMap` (mean, sd, count per bin, the caller's edges) (3.2, 7; owner decisions 2026-09-24) |
 | 0.19 | X-09 PR 1: `drivers` aligns and checks supplied series (no physics, no per-revolution averaging); `correlate` pre-whitens both series with the residual axis's ARMA model (Box–Jenkins), the lag convention and the Bartlett effective sample size are fixed (7; owner decisions 2026-09-24) |
 | 0.18 | X-08: V-7 closed from the code (the sigtools Kalman filter only predicts). `collocation` is covariance collocation on the model's autocovariance, never extrapolated beyond its largest lag, not a Kalman smoother; `reference` follows X-09 (owner decisions 2026-09-24; 6.5, 9.3) |
 | **0.14** | **Stage C done: verification items closed from the registered documents and real bytes (9.3). The v2 CRN oracle is wrong — the ATBD raises each passband term to the power N_c, the port raised the sum; real ACT1A→ACT1B data give DC gain 1 + 6.4e-8, not 1.0004533. Section 8 and ORC-1/ORC-2 corrected** |
@@ -144,7 +145,8 @@ These are checked mechanically: calls go downward only.
 
 ```
 L3  timeSeriesPreparation.run                         single point of access, instrument level
-L2  mask, qc, align, crnApply, noise, fill, observability, bootstrap, crossval, drivers, correlate, report
+L2  mask, qc, align, crnApply, noise, fill, observability, bootstrap, crossval, drivers, correlate,
+    regressDrivers, partialCorrelation, binnedMap, report
 L1  Arc, Config, crnKernel, noiseReference
 L0  +spectral  (sigtools/spectral: 10 functions)      +tsmodels (sigtools/tsmodels: 15 functions)
 ```
@@ -443,6 +445,12 @@ are estimated by `lsqvce.fit`.
   lag, block-bootstrap intervals at chosen lags.
 - Two PRs: lagged correlation first; regression with the VIF gate, partial
   correlation and the (β′, u) maps second.
+- The second part is three L2 functions: `regressDrivers` (OLS of each
+  per-revolution parameter on the demeaned drivers; a driver with VIF above
+  `Config.drivers.maxVif`, 10 and provisional, refuses; sigmas by block
+  bootstrap), `partialCorrelation` (−Q_ij/√(Q_ii Q_jj) from the inverse
+  correlation matrix; block-bootstrap sigmas) and `binnedMap` (mean, sd and
+  count per bin of the caller's edges; empty bins NaN).
 
 ---
 

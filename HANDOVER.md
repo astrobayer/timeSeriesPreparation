@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.20 · 2026-09-24 · X-09 PR 1 (`drivers`, lagged `correlate`) in review (PR #47), CI green 534 + 0 + 0; X-08 merged (PR #46, `a08cfc0`)**
+**Revision 0.21 · 2026-09-24 · X-09 PR 2 (`regressDrivers`, `partialCorrelation`, `binnedMap`) in review (PR #48), CI green 553 + 0 + 0; X-09 PR 1 merged (PR #47, `8182010`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,108 @@ restates:
 
 ---
 
-## X-09 PR 1 — `drivers` and lagged `correlate` (issue #12, stays open for PR 2; PR #47); scope frozen 2026-09-24
+## X-09 PR 2 — regression with VIF gate, partial correlation, binned maps (closes issue #12; PR #48); scope frozen 2026-09-24
+
+Tier B. Design: CONCEPT 7 (the remaining three methods) and 8 (demean
+regressors; block bootstrap for sigmas).
+
+**Owner decisions 2026-09-24 (second round):**
+- The VIF gate is **10, a Config default**. It is provisional until real
+  data refine it, like the 0.5 gate.
+- Coefficient sigmas come from the **block bootstrap**.
+- Binned maps give **mean, sd and count** per bin. The bin edges are the
+  caller's, and empty bins are NaN.
+- The methods are **three L2 functions**. CONCEPT 3.2 and the layering map
+  gain `regressDrivers`, `partialCorrelation` and `binnedMap`.
+
+True after the merge:
+- **`regressDrivers(P, Z, ...)`** (L2): P (R,J) holds the gated
+  per-revolution parameters and Z (R,K) the drivers. Rows are in time
+  order.
+  - Per parameter j, the fit is OLS on the rows complete in P(:,j) and Z,
+    with the regressors demeaned (CONCEPT 8). coef(1,j) is the intercept,
+    which is the mean of P(:,j).
+  - The VIF gate uses diag(inv(corrcoef(Z))) on the rows complete in Z. A
+    driver above MaxVif (default 10) refuses with `regressDrivers:collinear`.
+  - sigma and ci come from `bootstrap` over the rows [P(:,j) Z]: automatic
+    block length, seed from the stage name.
+  - Outputs: coef, sigma, ci, vif, r2, nRows, blockLength and names.
+  - Errors: `sizeMismatch`, `collinear`, `tooFewRows` (fewer than K + 2
+    rows).
+- **`partialCorrelation(X, ...)`** (L2): partial correlation of each pair
+  of columns given all the others, from the inverse correlation matrix:
+  -P_ij / sqrt(P_ii P_jj), on the complete rows. Sigma and ci come from the
+  block bootstrap. Errors: `tooFewVariables` (V < 2), `collinear`,
+  `tooFewRows`.
+- **`binnedMap(value, a, b, edgesA, edgesB)`** (L2): per bin of (a, b),
+  the mean, the sd (n − 1; NaN below 2 samples) and the count. It uses
+  `discretize` rules: bins are right-open except the last. NaN samples and
+  samples outside the edges are ignored, and empty bins are NaN. Errors:
+  `sizeMismatch`, `badEdges`.
+- `Config.drivers` gains `maxVif` (10).
+- Records: CONCEPT 3.2 (three new L2 units), 7 and history; TestLayering;
+  Contents, CHANGELOG, generated docs.
+
+**Tests planned:**
+- References: `backslash` on [ones, demeaned Z]; VIF 1/(1 − r²) for
+  constructed regressors; the 3-variable partial-correlation formula; an
+  explicit loop for `binnedMap`.
+- Precision: partial correlation equals the correlation of the residuals
+  after regressing each variable on the rest.
+- Measured band (NumPy, 2026-09-24): over 100 realisations of 600 rows
+  with white errors, the bootstrap slope sigma was 0.86–1.21 of the OLS
+  sigma; the test holds 0.75–1.35. The intercept's bootstrap sigma ran up
+  to 1.36 of the OLS value, because each replicate re-centres Z, so no test
+  compares it with OLS.
+
+**Amendment:** the singularity threshold is rcond < 1e-12, not eps. With
+eps, an exactly dependent column can slip through on rounding (rcond
+around 1e-16). Both `regressDrivers` and `partialCorrelation` use 1e-12.
+
+**Fault injection:**
+- The references are backslash, the 3-variable formula, the residual
+  correlation and an explicit loop, all written in the tests.
+- Dropping the demeaning changes coef(1) away from mean(P).
+- The VIF gate refuses at 50 against 10 and passes at MaxVif 100.
+
+**Prediction** (before any run): **554 + 0 + 0 = 554**. (Corrected below:
+553.) That is 534 plus:
+- TestRegressDrivers 7 (reference 3, contract 1, metamorphic 1,
+  vectorisation 1, robustness 1).
+- TestPartialCorrelation 5 (reference 1, precision 1, contract 1,
+  metamorphic 1, robustness 1).
+- TestBinnedMap 4 (reference 1, contract 1, metamorphic 1, robustness 1).
+- TestConfig +1 (contract).
+- TestHelpExamples 49 -> 52 (contract).
+
+Per tag: contract 175, reference 198, precision 18, robustness 108,
+metamorphic 36, vectorisation 16, speed 3.
+
+**Verdict, first run:** CI run 35980346146 on `2958261` (2026-09-24):
+`audit` green; `matlab` **552 + 1 + 0 = 553**.
+- **The failure was a bug in the test.**
+  `TestRegressDrivers/refusalsAndGate` planted too few rows on the u, v
+  pair with rho 0.99. The VIF gate (50 > 10) runs first, so it raised
+  `collinear` instead of `tooFewRows`. The fix passes MaxVif = 100 in that
+  call, so the row check is what fires. The function is unchanged.
+- **The prediction was wrong by one.** TestConfig gained no test: its
+  drivers test was extended, not added. The correct prediction is **553
+  + 0 + 0**: contract 174, reference 198, precision 18, robustness 108,
+  metamorphic 36, vectorisation 16, speed 3. Every other tag matched.
+
+**Verdict, MATLAB R2026a, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:**
+CI run 35982964249 on `336f36c` (2026-09-24): `audit` green; `matlab`
+green, **553 + 0 + 0 = 553**, every tag as corrected (contract 174,
+reference 198, precision 18, robustness 108, metamorphic 36,
+vectorisation 16, speed 3). No warnings from the new functions appear in
+the part of the log that was read. Gate time 1028 s.
+
+**Cited from memory, not re-read** (debt): Kutner et al. 2005 sect. 10.5,
+Kuensch 1989 and Whittaker 1990.
+
+---
+
+## X-09 PR 1 — `drivers` and lagged `correlate` — merged 2026-09-24 (PR #47, `8182010`); scope was frozen 2026-09-24
 
 Tier B. Design: CONCEPT 7, 6.1 row 9, 10.1 row X-09 (needs X-07, merged).
 
@@ -1016,7 +1117,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-09 PR 1 in review (PR #47): CI green, 534 + 0 + 0.**
+**X-09 PR 2 in review (PR #48): CI green, 553 + 0 + 0 (first run 552 + 1 + 0, a test bug, fixed).**
+X-09 PR 1 merged (PR #47, `8182010`; CI 534 + 0 + 0).
 X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
 X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0).
@@ -1048,7 +1150,7 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | content | `docs/CONCEPT.md` Rev 0.17, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
 | code, `Contents.m`, CI, audit | X-00b: setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config`. X-04: `crnKernel`, `crnApply`, `Contents.m` 0.1.0 |
 | `docs/GUIDE.md` | rev 1.11 (release workflow; `v0.1.0` anomaly) |
-| `docs/CONCEPT.md` | Rev 0.19 (X-09: `drivers`, Box–Jenkins `correlate`, 7) |
+| `docs/CONCEPT.md` | Rev 0.20 (X-09: `drivers`, `correlate`, `regressDrivers`, `partialCorrelation`, `binnedMap`; 3.2, 7) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was

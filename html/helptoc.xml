@@ -4,6 +4,7 @@
         <tocitem target="timeSeriesPreparation.Arc.html">timeSeriesPreparation.Arc</tocitem>
         <tocitem target="timeSeriesPreparation.Config.html">timeSeriesPreparation.Config</tocitem>
         <tocitem target="timeSeriesPreparation.align.html">timeSeriesPreparation.align</tocitem>
+        <tocitem target="timeSeriesPreparation.binnedMap.html">timeSeriesPreparation.binnedMap</tocitem>
         <tocitem target="timeSeriesPreparation.bootstrap.html">timeSeriesPreparation.bootstrap</tocitem>
         <tocitem target="timeSeriesPreparation.checkAlignment.html">timeSeriesPreparation.checkAlignment</tocitem>
         <tocitem target="timeSeriesPreparation.correlate.html">timeSeriesPreparation.correlate</tocitem>
@@ -21,6 +22,8 @@
         <tocitem target="timeSeriesPreparation.noise.html">timeSeriesPreparation.noise</tocitem>
         <tocitem target="timeSeriesPreparation.noiseReference.html">timeSeriesPreparation.noiseReference</tocitem>
         <tocitem target="timeSeriesPreparation.observability.html">timeSeriesPreparation.observability</tocitem>
+        <tocitem target="timeSeriesPreparation.partialCorrelation.html">timeSeriesPreparation.partialCorrelation</tocitem>
+        <tocitem target="timeSeriesPreparation.regressDrivers.html">timeSeriesPreparation.regressDrivers</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.allanVariance.html">timeSeriesPreparation.spectral.allanVariance</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.arma2acv.html">timeSeriesPreparation.spectral.arma2acv</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.arma2psd.html">timeSeriesPreparation.spectral.arma2psd</tocitem>

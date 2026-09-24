@@ -4,7 +4,7 @@ classdef TestConfig < matlab.unittest.TestCase
 %   DESCRIPTION
 %     The nine sections of CONCEPT 5 exist; crn holds preset (X-04), align
 %     its four options (X-06), fill its three (X-08), unc its five (X-07),
-%     drivers its three (X-09), the rest are empty.
+%     drivers its four (X-09), the rest are empty.
 %     Config(arc) records mission and product and takes the crn preset and
 %     the minimum-data gate from the product. set refuses an unknown section or field;
 %     fault injection of the refusal is the refusal itself: a misspelt
@@ -12,7 +12,7 @@ classdef TestConfig < matlab.unittest.TestCase
 %
 %   COVERAGE
 %     contract       - the nine sections, empty but crn, align, fill, unc
-%                      and drivers; drivers' defaults ("pchip", [], []); align's defaults (pchip, [], 60 s, 1 s) and
+%                      and drivers; drivers' defaults ("pchip", [], [], 10); align's defaults (pchip, [], 60 s, 1 s) and
 %                      setting them; fill's defaults ("none", [], []) and
 %                      setting them; unc's defaults ([], [], 1000, 0.6827, 5) and
 %                      the gate 0.5 for ACC1B, ACT1B, KBR1B and LRI1B only;
@@ -25,7 +25,7 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-24 10:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function nineSectionsSomeEmpty(testCase)
@@ -79,9 +79,9 @@ classdef TestConfig < matlab.unittest.TestCase
 
         function driversDefaultsAndSet(testCase)
             cfg = timeSeriesPreparation.Config();
-            testCase.verifyEqual(cfg.drivers, struct("method", "pchip", "maxGap", [], "maxLag", []));
-            cfg = set(cfg, "drivers", "maxLag", 5400);
-            testCase.verifyEqual(cfg.drivers.maxLag, 5400);
+            testCase.verifyEqual(cfg.drivers, struct("method", "pchip", "maxGap", [], "maxLag", [], "maxVif", 10));
+            cfg = set(set(cfg, "drivers", "maxLag", 5400), "drivers", "maxVif", 5);
+            testCase.verifyEqual([cfg.drivers.maxLag cfg.drivers.maxVif], [5400 5]);
         end
 
         function uncDefaultsAndGatePreset(testCase)

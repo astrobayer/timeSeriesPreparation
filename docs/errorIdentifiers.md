@@ -26,6 +26,8 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:arma2acv:zeroVariance` | `+timeSeriesPreparation/+spectral/arma2acv.m` | Model | Output "acf" with R(0) <= 0. |
 | `timeSeriesPreparation:arma2psd:badOption` | `+timeSeriesPreparation/+spectral/arma2psd.m` | Options | Output or Sided is not one of its values (case-insensitive), or Frequencies is not empty or a vector of values >= 0. Other options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:arma2psd:freqRange` | `+timeSeriesPreparation/+spectral/arma2psd.m` | Input | a Frequencies entry exceeds Fs/2. |
+| `timeSeriesPreparation:binnedMap:badEdges` | `+timeSeriesPreparation/binnedMap.m` | Input | an edge vector has fewer than two entries, is not strictly increasing, or is not finite. |
+| `timeSeriesPreparation:binnedMap:sizeMismatch` | `+timeSeriesPreparation/binnedMap.m` | Input | value, a and b are not vectors of one length. |
 | `timeSeriesPreparation:blockLength:tooShort` | `+timeSeriesPreparation/+internal/blockLength.m` | Input | fewer than 2 (m_max + 1) samples, so step 1 has too few pairs. |
 | `timeSeriesPreparation:blockLength:tooShort` | `+timeSeriesPreparation/bootstrap.m` | Input | automatic block length on too few rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:blockLength:tooShort` | `+timeSeriesPreparation/crossval.m` | Input | automatic Gap on too few rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
@@ -68,6 +70,9 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:observability:insufficientData` | `+timeSeriesPreparation/observability.m` | Gate | an axis keeps less than MinWeightFraction of its weight. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:observability:noThreshold` | `+timeSeriesPreparation/observability.m` | Input | no MinWeightFraction given and none in the product's preset. |
 | `timeSeriesPreparation:observability:sizeMismatch` | `+timeSeriesPreparation/observability.m` | Input | X does not have one row per epoch of arc, or Names not one name per column. |
+| `timeSeriesPreparation:partialCorrelation:collinear` | `+timeSeriesPreparation/partialCorrelation.m` | Numerical | the correlation matrix is singular (reciprocal condition below 1e-12: a column constant or a combination of the others). |
+| `timeSeriesPreparation:partialCorrelation:tooFewRows` | `+timeSeriesPreparation/partialCorrelation.m` | Input | fewer than V + 2 complete rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:partialCorrelation:tooFewVariables` | `+timeSeriesPreparation/partialCorrelation.m` | Input | X has fewer than two columns, or Names the wrong length. |
 | `timeSeriesPreparation:plotAllanVariance:sizeMismatch` | `+timeSeriesPreparation/+spectral/plotAllanVariance.m` | Input | adev, info.adevLow or info.adevHigh is not numel(tau) x P. Inputs outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:plotPowerSpectrum:badOption` | `+timeSeriesPreparation/+spectral/plotPowerSpectrum.m` | Options | XScale or YScale is neither "log" nor "linear" (case-insensitive). Other options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:plotPowerSpectrum:badSpec` | `+timeSeriesPreparation/+spectral/plotPowerSpectrum.m` | Input | spec is empty, lacks a field of powerSpectrum's output, or mixes "psd" and "amplitude" series. |
@@ -86,6 +91,9 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:psd2arma:toleranceNotMet` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Fit | Tol not reached up to MaxOrder; the best order found is returned. |
 | `timeSeriesPreparation:psd2arma:tooFewPoints` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Input | fewer than 2 points lie within [0, Fs/2]. |
 | `timeSeriesPreparation:psd2arma:zeroPSD` | `+timeSeriesPreparation/+spectral/psd2arma.m` | Input | the target is identically zero. |
+| `timeSeriesPreparation:regressDrivers:collinear` | `+timeSeriesPreparation/regressDrivers.m` | Numerical | a driver's VIF exceeds MaxVif, or the drivers are linearly dependent. |
+| `timeSeriesPreparation:regressDrivers:sizeMismatch` | `+timeSeriesPreparation/regressDrivers.m` | Input | P and Z have different rows, or Names or DriverNames the wrong length. |
+| `timeSeriesPreparation:regressDrivers:tooFewRows` | `+timeSeriesPreparation/regressDrivers.m` | Input | fewer than K + 2 complete rows for a parameter. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:setupTimeSeriesPreparation:noGracefoReading` | `setupTimeSeriesPreparation.m` | Input domain | GracefoReading names a folder that does not hold +gracefoReading. |
 | `timeSeriesPreparation:spec2acv:badBins` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Input | NanPolicy "error" and non-finite bins, or fewer than 2 valid bins to interpolate. |
 | `timeSeriesPreparation:spec2acv:badDOF` | `+timeSeriesPreparation/+spectral/spec2acv.m` | Options | DOF is not positive. Other options outside their domain are refused by the arguments block (case-sensitive values), and a non-positive gauss or exp WindowParam by validateattributes, with a MATLAB: identifier. |
@@ -130,4 +138,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-123 identifier(s).
+131 identifier(s).

@@ -47,6 +47,13 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
   size, Fisher-z intervals at every lag and block-bootstrap intervals at
   chosen lags.
 - `Config.drivers` (method, maxGap, maxLag).
+- **X-09** `regressDrivers`: OLS of per-revolution parameters on demeaned
+  drivers with a VIF gate (`Config.drivers.maxVif`, 10) and block-bootstrap
+  sigmas.
+- **X-09** `partialCorrelation`: partial correlations from the inverse
+  correlation matrix, block-bootstrap sigmas.
+- **X-09** `binnedMap`: mean, sd and count per bin of two coordinates, e.g.
+  a residual over (β′, u).
 
 ## 0.1.0 — 2026-09-23
 
