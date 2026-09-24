@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.19 · 2026-09-24 · X-08 `fill` scope frozen; X-07 library merged (PR #45, `fae4071`)**
+**Revision 0.19 · 2026-09-24 · X-08 `fill` in review (PR #46), CI green 515 + 0 + 0; X-07 library merged (PR #45, `fae4071`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,7 @@ restates:
 
 ---
 
-## X-08 — `fill` (issue #11); scope frozen 2026-09-24
+## X-08 — `fill` (issue #11, PR #46); scope frozen 2026-09-24
 
 Tier B (no local MATLAB; the MATLAB verdict is CI's). Design: CONCEPT
 6.5, 3.2 (no least-squares estimator; `fill` takes a covariance model),
@@ -111,6 +111,13 @@ an autocovariance.
 
 Per tag: contract 161, reference 189, precision 15, robustness 103,
 metamorphic 31, vectorisation 13, speed 3.
+
+**Verdict, MATLAB R2026a, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:**
+CI run 35960930225 on `cbac23e` (2026-09-24): `audit` green; `matlab`
+green, **515 + 0 + 0 = 515**, every tag as predicted (contract 161,
+reference 189, precision 15, robustness 103, metamorphic 31,
+vectorisation 13, speed 3). TestFill 12 of 12; no warning from `fill`.
+Gate time 1015 s.
 
 **Cited from memory, not re-read** (debt, as for X-07): Moritz 1980
 (collocation) and Brockwell & Davis 1991 (best linear prediction), both
@@ -896,7 +903,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-08 on branch `claude/grace-timeseries-issues-28g3a4`: CI pending (predicted 515 + 0 + 0).**
+**X-08 in review (PR #46): CI green, 515 + 0 + 0.**
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
 X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0).
 lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0).
