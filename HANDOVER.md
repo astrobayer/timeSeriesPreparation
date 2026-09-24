@@ -37,9 +37,9 @@ True after the merge:
   - `none` (default) changes nothing and only reports the gaps.
   - `collocation` predicts each interior gap of at most `MaxGap` seconds.
     It uses x_g = mu + C_go C_oo^-1 (x_o - mu), where the observed samples
-    are those within `Window` samples on either side of the gap (default:
-    the model's largest lag). The covariance is Toeplitz from `Model.acv`,
-    and is zero beyond it. `info.sigma` is the prediction standard
+    are those within `Window` samples on either side of the gap. The
+    covariance is Toeplitz from `Model.acv`; the window rule is in the
+    amendment below. `info.sigma` is the prediction standard
     deviation, sqrt(diag(C_gg - C_go C_oo^-1 C_og)).
   - Not filled, but reported: runs at the arc edges (extrapolation) and
     runs longer than `MaxGap`.
@@ -76,7 +76,45 @@ True after the merge:
 - Vectorisation: a batched call equals per-axis calls.
 - Robustness: every error above.
 
-The count is predicted in the code commit.
+**Amendment, measured before coding (2026-09-24).** The frozen text
+zero-padded the autocovariance beyond its largest lag L. NumPy showed that
+this padding biases the fill: 2e-9 for an AR(1) with L = 50 against the
+closed form. It can also make C_oo indefinite. The window W is therefore
+capped at floor((L - k + 1) / 2) for a gap of k samples. Every lag inside
+the window is then at most L, and the matrix is the model's own. A gap the
+model cannot bridge (W < 1) is reported as `beyondModel` instead of being
+filled. `info.gaps.width` records the W that was used. With this rule,
+NumPy gives (2026-09-24):
+- AR(1) one-sample and bridge closed forms: 6e-16.
+- AR(2) window against the whole record: 1.1e-15 over 50 realisations,
+  also with a second gap inside the window.
+- ARMA(1,1), worst over 200 realisations: 1.4e-3, 1.4e-6, 1.1e-12 and
+  4.7e-15 sigma for L = 40, 60, 100 and 140.
+
+`fill:notPositiveDefinite` stays; it now fires only for an ACV that is not
+an autocovariance.
+
+**Fault injection:**
+- Each identifier's test plants its own trigger.
+- The reference tests are closed forms written from gamma_k, not from
+  `fill`. Dropping the Cholesky solve or mis-indexing the Toeplitz lag
+  moves the AR(1) value by O(1).
+- Zero-padding beyond L instead of capping W fails
+  `ar1OneSampleClosedForm` by 2e-9 against 1e-12 (NumPy).
+
+**Prediction** (before any run): **515 + 0 + 0 = 515**. That is 499 plus:
+- TestFill: 12 (reference 3, precision 1, contract 4, metamorphic 2,
+  vectorisation 1, robustness 1).
+- TestArc +2 (contract, robustness).
+- TestConfig +1 (contract).
+- TestHelpExamples 46 -> 47 (contract).
+
+Per tag: contract 161, reference 189, precision 15, robustness 103,
+metamorphic 31, vectorisation 13, speed 3.
+
+**Cited from memory, not re-read** (debt, as for X-07): Moritz 1980
+(collocation) and Brockwell & Davis 1991 (best linear prediction), both
+named in `fill`'s help.
 
 ---
 
@@ -858,7 +896,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-08 on branch `claude/grace-timeseries-issues-28g3a4`: scope frozen.**
+**X-08 on branch `claude/grace-timeseries-issues-28g3a4`: CI pending (predicted 515 + 0 + 0).**
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
 X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0).
 lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0).
@@ -889,7 +927,7 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | content | `docs/CONCEPT.md` Rev 0.17, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
 | code, `Contents.m`, CI, audit | X-00b: setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config`. X-04: `crnKernel`, `crnApply`, `Contents.m` 0.1.0 |
 | `docs/GUIDE.md` | rev 1.11 (release workflow; `v0.1.0` anomaly) |
-| `docs/CONCEPT.md` | Rev 0.17 (X-07: `noise` L2, `noiseReference` L1) |
+| `docs/CONCEPT.md` | Rev 0.18 (X-08: V-7 closed, `fill` collocation, 6.5) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was

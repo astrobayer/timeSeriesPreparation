@@ -3,16 +3,18 @@ classdef TestConfig < matlab.unittest.TestCase
 %
 %   DESCRIPTION
 %     The nine sections of CONCEPT 5 exist; crn holds preset (X-04), align
-%     its four options (X-06), unc its five (X-07), the rest are empty.
+%     its four options (X-06), fill its three (X-08), unc its five (X-07),
+%     the rest are empty.
 %     Config(arc) records mission and product and takes the crn preset and
 %     the minimum-data gate from the product. set refuses an unknown section or field;
 %     fault injection of the refusal is the refusal itself: a misspelt
 %     section and a field no schema lists must both fire.
 %
 %   COVERAGE
-%     contract       - the nine sections, empty but crn, align and unc;
-%                      align's defaults (pchip, [], 60 s, 1 s) and setting
-%                      them; unc's defaults ([], [], 1000, 0.6827, 5) and
+%     contract       - the nine sections, empty but crn, align, fill and
+%                      unc; align's defaults (pchip, [], 60 s, 1 s) and
+%                      setting them; fill's defaults ("none", [], []) and
+%                      setting them; unc's defaults ([], [], 1000, 0.6827, 5) and
 %                      the gate 0.5 for ACC1B, ACT1B, KBR1B and LRI1B only;
 %                      mission, product and crn.preset taken from the arc
 %                      (ACC1B/ACT1B ACC, KBR1B KBR, others ""); crn.preset
@@ -23,14 +25,14 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-23 20:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function nineSectionsSomeEmpty(testCase)
             cfg = timeSeriesPreparation.Config();
             testCase.verifyEqual(cfg.Sections, ...
                 ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]);
-            for sec = setdiff(cfg.Sections, ["crn" "align" "unc"], "stable")
+            for sec = setdiff(cfg.Sections, ["crn" "align" "fill" "unc"], "stable")
                 testCase.verifyEqual(cfg.(sec), struct(), sec);
             end
             testCase.verifyEqual(cfg.crn, struct("preset", ""));
@@ -66,6 +68,13 @@ classdef TestConfig < matlab.unittest.TestCase
                 "maxGap", [], "maxLag", 60, "threshold", 1));
             cfg = set(set(cfg, "align", "maxLag", 30), "align", "maxGap", 15);
             testCase.verifyEqual([cfg.align.maxLag cfg.align.maxGap], [30 15]);
+        end
+
+        function fillDefaultsAndSet(testCase)
+            cfg = timeSeriesPreparation.Config();
+            testCase.verifyEqual(cfg.fill, struct("method", "none", "maxGap", [], "window", []));
+            cfg = set(set(cfg, "fill", "method", "collocation"), "fill", "maxGap", 10);
+            testCase.verifyEqual([cfg.fill.method string(cfg.fill.maxGap)], ["collocation" "10"]);
         end
 
         function uncDefaultsAndGatePreset(testCase)
