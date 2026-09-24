@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.21 · 2026-09-24 · X-09 PR 2 (`regressDrivers`, `partialCorrelation`, `binnedMap`) in review (PR #48), CI green 553 + 0 + 0; X-09 PR 1 merged (PR #47, `8182010`)**
+**Revision 0.22 · 2026-09-24 · X-05 PR-A (`.github/`: DATAPOOL for the `matlab` job; D-9 defect catalogue recorded; X-05 scope frozen) in review; X-09 merged (PR #48, `ffe0164`; issue #12 closed)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,101 @@ restates:
 
 ---
 
-## X-09 PR 2 — regression with VIF gate, partial correlation, binned maps (closes issue #12; PR #48); scope frozen 2026-09-24
+## X-05 PR-A — DATAPOOL for the `matlab` job, D-9 catalogue, X-05 scope (issue #8); scope frozen 2026-09-24
+
+Tier B. A `.github/` change, so it stands alone: it touches only
+`.github/workflows/ci.yml` and this file.
+
+**Owner decisions 2026-09-24:**
+- D-9 is recorded from **two scanned months**, 2020-01 (throwaway PR #49)
+  and 2020-07 (throwaway PR #50, which also fetched 2020-07 into the
+  DATAPOOL). Both PRs were closed unmerged.
+- The three classes with **no real instance** in either month are covered
+  by **synthetic tests only**, and each test says so.
+- X-05 is cut into **three PRs**:
+  - **PR-A** (this one): `.github/` and HANDOVER.
+  - **PR-B**: the `qc` port, unchanged, with its tests.
+  - **PR-C**: `mask`, the D-9 tests and release 0.2.0.
+- **Port helpers.** `NonGravForces.fail` becomes an internal `fail` with
+  the prefix `timeSeriesPreparation:`, so the identifiers read
+  `timeSeriesPreparation:<unit>:<mnemonic>`. `NonGravForces.provenance`
+  becomes a local record with the same fields; its FNV-1a option hash is
+  unchanged.
+- **Test inputs.** THR1B comes from gracefoReading `v1.1.0`
+  `tests/realdata/THR1B_2020-01-01_C_04.txt` (read with
+  `gracefoReading.readL1b`). The 600-s ACT1B sample is copied from
+  NonGravForces `data/samples/` with its SHA-256. The tests change only in
+  the reader call; every bound stays.
+
+True after the merge:
+- The `matlab` job's environment carries
+  `READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}`, the DATAPOOL root
+  (HANDOVER F, 2026-09-19). Nothing reads it yet. PR-C's D-9 tests will,
+  and a test that finds it empty is counted incomplete, never passed.
+- The D-9 catalogue below. GUIDE D-9 names this file as the place to
+  record it.
+
+### D-9 — the defect catalogue (V-12, CONCEPT ORC-11)
+
+GRACE-FO L1B RL04, below `<DATAPOOL>\GRACEFO\L1B\RL04\<yyyy>\<yyyy-mm-dd>\`.
+Times are seconds of the GPS day of the named file. Found by the throwaway
+scans (`tools/scanDefectCandidates.m`, never merged), each reading every
+day with `gracefoReading.readL1b` (`v1.1.0`). The qualflg meanings are the
+ones the file headers themselves print (2020-07 headers).
+
+| id | class | file (day) | epoch range | expected verdict |
+|---|---|---|---|---|
+| DC-1 | satellite outage (GRACE-D AOCS safe mode, TN-01a) | ACT1B D 2020-01-18 … 2020-01-22 | last sample 01-18 18229 s; 01-19, 01-20, 01-21 files hold no data (`gracefoReading:readL1b:noData`); first sample 01-22 43385 s. KBR1B/LRI1B return 2020-01-24 at 36770 s / 57564 s | masked by the TN-01a event layer (01-18 05:05 … 01-22 12:05, D-4) and reported as one gap; never filled |
+| DC-2 | gap across the day boundary | KBR1B Y 2020-01-14 → 2020-01-15 | last sample 01-14 82235 s; first sample 01-15 4675 s | one gap spanning both files; longer than the 21-s L1B fill limit, so the arc splits there |
+| DC-3 | gaps inside a day | KBR1B Y 2020-01-08; KBR1B Y 2020-07-09 | 01-08: starts 70170 s (+740 s), 78290 s (+610), 79215 s (+75), 82025 s (+100); 07-09: 81680 s (+965) | four (one) gap segments; each longer than 21 s, so none is an L1B fill |
+| DC-4 | KBR SNR drop | KBR1B Y 2020-01-14, `K_B_SNR` | minimum 288 at 82150 s (median of the day 774), just before DC-2's gap | flagged by the SNR layer (PR-C sets the threshold); smaller dips 2020-07-12 (723 at 61455 s) and 2020-07-17 (732 at 19145 s) stay unflagged |
+| DC-5 | KBR phase break (qualflg bit 0) | KBR1B Y 2020-07-01; KBR1B Y 2020-07-09 | one flagged sample each day (the scan counted, it did not print the epoch; PR-C's test locates and records it) | masked by the qualflg layer (bit 0) |
+| DC-6 | ACT1B clock-offset extrapolation (qualflg bits 3/4) | ACT1B C 2020-01-08; ACT1B C 2020-07-16 | 01-08: bits 3/4 on ~16 200 samples; 07-16: bit 3 on 10 750 samples | a qualflg layer, **reported, not masked by default**: the header reads "extrapolated CLK1B clock offset, > 5 s (bit 3) / ≤ 5 s (bit 4) from the CRN centre" — a time-tag quality statement, not a data defect. (Corrects this session's first reading, "large-range mode", which was wrong.) |
+| DC-7 | KBR time-tag bias correction (qualflg bit 5) | KBR1B Y 2020-01-09 | all 17 182 samples | informational layer, **not masked**: the header reads "data corrected for time-tag bias in K or Ka phase" |
+| DC-8 | thruster-heavy day | THR1B D 2020-01-04 (with ACT1B D 2020-01-04) | 727 THR1B records against ~440 on a typical day | THR1B windows layer; `qc` impulses assigned to THR1B with confidence 1 |
+
+**No real instance in 2020-01 or 2020-07 — synthetic tests only** (owner,
+2026-09-24):
+- **Duplicate epochs at the day boundary.** Every file runs 0 … 86399 s
+  (ACT1B) with no repeated epoch.
+- **LRI phase jump.** LRI1B qualflg bit 0 is never set in either month.
+- **Clear ACT1B bias jump.** The largest step of 10-min block medians
+  after a 3-h moving median, over the robust scale of all steps, is 7.7
+  (2020-07-20 at 85199 s) and 7.4 (2020-07-26): no isolated jump stands
+  out.
+
+A later month, or classic GRACE after G-02, may supply them. They then
+enter this table and the synthetic test stays.
+
+**Measured:** 2020-07 fetch (PR #50, same D-2 script): 93 archives, 0
+failed, 2 821 extracted, **2 728 of 2 728** source MD5 verified, 0
+conflicts; manifest `GRACEFO\L1B\RL04\2020\SHA256SUMS_2020-07.txt` (2 914
+entries), 11 min. The 2020-07 scan: 124 rows (31 days × ACT1B C, ACT1B D,
+KBR1B, LRI1B), no read error.
+
+### X-05 scope (all three PRs)
+
+- **PR-B, `qc` port.** NonGravForces `3cc0123` (0.12.0, the pin in CONCEPT
+  2), `+NonGravForces/+qc/`: `residuals`, `hampel`, `detectImpulses`,
+  `detectJumps`, `eventTable`, `screen` → `+timeSeriesPreparation/+qc/`.
+  With them come `tests/tNgfQc.m` and `tests/tNgfQcScreen.m` and the
+  oracles they read (`tools/pyxcheck/hampel_*`, `pelt_*`). The `v0.12.0`
+  tag differs from `3cc0123` only in five help lines of `screen.m`. The
+  only code changes are the ones the namespace forces, and a `reference`
+  test checks that every ported file equals its original once they are
+  mapped back. Conventions, speed (X-16) and templates (X-17) come later.
+- **PR-C, `mask` and D-9.** `mask` (CONCEPT 6.1, row 1): qualflg layers
+  via `gracefoReading.decodeQualFlags`, the L1B fill flags, THR1B windows,
+  CRN edges, a user layer and the official event lists
+  (`gracefoReading.readEventList`, G-05). One test per DC row above on the
+  real day, plus the three synthetic classes. Release **0.2.0**.
+
+**Prediction for PR-A** (before any run): **553 + 0 + 0 = 553**, unchanged
+from X-09 PR 2 (no test is added; the new variable is not read yet).
+
+---
+
+## X-09 PR 2 — regression with VIF gate, partial correlation, binned maps — merged 2026-09-24 (PR #48, `ffe0164`; issue #12 closed); scope was frozen 2026-09-24
 
 Tier B. Design: CONCEPT 7 (the remaining three methods) and 8 (demean
 regressors; block bootstrap for sigmas).
@@ -1117,7 +1211,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-09 PR 2 in review (PR #48): CI green, 553 + 0 + 0 (first run 552 + 1 + 0, a test bug, fixed).**
+**X-05 PR-A in review.**
+X-09 PR 2 merged (PR #48, `ffe0164`; CI 553 + 0 + 0; issue #12 closed).
 X-09 PR 1 merged (PR #47, `8182010`; CI 534 + 0 + 0).
 X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
@@ -1132,13 +1227,14 @@ released nothing, as designed. `.github/` profile switch merged (PR #41,
 
 **Phase 0 complete (2026-09-19):**
 - Stage A: repositories, settings and issues.
-- Stage B: data D-1 … D-8 and D-10; D-9 pending.
+- Stage B: data D-1 … D-10 (D-9 recorded 2026-09-24).
 - Stage C: references and V-items (CONCEPT 9.3).
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
 C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
-`v1.3.2`). Next: X-09 (#12, two PRs); X-05
-(#8) also waits on V-12 (defect catalogue, D-9).
+`v1.3.2`). Next: X-05 (#8) in three PRs
+(PR-A `.github/`, PR-B `qc` port, PR-C `mask` + D-9 + release 0.2.0); V-12
+is answered by D-9.
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).
 
@@ -1175,7 +1271,7 @@ The four input files are unchanged, and their SHA-256 match
 | D-6 | **complete** for AEI: LRI1B and RTC1B v52, 2020 Q1 (Jan 31, Feb 29, Mar 31 days), release notes, Misfeldt et al. 2023; CC BY 3.0. SYSU/HUST not planned (owner named AEI) | same run; `GRACEFO\L1B\AEI_v52\SHA256SUMS_2020-Q1.txt` (186) |
 | D-7 | **complete**: the owner names ITSG attitude as D-7; it arrived with D-3 | — |
 | D-8 | **complete** for 2008-07 (before April 2011), 2012-01 (thermal control off), 2017-01 (GRACE-B transplant): RL02 daily archives (full product set, 93 days, 5 190 files) and RL03 monthly archives (KBR1B and SCA1B only), plus the GRACE-B transplant archive (ACT1B B, 2016-11-13 … 2017-06-29, 169 files). Classic `.dat` records are **binary** (ASCII header `FILE FORMAT … : 0`) | fetch run 35466840120 (PR #29); `GRACE\L1B\JPL\RL03\SHA256SUMS_2026-09-19_222059.txt` (6 014); findings posted on gracefoReading#17 (G-02) |
-| D-9 | can start now (D-2 exists) | — |
+| D-9 | **recorded 2026-09-24**: 8 classes from 2020-01 and 2020-07, 3 classes synthetic only (see X-05 PR-A) | scans on throwaway PRs #49, #50; 2020-07 fetched with the D-2 script, `GRACEFO\L1B\RL04\2020\SHA256SUMS_2020-07.txt` (2 914) |
 | D-10 | **complete**: ZARM Bremen (Wöske et al. 2024): all ACC calibration files, i.e. GRACE A/B 2002–2016 (constant and monthly scale, 3-hourly bias, monthly scale factors) and GRACE-C 2018–2023. For the reference months also ZARM's GRACE-D transplant 2020-01 (24 days) and modelled radiation accelerations (GRACE-A 2008-07 and 2012-01; C 2020-01, 31 days; D 2020-01, 26 days; none published for 2017). **Convention ACC_cal = s·(ACC + b)**: their bias converts to this design's b = s·b_ZARM. No GRACE-D calibration series (D is a transplant) | fetch run 35467369081 (PR #30); `ZARM\SHA256SUMS_2026-09-19.txt` (95) |
 
 **Stage C (references), 2026-09-19.**
