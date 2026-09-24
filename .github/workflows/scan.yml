@@ -1,0 +1,37 @@
+# THROWAWAY: runs only on its own PR and is never merged (GUIDE D-9 / CONCEPT V-12).
+# Read-only: scans the 2020-01 GRACE-FO L1B files of the DATAPOOL for defect candidates.
+name: scan-defects
+on:
+  pull_request:
+    paths: ['.github/workflows/scan.yml', 'tools/scanDefectCandidates.m']
+permissions:
+  contents: read
+jobs:
+  scan:
+    name: defect candidates 2020-01
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Check out gracefoReading
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: astrobayer/gracefoReading
+          ref: v1.1.0
+          token: ${{ secrets.REFERENCE_READ_TOKEN }}
+          path: deps/gracefoReading
+
+      - name: Scan (read-only)
+        uses: matlab-actions/run-command@bfa857648f4895aa98a446fe41c85e0788421ed5 # v3
+        env:
+          READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}
+        with:
+          command: addpath(genpath('deps/gracefoReading')); addpath('tools'); scanDefectCandidates(getenv('READING_DATA_POOL'), "2020-01")
+
+      - name: Publish scan
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: defect-scan-2020-01
+          path: artifacts/
