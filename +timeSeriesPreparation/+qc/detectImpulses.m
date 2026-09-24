@@ -1,85 +1,90 @@
 function [events, info] = detectImpulses(r, options)
-%DETECTIMPULSES Matched-filter detection of pulses with a known shape (the CRN impulse response) in whitened residuals; thruster priors are assigned first.
+%DETECTIMPULSES  Matched-filter detection of pulses of a known shape in whitened residuals; thruster priors are assigned first.
 %
-%   [events, info] = timeSeriesPreparation.qc.detectImpulses(r, 'Epoch', t, 'Response', h)
-%   [events, info] = timeSeriesPreparation.qc.detectImpulses(r, 'Epoch', t, 'Response', h, 'Priors', thr, 'Threshold', 5)
+%   SYNTAX
+%     [events, info] = timeSeriesPreparation.qc.detectImpulses(r, Epoch = t, Response = h)
+%     [events, info] = timeSeriesPreparation.qc.detectImpulses(r, Epoch = t, Response = h, Priors = thr, Threshold = 5, PriorWindow_s = 5)
 %
-%   For each channel the residual is correlated with the ZERO-MEAN, unit-norm
-%   template hz = (h - mean h)/|h - mean h| (L samples, the pulse starting at
-%   its first sample):
+%   DESCRIPTION
+%     Each channel is correlated with the zero-mean, unit-norm template
+%     hz = (h - mean h)/|h - mean h| (L samples, the pulse starting at its
+%     first sample): c(t) = sum_i r(t+i-1) hz(i), score = c/sigma_c, with
+%     sigma_c the robust (1.4826 MAD) scale of c. The zero-mean template is
+%     blind to an offset or a level jump inside the window; only a step's
+%     edge can register, once at most. The last L-1 samples are not
+%     evaluable. Local maxima of |score| above Threshold, at least L
+%     samples apart (the strongest wins), are pulses with amplitude
+%     a = c/(hz.h), sigma_a = sigma_c/(hz.h), tStart at the peak and tEnd
+%     L-1 samples later. A pulse within PriorWindow_s of a prior row (e.g.
+%     THR1B firings) takes the prior's source and confidence 1; the others
+%     are "unassigned" with confidence erf(|score|/sqrt(2)). NaN samples
+%     count as zero in the correlation and are reported. Ported from
+%     NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b).
 %
-%       c(t) = sum_i r(t+i-1) hz(i),   score(t) = c(t) / sigma_c,
+%   INPUTS
+%     r  (K,M) double   -   Whitened residuals (qc.residuals), M = 1 (axis
+%                           "all") or 3 (x, y, z).
 %
-%   sigma_c the robust (1.4826 MAD) scale of c. Removing the template mean makes
-%   the filter blind to a constant offset or a level jump inside the window
-%   (measured 2026-09-07: a 4-sigma step produced a plateau of false pulses with
-%   the raw template); only the step's edge can still register, as one
-%   candidate at most. The last L-1 samples are not evaluable (the window
-%   would run past the end) and never host a detection. Local maxima of
-%   |score| above Threshold, at least L
-%   samples apart (the strongest wins), are pulses with amplitude a = c/(hz.h)
-%   (the height multiplying h), sigma_a = sigma_c/(hz.h),
-%   tStart at the peak sample and tEnd L-1 samples later. A pulse within
-%   PriorWindow_s of a prior row (e.g. THR1B firings from io.readTHR1B) takes
-%   the prior's source and confidence 1 (HANDOVER Part J item 9: priors are
-%   assigned, not rediscovered); the others are "unassigned" (twang or impact
-%   candidates) with confidence erf(|score|/sqrt(2)) - the two-sided Gaussian
-%   probability that noise alone does not reach the score. NaN samples of r
-%   are treated as zero in the correlation and counted in info.
+%   OPTIONS
+%     Epoch          (K,1) datetime   []    Sample epochs, UTC; required.
+%     Response       (L,1) double     []    Pulse template, 2 <= L <= K,
+%                                           finite, not constant; required
+%                                           (no shape is assumed).
+%     Priors         (N,8) table      []    qc.eventTable rows to assign.
+%     Threshold      (1,1) double     [5]   On |score|, in sigma (Gaussian
+%                                           false alarm 6e-7 per sample).
+%     PriorWindow_s  (1,1) double     [5]   Assignment window around a
+%                                           prior epoch, s.
 %
-% INPUT ARGUMENTS
-%   Name      Size  Type    Units  Description
-%   ----      ----  ----    -----  -----------
-%   r         KxM   double  units  Whitened residuals (qc.residuals), M = 1 (axis "all") or 3 (x, y, z)
+%   OUTPUTS
+%     events  (N,8) table    -   qc.eventTable rows of class "impulse",
+%                                sorted by tStart.
+%     info    (1,1) struct   -   Fields: score, amplitude (K,M); sigmaCorr,
+%                                nanCount (1,M); templateGain (hz.h);
+%                                templateLength; unmatchedPriors (rows of
+%                                Priors without a detection); provenance.
 %
-% NAME-VALUE ARGUMENTS
-%   Name           Size   Type      Units    Description
-%   ----           ----   ----      -----    -----------
-%   Epoch          Kx1    datetime  UTC      Sample epochs (required; eventTable times)
-%   Response       Lx1    double    any      Pulse template, L >= 2, not constant (required: the CRN impulse response at the
-%                                            sample rate; no default shape is assumed)
-%   Priors         Nx8    table     -        qc.eventTable rows (class impulse) to assign, default none
-%   Threshold      1x1    double    sigma    Detection threshold on |score|, default 5 (Gaussian false alarm
-%                                            6e-7 per sample, ~0.05 per day at 1 Hz)
-%   PriorWindow_s  1x1    double    s        Assignment window around a prior epoch, default 5
+%   ACCURACY
+%     Planted pulses are recovered to +-1 sample and their amplitude to
+%     3 sigma_a above Threshold (measured in the ported tests). Two pulses
+%     closer than L samples merge into the stronger one. A template that
+%     does not match the true shape lowers the score by the cosine between
+%     the shapes, never raises it.
 %
-% OUTPUT ARGUMENTS
-%   Name      Size  Type    Units  Description
-%   ----      ----  ----    -----  -----------
-%   events    Nx8   table   -      qc.eventTable rows, class "impulse", sorted by tStart
-%   info      1x1   struct  -      .score (KxM), .amplitude (KxM, c/(hz.h)), .sigmaCorr (1xM), .templateGain (hz.h),
-%                                  .nanCount (1xM), .unmatchedPriors (rows of Priors without a detection),
-%                                  .provenance
+%   ERRORS
+%     Input:
+%       timeSeriesPreparation:detectImpulses:inputShape - r is not Kx1 or
+%           Kx3, or Epoch is not Kx1.
+%       timeSeriesPreparation:detectImpulses:inputEpoch - Epoch is missing,
+%           not a datetime, or not UTC.
+%       timeSeriesPreparation:detectImpulses:inputResponse - Response is
+%           missing, shorter than 2, longer than K, not finite or constant.
+%       timeSeriesPreparation:detectImpulses:inputPriors - Priors is not a
+%           qc.eventTable.
+%       timeSeriesPreparation:detectImpulses:inputRange - Threshold or
+%           PriorWindow_s is not positive.
 %
-% ACCURACY
-%   Epoch of a planted pulse recovered to +-1 sample and amplitude to 3 sigma_a
-%   for pulses above Threshold (measured on synthetic CRN-shaped pulses in the
-%   test suite). Two pulses closer than L samples merge into the stronger one
-%   by design (impulses shorter than the CRN width are unresolvable in L1B,
-%   theory §10). A template that does not match the true pulse shape lowers
-%   the score by the cosine between the shapes, never raises it.
+%   EXAMPLE
+%     % One raised-cosine pulse of 8 sigma in white noise.
+%     x = 1e-9 * randn(RandStream("twister", "Seed", 3), 3000, 1);
+%     h = sin(pi * (0:29)' / 30).^2; x(1000:1029) = x(1000:1029) + 8e-9 * h;
+%     t = datetime(2020, 1, 1, "TimeZone", "UTC") + seconds((0:2999)');
+%     events = timeSeriesPreparation.qc.detectImpulses(x, Epoch = t, Response = h);
 %
-% ERRORS
-%   timeSeriesPreparation:detectImpulses:inputShape      r not KxM with M = 1 or 3, or Epoch not Kx1 datetime
-%   timeSeriesPreparation:detectImpulses:inputEpoch      Epoch missing or not UTC
-%   timeSeriesPreparation:detectImpulses:inputResponse   Response missing, shorter than 2 samples, longer than K, or constant
-%   timeSeriesPreparation:detectImpulses:inputPriors     Priors not an eventTable-shaped table
-%   timeSeriesPreparation:detectImpulses:inputRange      Threshold or PriorWindow_s <= 0
+%   LIMITATIONS
+%     Pulses shorter than the template are unresolvable in L1B. The
+%     template is the caller's; the CRN impulse response is crnKernel's.
 %
-% REFERENCES
-%   Theory §10; Bandikova T. et al. (2019) Adv. Space Res. 64:623 (CRN impulse
-%   responses per thruster pair); Meyer U. et al. (2012) GRACE ACC twangs;
-%   Turin G.L. (1960) An introduction to matched filters, IRE Trans. IT-6.
+%   REFERENCES
+%     Turin, G. L. (1960). An introduction to matched filters. IRE Trans.
+%     Inf. Theory 6, 311-329. Bandikova, T. et al. (2019) and Meyer, U. et
+%     al. (2012), cited as the port cites them, not re-read.
 %
-% EXAMPLE
-%   thr = NonGravForces.io.readTHR1B(thrFile);
-%   [ev, info] = timeSeriesPreparation.qc.detectImpulses(r, 'Epoch', t, 'Response', crn, 'Priors', thr);
-%   ev(ev.source == "unassigned", :)                 % twang / impact candidates
+%   See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.qc.screen, timeSeriesPreparation.crnKernel.
 %
-% See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.eventTable, NonGravForces.io.readTHR1B, timeSeriesPreparation.qc.screen.
-%
-% KEYWORDS impulse matched filter thruster twang quality control
-% Created 2026-09-07 by Claude Fable 5.1 (Anthropic).
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
 arguments
     r double
     options.Epoch = []
@@ -88,33 +93,32 @@ arguments
     options.Threshold (1,1) double = 5
     options.PriorWindow_s (1,1) double = 5
 end
-unit = "detectImpulses";
 [K, M] = size(r);
 if ~ismatrix(r) || ~(M == 1 || M == 3)
-    timeSeriesPreparation.internal.fail(unit, "inputShape", "r must be Kx1 or Kx3 -> got %s (samples down the columns)", mat2str(size(r)));
+    error("timeSeriesPreparation:detectImpulses:inputShape", "r must be Kx1 or Kx3 -> got %s (samples down the columns)", mat2str(size(r)));
 end
 t = options.Epoch;
 if isempty(t) || ~isdatetime(t)
-    timeSeriesPreparation.internal.fail(unit, "inputEpoch", "'Epoch' (Kx1 datetime, UTC) is required -> pass the sample epochs of r");
+    error("timeSeriesPreparation:detectImpulses:inputEpoch", "'Epoch' (Kx1 datetime, UTC) is required -> pass the sample epochs of r");
 end
 if ~isequal(size(t), [K 1])
-    timeSeriesPreparation.internal.fail(unit, "inputShape", "Epoch must be Kx1 = %dx1 -> got %s", K, mat2str(size(t)));
+    error("timeSeriesPreparation:detectImpulses:inputShape", "Epoch must be Kx1 = %dx1 -> got %s", K, mat2str(size(t)));
 end
 if isempty(t.TimeZone) || ~strcmp(t.TimeZone, 'UTC')
-    timeSeriesPreparation.internal.fail(unit, "inputEpoch", "Epoch must carry TimeZone UTC -> set t.TimeZone = 'UTC'");
+    error("timeSeriesPreparation:detectImpulses:inputEpoch", "Epoch must carry TimeZone UTC -> set t.TimeZone = 'UTC'");
 end
 h = options.Response(:);
 if numel(h) < 2 || numel(h) > K || any(~isfinite(h)) || ~any(h - h(1))
-    timeSeriesPreparation.internal.fail(unit, "inputResponse", "'Response' must be a finite, non-constant template of 2..K samples -> pass the CRN impulse response at the sample rate");
+    error("timeSeriesPreparation:detectImpulses:inputResponse", "'Response' must be a finite, non-constant template of 2..K samples -> pass the CRN impulse response at the sample rate");
 end
 if options.Threshold <= 0 || options.PriorWindow_s <= 0
-    timeSeriesPreparation.internal.fail(unit, "inputRange", "Threshold and PriorWindow_s must be > 0 -> got %g, %g", options.Threshold, options.PriorWindow_s);
+    error("timeSeriesPreparation:detectImpulses:inputRange", "Threshold and PriorWindow_s must be > 0 -> got %g, %g", options.Threshold, options.PriorWindow_s);
 end
 priors = options.Priors;
 if isempty(priors), priors = timeSeriesPreparation.qc.eventTable(); end
 schema = timeSeriesPreparation.qc.eventTable().Properties.VariableNames;
 if ~istable(priors) || ~isequal(priors.Properties.VariableNames, schema)
-    timeSeriesPreparation.internal.fail(unit, "inputPriors", "Priors must be a qc.eventTable -> use io.readTHR1B or qc.eventTable(...)");
+    error("timeSeriesPreparation:detectImpulses:inputPriors", "Priors must be a qc.eventTable -> use io.readTHR1B or qc.eventTable(...)");
 end
 L = numel(h);
 hz = h - mean(h);

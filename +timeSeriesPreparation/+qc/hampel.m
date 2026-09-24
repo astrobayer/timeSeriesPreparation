@@ -1,65 +1,74 @@
 function [mask, info] = hampel(x, options)
-%HAMPEL Robust point-outlier detector: moving median and scaled MAD, per column.
+%HAMPEL  Robust point-outlier detector: moving median and scaled MAD, per column.
 %
-%   mask = timeSeriesPreparation.qc.hampel(x)
-%   [mask, info] = timeSeriesPreparation.qc.hampel(x, 'Window', 61, 'Threshold', 4)
+%   SYNTAX
+%     mask = timeSeriesPreparation.qc.hampel(x)
+%     [mask, info] = timeSeriesPreparation.qc.hampel(x, Window = 61, Threshold = 4, MinSigma = 0)
 %
-%   Flags sample i of column j when |x(i,j) - med(i,j)| > t * 1.4826 * MAD(i,j),
-%   where med and MAD are computed over a centred window of W samples
-%   (truncated at the edges). Median and MAD are unaffected by up to ~50 %
-%   contaminated samples in a window, which is why this - and not a moving
-%   mean/std - is the first pass on accelerometer residuals containing
-%   thruster spikes and twangs (see the ACCURACY block).
+%   DESCRIPTION
+%     Flags sample i of column j when |x(i,j) - med(i,j)| > t * 1.4826 *
+%     MAD(i,j), with med and MAD over a centred window of W samples,
+%     truncated at the edges. Median and MAD tolerate up to about half the
+%     window contaminated, which is why this, not a moving mean and std,
+%     is the first pass on residuals with thruster spikes and twangs.
+%     NaN samples are never flagged and never enter the window
+%     statistics; a window with fewer than three finite samples flags
+%     nothing. A row vector is one channel. Ported from NonGravForces.qc
+%     0.12.0 (X-05); numbers unchanged (X-05b).
 %
-%   NaN POLICY. NaN samples are never flagged and never enter the window
-%   statistics; a window with fewer than 3 finite samples flags nothing.
+%   INPUTS
+%     x  (K,M) double   -   K samples of M channels.
 %
-% INPUT ARGUMENTS
-%   Name       Size  Type    Units  Description
-%   ----       ----  ----    -----  -----------
-%   x          KxM   double  any    K samples of M channels (columns). A row
-%                                   vector is treated as one channel.
+%   OPTIONS
+%     Window     (1,1) double   [61]  Odd window >= 3 in samples (1 min at
+%                                     1 Hz: longer than a CRN-filtered
+%                                     impulse, shorter than an orbit).
+%     Threshold  (1,1) double   [4]   Multiple of the robust sigma
+%                                     (Gaussian false-alarm rate 6e-5 per
+%                                     sample).
+%     MinSigma   (1,1) double   [0]   Floor on the robust sigma, units of
+%                                     x, so that a flat window cannot flag
+%                                     quantisation.
 %
-% NAME-VALUE ARGUMENTS
-%   Window     1x1   double  samples Odd window length >= 3, default 61
-%                                   (1 min at 1 Hz: longer than a CRN-filtered
-%                                   impulse, shorter than an orbit).
-%   Threshold  1x1   double  -      Multiple of the robust sigma, default 4
-%                                   (Gaussian false-alarm rate 6e-5/sample).
-%   MinSigma   1x1   double  units  Floor on the robust sigma, default 0:
-%                                   set to the instrument noise level so that
-%                                   a flat window cannot flag quantisation.
+%   OUTPUTS
+%     mask  (K,M) logical   -   True = outlier.
+%     info  (1,1) struct    -   Fields: median, sigma (robust), score
+%                               (|x - med|/sigma), all (K,M); nFlagged
+%                               (1,M); provenance.
 %
-% OUTPUT ARGUMENTS
-%   Name       Size  Type     Units  Description
-%   ----       ----  ----     -----  -----------
-%   mask       KxM   logical  -      true = outlier
-%   info       1x1   struct   -      .median (KxM) .sigma (KxM, robust)
-%                                    .score (KxM, |x-med|/sigma) .nFlagged
-%                                    (1xM) .provenance
+%   ACCURACY
+%     1.4826 makes the MAD consistent with sigma for Gaussian noise; for
+%     1/f accelerometer noise it overestimates sigma by up to about 10 %
+%     inside a 61-sample window, which is conservative. Impulses wider
+%     than Window/2 are not outliers here by design; they go to
+%     detectImpulses.
 %
-% ACCURACY
-%   The scale factor 1.4826 makes MAD consistent with sigma for Gaussian
-%   noise; for the coloured 1/f accelerometer noise it overestimates sigma
-%   by up to ~10 % inside a 61-sample window, which is conservative.
-%   Impulses wider than Window/2 are NOT outliers to this detector by design
-%   - they go to detectImpulses.
+%   ERRORS
+%     Input:
+%       timeSeriesPreparation:hampel:inputShape - x is not a real 2-D
+%           array.
+%       timeSeriesPreparation:hampel:inputWindow - Window is even, below 3
+%           or not an integer.
 %
-% ERRORS
-%   timeSeriesPreparation:hampel:inputShape    x is not a 2-D real double array
-%   timeSeriesPreparation:hampel:inputWindow   Window even, < 3, or non-integer
+%   EXAMPLE
+%     % One planted outlier in white noise.
+%     x = randn(RandStream("twister", "Seed", 2), 1000, 1); x(500) = 12;
+%     mask = timeSeriesPreparation.qc.hampel(x);
 %
-% REFERENCES
-%   Hampel (1974) J. Am. Stat. Assoc. 69:383; Pearson (2002) EURASIP JASP.
+%   LIMITATIONS
+%     An interpreted loop, O(K W) per channel; X-16 moves it onto
+%     movmedian with an exact window MAD.
 %
-% EXAMPLE
-%   x = randn(1000,1); x(500) = 12;
-%   mask = timeSeriesPreparation.qc.hampel(x); find(mask)   % -> 500
+%   REFERENCES
+%     Hampel, F. R. (1974). The influence curve and its role in robust
+%     estimation. J. Am. Stat. Assoc. 69, 383-393. Pearson (2002), cited
+%     as the port cites it ("EURASIP JASP"), not re-read.
 %
-% See also timeSeriesPreparation.qc.screen, timeSeriesPreparation.qc.detectImpulses, movmedian.
+%   See also timeSeriesPreparation.qc.screen, timeSeriesPreparation.qc.detectImpulses, movmedian.
 %
-% KEYWORDS outlier robust median MAD quality control
-% Created 2026-08-27 by Claude Fable 5 (Anthropic).
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
 arguments
     x double
     options.Window (1,1) double = 61
@@ -67,11 +76,11 @@ arguments
     options.MinSigma (1,1) double {mustBeNonnegative} = 0
 end
 if ~ismatrix(x) || ~isreal(x)
-    timeSeriesPreparation.internal.fail("hampel", "inputShape", "x must be a real KxM matrix -> got %s", mat2str(size(x)));
+    error("timeSeriesPreparation:hampel:inputShape", "x must be a real KxM matrix -> got %s", mat2str(size(x)));
 end
 W = options.Window;
 if W < 3 || mod(W, 2) ~= 1 || W ~= round(W)
-    timeSeriesPreparation.internal.fail("hampel", "inputWindow", "Window must be an odd integer >= 3 -> got %g", W);
+    error("timeSeriesPreparation:hampel:inputWindow", "Window must be an odd integer >= 3 -> got %g", W);
 end
 if isrow(x), x = x(:); end
 [K, M] = size(x);

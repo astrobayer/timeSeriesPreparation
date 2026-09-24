@@ -1,23 +1,22 @@
 classdef NgfTestCase < matlab.unittest.TestCase
-%NGFTESTCASE Base class for NonGravForces tests: shared checks and the record store.
+%NGFTESTCASE  Base class of the ported qc tests: shared checks and the record store.
 %
-%   classdef tNgfSomething < NgfTestCase
+%   DESCRIPTION
+%     Ported from NonGravForces' tests at 3cc0123 with NonGravForces.qc
+%     (X-05). Subclasses (tNgfQc, tNgfQcScreen) tag their methods with the
+%     seven categories of CONCEPT 9. verifyErrorId requires a call to throw
+%     exactly one identifier; verifyBoundAndRecord requires a measured value
+%     to be finite and within its bound and records the number, so the run
+%     report carries what was measured; verifyRelClose is a relative
+%     closeness with a floor. The warning switch of hushExtrapolation
+%     belongs to NonGravForces' own suite and is harmless here.
 %
-%   Seven test categories are mandatory per public unit, expressed as method
-%   tags and counted by auditTestCategories:
-%     contract      shapes, rejection, error identifiers, option validation
-%     reference     agreement with an authority outside this project
-%     precision     a numerical claim with a tolerance justified in a comment
-%     vectorization K epochs at once == the same epochs one at a time
-%     robustness    NaN, gaps, empty input, flags: defined behaviour, no crash
-%     metamorphic   a relation that must hold without a known answer
-%     speed         a ratio or a budget, measured in this run on this host
+%   COVERAGE
+%     None of its own: a base class without test methods.
 %
-%   Every bound that passes leaves its number in the record store
-%   (verifyBoundAndRecord), so the run report carries what was measured.
-%
-% KEYWORDS test base class categories record
-% Created 2026-08-27 by Claude Fable 5 (Anthropic).
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
     methods (TestMethodSetup)
         function hushExtrapolation(tc)
             %HUSHEXTRAPOLATION Silence O-42's extrapolation warning for every test by default.

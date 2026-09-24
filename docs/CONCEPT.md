@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.21 (DRAFT) · 2026-09-24 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.22 (DRAFT) · 2026-09-24 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.22 | X-05b inserted before X-10: the ported `qc` takes this repository's conventions before release 1.0, numbers gated by equality to the port (10.1; owner decision 2026-09-24) |
 | 0.21 | X-05: `mask` (6.1 row 1) follows the file headers' qualflg meanings: GRACE-FO ACT1B bits 3/4 are the CLK1B clock-offset extrapolation, not a large-range mode, and are reported, not removed; the presets remove the phase break and the L1B fill flags. An `snr` layer (0.5 of the median, provisional) is added; TN-01 MANV rows become windows of their stated duration, TN-01a windows are the caller's; THR1B and eclipse margins are half the CRN fit interval. V-12 answered by D-9 (owner decisions 2026-09-24) |
 | 0.20 | X-09 PR 2: the remaining methods of 7 are three L2 units, `regressDrivers` (OLS on demeaned drivers, VIF gate 10 as a provisional Config default, block-bootstrap sigmas), `partialCorrelation` (inverse correlation matrix, block-bootstrap sigmas) and `binnedMap` (mean, sd, count per bin, the caller's edges) (3.2, 7; owner decisions 2026-09-24) |
 | 0.19 | X-09 PR 1: `drivers` aligns and checks supplied series (no physics, no per-revolution averaging); `correlate` pre-whitens both series with the residual axis's ARMA model (Box–Jenkins), the lag convention and the Bartlett effective sample size are fixed (7; owner decisions 2026-09-24) |
@@ -669,7 +670,8 @@ repository has one open PR at a time.
 | timeSeriesPreparation | X-07 | noise stage on `tsmodels`/`spectral`, `observability` with the minimum-data gate (5.2), `bootstrap`, `crossval`; **Q12 agreement test**: `arma2acv`↔`lsqvce.kernel.armaACV`, `spec2acv`↔`psd2acv`, `tsLjungBox`↔`whitenessCorr`, `tsFitAR`↔`levinsonDurbin`/`whittle`, each with a tolerance naming the term it bounds (lsqvce is a test-only dependency) | WP-07, WP-12, WP-15 part | X-02, X-03 |
 | timeSeriesPreparation | X-08 | `fill` | — | X-07, V-7 |
 | timeSeriesPreparation | X-09 | `drivers`, `correlate` | WP-17 part | X-07 |
-| timeSeriesPreparation | X-10 | `run`, full `Config`, integration test (real ACT1B against the ITSG reference; synthetic) → **release 1.0** | WP-19 part | X-03..X-09 |
+| timeSeriesPreparation | X-05b | `qc` conventions (help template, literal identifiers, test tags), gated by equality to the X-05 port; owner decision 2026-09-24 | — | X-05 |
+| timeSeriesPreparation | X-10 | `run`, full `Config`, integration test (real ACT1B against the ITSG reference; synthetic) → **release 1.0** | WP-19 part | X-03..X-09, X-05b |
 | timeSeriesPreparation | X-11 | `report` | WP-20 part | X-10 |
 | timeSeriesPreparation | X-12 | V-1 CRN verification | WP-24 | handbook |
 | timeSeriesPreparation | X-14 | stage cache (6.6) | — | X-10 |

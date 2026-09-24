@@ -1,9 +1,9 @@
 % timeSeriesPreparation.qc - residual quality control
-% Port of NonGravForces.qc 0.12.0 (3cc0123), unchanged but for the namespace (X-05)
+% NonGravForces.qc 0.12.0 (3cc0123), ported at X-05, conventions of X-05b
 %
 %   Base MATLAB only. Call as timeSeriesPreparation.qc.<name>. Errors are
-%   timeSeriesPreparation:<name>:<mnemonic>, raised through
-%   timeSeriesPreparation.internal.fail.
+%   timeSeriesPreparation:<name>:<mnemonic>. The numbers equal the port's
+%   (tests/TestQcEquivalence).
 %
 %   residuals            - Whitened residuals measured - modelled with preliminary calibration
 %   hampel               - Robust point-outlier detector (moving median + MAD)

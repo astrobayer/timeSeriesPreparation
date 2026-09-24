@@ -10,6 +10,74 @@ restates:
 
 ---
 
+## X-05b — `qc` conventions, numbers unchanged (owner decision 2026-09-24); scope frozen 2026-09-24
+
+Tier B. The ported `+qc` is brought to this repository's conventions
+before release 1.0 (CONCEPT 12.9: conventions change in a separate WP,
+gated by equality to the port). Two PRs: this code PR, then a `.github/`
+PR that removes the audit profile `qc-ported` and the docs exclusion,
+with the regenerated catalogue and help examples (as PR #41 after X-02).
+
+**Owner decisions 2026-09-24 (X-10 interview):**
+- **X-05b before X-10**, so 1.0 has one convention throughout.
+- **X-10 in two PRs**:
+  - PR-1: `run` for a single arc, the full Config presets, and a contract
+    test pinning the result fields.
+  - PR-2: the integration tests and release 1.0.0.
+- **`run` is input-driven.** Every stage whose inputs exist runs, in
+  CONCEPT 6.1 order. A stage without its input is skipped and listed in
+  `diagnostics.skipped`; nothing is assumed.
+- **Integration day: ACT1B C 2020-01-02 against ITSG
+  nonConservativeForces**, the day V-4 measured. The thresholds come from
+  V-4: correlation ≥ 0.95 / 0.95 / 0.93 (measured 0.984 / 0.973 / 0.955),
+  the lag below 1 s, and the scales within the V-4 range. A synthetic arc
+  with planted truth is added.
+
+True after the merge (code PR):
+- The six `+qc` units have the template help (SYNTAX … REFERENCES, footer)
+  and self-contained EXAMPLEs. Their errors are raised with literal
+  identifiers, `error("timeSeriesPreparation:<unit>:<mnemonic>", …)`, so
+  the audit can catalogue them.
+- `internal.fail` is removed, since nothing calls it any more.
+  `internal.provenance` stays.
+- The frozen port is `tests/qc/frozen/*.m.txt`, the PR-B files with
+  `qcPort.` names.
+  - `TestQcPort` holds the six units to NonGravForces `3cc0123` by
+    SHA-256.
+  - **`TestQcEquivalence`** loads the frozen port as package `qcPort` and
+    requires every output of 15 cases to be isequaln, with the provenance
+    records removed (they carry a creation time). The refusals must raise
+    the same identifiers.
+  - Fault injection: a one-ulp change must fire.
+- In `tests/qc` only the help headers changed (DESCRIPTION, COVERAGE,
+  footer) and the tag spelling `vectorization` → `vectorisation`.
+  `TestTagPolicy` exempts no folder any more.
+
+**Measured before the push (2026-09-24, ci-actions `v1.3.2`):**
+- The code lines of the six units differ from the frozen port only in the
+  34 error calls and the dropped `unit =` lines (diff, 0 unexplained).
+- Under the current configuration: audit clean (125 files), docs in sync
+  (60).
+- Under the `.github` configuration the follow-up PR will carry (on a
+  copy): audit clean, **20** `qc` identifiers catalogued (157 in total),
+  docs in sync (66), and 6 new help examples.
+
+**Prediction** (before any run): **637 + 0 + 0 = 637**. That is 622 (after
+O-6) with these changes:
+- TestQcEquivalence +17 (reference 15, contract 1, robustness 1).
+- TestQcPort 5 → 4: the screen-test hash is gone (reference −1).
+- TestHelpExamples 55 → 54: `internal.fail` is gone (contract −1).
+- The five `vectorization` tests move to `vectorisation`.
+
+Per tag: contract 187, reference 234, precision 23, robustness 120,
+metamorphic 44, vectorisation 21, speed 8.
+
+**Risk:** the equivalence cases run for the first time. A red case is a
+test bug or a conversion slip, fixed in this PR; the numbers are never
+touched.
+
+---
+
 ## O-6 — `matlab` job timeout 30 → 60 min (`.github/` only); 2026-09-24
 
 A `.github/` change, so it stands alone: `.github/workflows/ci.yml` and this

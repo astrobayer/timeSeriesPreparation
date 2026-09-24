@@ -3,6 +3,15 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
+## Unreleased
+
+- CI: the `matlab` job's timeout is 60 min (O-6, PR #54).
+- **X-05b** `qc`: help in this repository's template, errors raised with
+  literal identifiers (catalogued once the `.github` follow-up lands),
+  test tags spelled `vectorisation`; `internal.fail` removed. Numbers
+  unchanged: `TestQcEquivalence` holds every output to the frozen X-05
+  port, which `TestQcPort` holds to NonGravForces 0.12.0.
+
 ## 0.2.0 — 2026-09-24
 
 Second release (GUIDE section 7, Phase 2: X-05 → v0.2.0). Besides X-05 it
