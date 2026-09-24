@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.19 · 2026-09-24 · X-08 `fill` in review (PR #46), CI green 515 + 0 + 0; X-07 library merged (PR #45, `fae4071`)**
+**Revision 0.20 · 2026-09-24 · X-09 PR 1 (`drivers`, lagged `correlate`) scope frozen; X-08 merged (PR #46, `a08cfc0`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,76 @@ restates:
 
 ---
 
-## X-08 — `fill` (issue #11, PR #46); scope frozen 2026-09-24
+## X-09 PR 1 — `drivers` and lagged `correlate` (issue #12, stays open for PR 2); scope frozen 2026-09-24
+
+Tier B. Design: CONCEPT 7, 6.1 row 9, 10.1 row X-09 (needs X-07, merged).
+
+**Owner decisions 2026-09-24:**
+- **Two PRs.**
+  - PR 1: `drivers`, lagged correlation of pre-whitened series, the
+    effective sample size and block-bootstrap CIs.
+  - PR 2: regression with the VIF gate, partial correlation, and binned
+    (β′, u) maps.
+- **`drivers` aligns and validates supplied series and computes no
+  physics.** β′, u, eclipse, space weather, THR1B counts and SNR come from
+  other toolboxes (CONCEPT 7). There is no per-revolution averaging.
+- **Pre-whitening with a caller-supplied noise model.** `correlate` hides
+  no fit.
+
+True after the merge:
+- **`drivers`** (L2): `drv = drivers(arc, series, Method = "pchip", MaxGap = [])`.
+  - `series` is a (1,K) struct with fields `name`, `t` (int64 GPS ns,
+    increasing), `value` (double, NaN missing) and `unit`. A unit is
+    required (R5).
+  - Each driver goes onto `arc.t` by align's rule
+    (`internal.resampleOnto`). It is exact at coinciding epochs, never
+    interpolated across a hole, and never extrapolated.
+  - It returns a struct: `t`, `names`, `units`, `values` (N,K), `gap`
+    (N,K), `method`, and `maxGap` (1,K).
+  - Errors: `drivers:badSeries`, `drivers:duplicateName`,
+    `drivers:unitUnknown`.
+- **`correlate`** (L2), lagged correlation:
+  `res = correlate(arc, drv, model, maxLag, AcfLags, BootLags = 0, NBoot, BlockLength, Seed, Stage = "correlate", Level)`.
+  - **Pre-whitening follows Box and Jenkins.** Axis m and every driver are
+    filtered by the inverse of axis m's ARMA model (a/b, `noise`'s
+    output), each after removing its own mean. Each finite segment is
+    filtered from rest, and its first p samples are dropped. For AR models
+    that is exact; for MA terms the start-up transient decays like
+    theta^k. With the residual white, the null variance of r is 1/n
+    whatever the driver's own autocorrelation (Bartlett), so one model per
+    axis is enough.
+  - r(l, m, k) is the Pearson correlation over the complete pairs
+    (x'_t, d'_(t-l)), for l = -maxLag..maxLag samples. A positive lag
+    means the driver leads.
+  - nEff(m, k) = n / (1 + 2 sum_k rho_x'(k) rho_d'(k)), using the
+    gap-aware `tsmodels.tsAcf` of the whitened series up to AcfLags.
+  - The CI at every lag is Fisher z with nEff.
+  - At BootLags, a moving-block bootstrap of the pair rows is run through
+    `bootstrap` (automatic block length, seed from Stage).
+  - maxLag has no default (R5).
+  - Errors: `correlate:epochMismatch`, `correlate:modelMismatch`,
+    `correlate:irregularGrid`, `correlate:tooFewPairs`.
+- `Config.drivers`: method ("pchip"), maxGap ([]) and maxLag ([], no
+  default).
+- Records: CONCEPT 7 (the pre-whitening rule and the lag convention),
+  Contents, CHANGELOG, generated docs.
+
+**Tests planned:**
+- Reference: a white model reduces `correlate` to corrcoef of the shifted
+  vectors. A white transfer x_t = e_t + beta d_(t-l0) peaks at l0 with rho
+  = beta sd / sqrt(beta^2 sd^2 + se^2).
+- Precision: AR(1) pre-whitening returns the innovations exactly.
+- Metamorphic: two independent AR(0.95) series stay within the null band
+  after pre-whitening. They far exceed it before.
+- `drivers` equals `align` on a same-unit driver, bitwise.
+- Contract, vectorisation and robustness as usual.
+
+Tolerances will be measured in NumPy before coding, and the count
+predicted in the code commit.
+
+---
+
+## X-08 — `fill` — merged 2026-09-24 (PR #46, `a08cfc0`; issue #11 closed); scope was frozen 2026-09-24
 
 Tier B (no local MATLAB; the MATLAB verdict is CI's). Design: CONCEPT
 6.5, 3.2 (no least-squares estimator; `fill` takes a covariance model),
@@ -903,7 +972,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-08 in review (PR #46): CI green, 515 + 0 + 0.**
+**X-09 PR 1 on branch `claude/grace-timeseries-issues-28g3a4`: scope frozen.**
+X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
 X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0).
 lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0).
@@ -921,7 +991,7 @@ released nothing, as designed. `.github/` profile switch merged (PR #41,
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
 C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
-`v1.3.2`). Next: X-08 (#11); X-05
+`v1.3.2`). Next: X-09 (#12, two PRs); X-05
 (#8) also waits on V-12 (defect catalogue, D-9).
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).
