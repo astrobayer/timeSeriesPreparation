@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.21 · 2026-09-24 · X-09 PR 2 (`regressDrivers`, `partialCorrelation`, `binnedMap`) scope frozen; X-09 PR 1 merged (PR #47, `8182010`)**
+**Revision 0.21 · 2026-09-24 · X-09 PR 2 (`regressDrivers`, `partialCorrelation`, `binnedMap`) in review (PR #48), CI green 553 + 0 + 0; X-09 PR 1 merged (PR #47, `8182010`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,7 @@ restates:
 
 ---
 
-## X-09 PR 2 — regression with VIF gate, partial correlation, binned maps (closes issue #12); scope frozen 2026-09-24
+## X-09 PR 2 — regression with VIF gate, partial correlation, binned maps (closes issue #12; PR #48); scope frozen 2026-09-24
 
 Tier B. Design: CONCEPT 7 (the remaining three methods) and 8 (demean
 regressors; block bootstrap for sigmas).
@@ -98,6 +98,13 @@ metamorphic 36, vectorisation 16, speed 3.
   drivers test was extended, not added. The correct prediction is **553
   + 0 + 0**: contract 174, reference 198, precision 18, robustness 108,
   metamorphic 36, vectorisation 16, speed 3. Every other tag matched.
+
+**Verdict, MATLAB R2026a, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:**
+CI run 35982964249 on `336f36c` (2026-09-24): `audit` green; `matlab`
+green, **553 + 0 + 0 = 553**, every tag as corrected (contract 174,
+reference 198, precision 18, robustness 108, metamorphic 36,
+vectorisation 16, speed 3). No warnings from the new functions appear in
+the part of the log that was read. Gate time 1028 s.
 
 **Cited from memory, not re-read** (debt): Kutner et al. 2005 sect. 10.5,
 Kuensch 1989 and Whittaker 1990.
@@ -1110,7 +1117,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-09 PR 2 in review (PR #48): first run 552 + 1 + 0, a test bug; fix pushed, predicted 553 + 0 + 0.**
+**X-09 PR 2 in review (PR #48): CI green, 553 + 0 + 0 (first run 552 + 1 + 0, a test bug, fixed).**
 X-09 PR 1 merged (PR #47, `8182010`; CI 534 + 0 + 0).
 X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
