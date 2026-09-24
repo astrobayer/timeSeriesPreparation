@@ -39,6 +39,14 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
   flagged in `Arc.filled` through the new `Arc.fillSamples`. V-7 closed:
   the sigtools Kalman filter has no smoother. `reference` follows X-09.
 - `Config.fill` (method, maxGap, window).
+- **X-09** `drivers`: supplied driver series (β′, u, eclipse, space weather,
+  THR1B counts, SNR) onto the arc's epochs by align's rule, names and units
+  checked; no physics.
+- **X-09** `correlate`: lagged correlation of Box–Jenkins pre-whitened
+  residuals and drivers (the caller's ARMA model), Bartlett effective sample
+  size, Fisher-z intervals at every lag and block-bootstrap intervals at
+  chosen lags.
+- `Config.drivers` (method, maxGap, maxLag).
 
 ## 0.1.0 — 2026-09-23
 

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.drivers</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.drivers</h1>
+<p>Supplied driver series on the epochs of an arc, names and units checked.</p>
+<h2>Syntax</h2>
+<pre><code>drv = timeSeriesPreparation.drivers(arc, series)
+drv = timeSeriesPreparation.drivers(arc, series, Method = &quot;pchip&quot;, MaxGap = [])</code></pre>
+<h2>Description</h2>
+<p>The first half of the correlation stage (CONCEPT 6.1 row 9, 7). Drivers are supplied, not computed here: beta&#x27; and u from referenceSystem.orbitSunGeometry, the eclipse factor and space weather from NonGravForces, THR1B counts, LRI/KBR SNR. drivers puts each one onto arc.t by align&#x27;s rule (internal.resampleOnto): a sample on a coinciding epoch is taken bit for bit, elsewhere Method interpolates inside stretches of usable samples, never across a hole (a NaN, or a spacing above MaxGap) and never beyond the ends. An epoch no stretch covers is NaN and marked in gap. Each driver is resampled on its own, so its holes do not remove the others&#x27; samples.</p>
+<p>Every driver states a name, a valid MATLAB field name distinct from the others, and a unit; an unstated unit refuses (R5). Nothing is averaged per revolution and no physics is evaluated (owner decision 2026-09-24).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Supplies the epochs arc.t.</td></tr>
+<tr><td><code>series</code></td><td>1,K</td><td><code>struct</code></td><td>&mdash;</td><td>- One element per driver, fields: name (1,1) string; t (:,1) int64 GPS ns, strictly increasing; value (:,1) double, NaN missing, no Inf; unit (1,1) string.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;pchip&quot;</td><td>interp1 method: &quot;pchip&quot;, &quot;makima&quot;, &quot;spline&quot; or &quot;linear&quot;.</td></tr>
+<tr><td><code>MaxGap</code></td><td>1,1</td><td><code>double</code></td><td>auto</td><td>Widest driver spacing in s interpolated across; [] (auto) = 1.5 x each driver&#x27;s median step.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>drv</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: t (N,1) int64, arc.t; names (1,K) string; units (1,K) string; values (N,K) double, NaN where not covered; gap (N,K) logical; method; maxGap (1,K) s as applied.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>That of align: exact at coinciding epochs, elsewhere the method&#x27;s interpolation error (pchip at 5 s spacing evaluated at 1 s: 3.8e-6 of the amplitude of a 1/rev plus 2/rev signal). A driver with the arc&#x27;s unit gives align&#x27;s result bit for bit (TestDrivers).</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:drivers:badSeries</code></td><td>Input</td><td>series lacks a field, or a driver&#x27;s name is not a field name, its t is not an int64 strictly increasing column, or its value is not a real double column of t&#x27;s size without Inf.</td></tr>
+<tr><td><code>timeSeriesPreparation:drivers:duplicateName</code></td><td>Input</td><td>two drivers share a name.</td></tr>
+<tr><td><code>timeSeriesPreparation:drivers:unitUnknown</code></td><td>Input</td><td>a driver states no unit. Options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>beta&#x27; at 60 s onto a 1 s arc.</p>
+<pre><code>aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACT1B_2020-01-01_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+arc = timeSeriesPreparation.Arc(int64(0:599)&#x27; * int64(1e9), zeros(600, 1), aux);
+tb = int64(0:60:600)&#x27;;
+beta = struct(&quot;name&quot;, &quot;betaPrime&quot;, &quot;t&quot;, tb * int64(1e9), &quot;value&quot;, 30 + double(tb) / 600, &quot;unit&quot;, &quot;deg&quot;);
+drv = timeSeriesPreparation.drivers(arc, beta);</code></pre>
+<h2>Limitations</h2>
+<p>No unit conversion and no frame or time-system handling: the drivers are GPS ns and their units are the caller&#x27;s statement. Angles are interpolated as numbers, so a wrapping angle (u in [0, 360)) must be supplied unwrapped or as sin/cos.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md sections 6.1 (row 9) and 7; R5 (no assumed defaults).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.correlate</code>, <code>timeSeriesPreparation.align</code>, <code>timeSeriesPreparation.internal.resampleOnto</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/drivers.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

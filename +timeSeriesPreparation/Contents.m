@@ -28,6 +28,10 @@
 %                       substream per replicate.
 %     crossval        - Blocked cross-validation with a buffer, for serially
 %                       correlated rows.
+%     drivers         - Supplied driver series on the epochs of an arc, names
+%                       and units checked.
+%     correlate       - Lagged correlation of pre-whitened residuals and
+%                       drivers, with effective sample size and CIs.
 %
 %   Spectra and time-series models (L0, sigtools v1.3.1; conventions of X-02)
 %     spectral   - help timeSeriesPreparation.spectral

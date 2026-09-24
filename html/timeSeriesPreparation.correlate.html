@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.correlate</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.correlate</h1>
+<p>Lagged correlation of pre-whitened residuals and drivers, with effective sample size and CIs.</p>
+<h2>Syntax</h2>
+<pre><code>res = timeSeriesPreparation.correlate(arc, drv, model, maxLag)
+res = timeSeriesPreparation.correlate(arc, drv, model, maxLag, AcfLags = [], BootLags = 0, NBoot = 1000, BlockLength = [], Seed = 0, Stage = &quot;correlate&quot;, Level = 0.6827)</code></pre>
+<h2>Description</h2>
+<p>The lagged correlation of CONCEPT 7, respecting autocorrelation. - Pre-whitening (Box and Jenkins): axis m and every driver are filtered by the inverse of axis m&#x27;s ARMA model, e_t = (a(B)/b(B)) (x_t - mu), a and b from noise (owner decision 2026-09-24: the model is the caller&#x27;s, no fit here). The axis loses model.mu(m), each driver its own mean first. Each finite stretch is filtered from rest and its first p samples are dropped (NaN): exact for AR models; with MA terms the start-up transient decays like theta^k. Rows with weight 0 or filled are missing (CONCEPT 5). - r(l) = corr(x&#x27;_t, d&#x27;_(t-l)), the Pearson correlation over the complete pairs, for l = -maxLag..maxLag samples; a positive l means the driver leads the residual by l samples. - Effective sample size (Bartlett) per axis and driver: nEff = n / (1 + 2 sum_(k=1..AcfLags) rho_x&#x27;(k) rho_d&#x27;(k)), n the lag-0 pairs and rho the gap-aware tsmodels.tsAcf of the whitened series. With the residual white, rho_x&#x27;(k) is near 0 and nEff near n whatever the driver&#x27;s own memory; that is why one model per axis suffices. Unwhitened AR(0.95) pairs have nEff about 5 % of n (NumPy, 2026-09-24). - ci: the Fisher-z interval tanh(atanh(r) -+ z/sqrt(nEff - 3)) at Level, at every lag. - At BootLags: a moving-block bootstrap of the pair rows (bootstrap, automatic block length unless BlockLength, seed from Stage and Seed), its sigma and percentile interval. maxLag has no default (R5).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Residuals on a uniform grid, M axes.</td></tr>
+<tr><td><code>drv</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- drivers(arc, ...) output on arc.t, K drivers.</td></tr>
+<tr><td><code>model</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Per-axis ARMA model, noise&#x27;s output: fields a (M, p+1), b (M, q+1), mu (1, M), a(:,1) = b(:,1) = 1.</td></tr>
+<tr><td><code>maxLag</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>- Largest lag in samples, integer &gt;= 0.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>AcfLags</code></td><td>1,1</td><td><code>double</code></td><td>maxLag</td><td>Lags of the nEff sum; 0 = nEff = n.</td></tr>
+<tr><td><code>BootLags</code></td><td>1,:</td><td><code>double</code></td><td>0</td><td>Lags bootstrapped, |l| &lt;= maxLag; [] = none.</td></tr>
+<tr><td><code>NBoot</code></td><td>1,1</td><td><code>double</code></td><td>1000</td><td>Bootstrap replicates.</td></tr>
+<tr><td><code>BlockLength</code></td><td>1,1</td><td><code>double</code></td><td>auto</td><td>Block length in rows; [] = Politis-White.</td></tr>
+<tr><td><code>Seed</code></td><td>1,1</td><td><code>double</code></td><td>0</td><td>Caller&#x27;s seed, integer &gt;= 0.</td></tr>
+<tr><td><code>Stage</code></td><td>1,1</td><td><code>string</code></td><td>&quot;correlate&quot;</td><td>Stage name of the seed.</td></tr>
+<tr><td><code>Level</code></td><td>1,1</td><td><code>double</code></td><td>0.6827</td><td>Two-sided level of ci and of the bootstrap interval.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>res</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: axes (1,M), drivers (1,K) string; lags (2L+1,1) samples; lagSeconds (2L+1,1) s; r, n (2L+1,M,K); nEff (M,K); ci (2,2L+1,M,K); level; boot, a struct with lags (B,1), sigma (B,M,K), ci (2,B,M,K), blockLength (B,M,K); order (M,2) [p q].</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>r is exact arithmetic on the pairs. With a white model it equals corrcoef of the shifted vectors; AR(1) pre-whitening returns the innovations to 4e-16 (NumPy). The Fisher interval assumes near-normal pairs; the bootstrap sigma of a lag-0 correlation lay within 0.90-1.10 of (1 - r^2)/sqrt(n) over 100 NumPy realisations (2026-09-24).</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:correlate:irregularGrid</code></td><td>Input</td><td>the epochs are not uniformly spaced.</td></tr>
+<tr><td><code>timeSeriesPreparation:correlate:epochMismatch</code></td><td>Input</td><td>drv is not drivers&#x27; output on arc.t.</td></tr>
+<tr><td><code>timeSeriesPreparation:correlate:modelMismatch</code></td><td>Input</td><td>model lacks a, b or mu, or its rows differ from the arc&#x27;s axes, or a(:,1) or b(:,1) is not 1.</td></tr>
+<tr><td><code>timeSeriesPreparation:correlate:badBootLag</code></td><td>Input</td><td>a BootLags entry exceeds maxLag.</td></tr>
+<tr><td><code>timeSeriesPreparation:correlate:tooFewPairs</code></td><td>Input</td><td>an axis and a driver share fewer than 10 whitened samples at lag 0. Options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A driver acting 5 s late on a white residual: the peak sits at +5.</p>
+<pre><code>aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACT1B_2020-01-01_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+rs = RandStream(&quot;twister&quot;, &quot;Seed&quot;, 9);
+d = randn(rs, 2005, 1);
+t = int64(0:1999)&#x27; * int64(1e9);
+arc = timeSeriesPreparation.Arc(t, randn(rs, 2000, 1) + 0.5 * d(1:2000), aux);
+drv = timeSeriesPreparation.drivers(arc, struct(&quot;name&quot;, &quot;d&quot;, &quot;t&quot;, t, &quot;value&quot;, d(6:2005), &quot;unit&quot;, &quot;1&quot;));
+white = struct(&quot;a&quot;, 1, &quot;b&quot;, 1, &quot;mu&quot;, 0);
+res = timeSeriesPreparation.correlate(arc, drv, white, 10, BootLags = [], AcfLags = 5);</code></pre>
+<h2>Limitations</h2>
+<p>Linear, pairwise and stationary. The interval at each lag ignores the search over 2 maxLag + 1 lags; pick the lag of interest beforehand or correct the level. Correlation is not attribution: partial correlation and regression are X-09&#x27;s second part.</p>
+<h2>References</h2>
+<p>Box, G. E. P., Jenkins, G. M., Reinsel, G. C., Ljung, G. M. (2015). Time Series Analysis: Forecasting and Control, 5th ed. Wiley, ch. 12 (pre-whitening, the cross-correlation check). Bartlett, M. S. (1946). On the theoretical specification and sampling properties of autocorrelated time-series. J. R. Stat. Soc. Suppl. 8, 27-41. Fisher, R. A. (1921). Metron 1, 3-32 (the z transform). docs/CONCEPT.md section 7.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.drivers</code>, <code>timeSeriesPreparation.noise</code>, <code>timeSeriesPreparation.bootstrap</code>, <code>timeSeriesPreparation.tsmodels.tsAcf</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/correlate.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>
