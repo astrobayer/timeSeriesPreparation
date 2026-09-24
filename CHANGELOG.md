@@ -54,6 +54,14 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
   correlation matrix, block-bootstrap sigmas.
 - **X-09** `binnedMap`: mean, sd and count per bin of two coordinates, e.g.
   a residual over (β′, u).
+- **X-05** CI: the `matlab` job receives `READING_DATA_POOL` for the D-9
+  real-day tests; audit profile `qc-ported` (PR #51).
+- **X-05** `qc`: NonGravForces.qc 0.12.0 (`3cc0123`) ported unchanged but for
+  the namespace — `residuals`, `hampel`, `detectImpulses`, `detectJumps`,
+  `eventTable`, `screen` — with its two test classes as the gate
+  (`tests/qc`). Errors are now `timeSeriesPreparation:<unit>:<mnemonic>`
+  through `internal.fail`; `internal.provenance` keeps the record's fields.
+  `TestQcPort` holds every ported file to the SHA-256 of its original.
 
 ## 0.1.0 — 2026-09-23
 

@@ -1,0 +1,83 @@
+function ME = fail(unit, mnemonic, message, varargin)
+%FAIL  Build, and by default throw, an error of the ported qc units.
+%
+%   SYNTAX
+%     timeSeriesPreparation.internal.fail(unit, mnemonic, message, args...)
+%     ME = timeSeriesPreparation.internal.fail(unit, mnemonic, message, args...)
+%
+%   DESCRIPTION
+%     The port of NonGravForces.fail (0.12.0, 3cc0123) for the units of
+%     +qc, which raise every error through it (X-05). The identifier is
+%     timeSeriesPreparation:<unit>:<mnemonic>; the behaviour is otherwise
+%     that of the original:
+%       - the mnemonic starts with one of the classes input, dep, data,
+%         numeric, unsupported, notImplemented;
+%       - the message carries a correction hint after the marker " -> ";
+%       - without an output the exception is thrown from the caller's frame
+%         (throwAsCaller), so the stack points at the offending function;
+%         with an output it is returned and nothing is thrown.
+%
+%   INPUTS
+%     unit      (1,1) string   -   Function name, e.g. "hampel".
+%     mnemonic  (1,1) string   -   camelCase reason, first token from the
+%                                  classes above, e.g. "inputShape".
+%     message   (1,1) string   -   sprintf format containing " -> ".
+%     args      (1,:) cell     -   sprintf arguments of message, any number.
+%
+%   OUTPUTS
+%     ME  (1,1) MException   -   Only when an output is requested.
+%
+%   ACCURACY
+%     Not applicable, because the function computes no number.
+%
+%   ERRORS
+%     Contract:
+%       timeSeriesPreparation:fail:inputMnemonic - the mnemonic does not
+%           start with one of the six classes.
+%       timeSeriesPreparation:fail:inputHint - the message lacks the " -> "
+%           correction hint.
+%
+%   EXAMPLE
+%     % Build the exception without throwing it.
+%     ME = timeSeriesPreparation.internal.fail("hampel", "inputShape", ...
+%         "x must be KxM -> transpose the input");
+%
+%   LIMITATIONS
+%     The identifiers it raises are built at run time, so the static audit
+%     cannot catalogue them; the ported units list them in their help until
+%     a conventions WP writes them out.
+%
+%   REFERENCES
+%     NonGravForces fail.m at 3cc0123 (0.12.0); HANDOVER X-05 PR-A.
+%
+%   See also timeSeriesPreparation.qc.screen, MException, throwAsCaller.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.1.0 | 2026-09-24 16:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
+    arguments
+        unit (1,1) string {mustBeNonzeroLengthText}
+        mnemonic (1,1) string {mustBeNonzeroLengthText}
+        message (1,1) string {mustBeNonzeroLengthText}
+    end
+    arguments (Repeating)
+        varargin
+    end
+
+    classes = ["input" "dep" "data" "numeric" "unsupported" "notImplemented"];
+    if ~any(startsWith(mnemonic, classes))
+        error("timeSeriesPreparation:fail:inputMnemonic", ...
+            "mnemonic '%s' must start with one of %s -> pick the class that names the failure", ...
+            mnemonic, strjoin(classes, ", "));
+    end
+    if ~contains(message, " -> ")
+        error("timeSeriesPreparation:fail:inputHint", ...
+            "message for %s:%s lacks the ' -> ' correction hint -> append what the caller should change", ...
+            unit, mnemonic);
+    end
+    id = "timeSeriesPreparation:" + unit + ":" + mnemonic;
+    ME = MException(id, "%s", sprintf(message, varargin{:}));
+    if nargout == 0
+        throwAsCaller(ME);
+    end
+end

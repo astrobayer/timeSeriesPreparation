@@ -38,6 +38,9 @@
 %                       all others, with block-bootstrap sigmas.
 %     binnedMap       - Mean, standard deviation and count of a value in bins
 %                       of two coordinates.
+%     qc              - Residual quality control: outliers, impulses, jumps,
+%                       event table (NonGravForces.qc 0.12.0, ported
+%                       unchanged; help timeSeriesPreparation.qc).
 %
 %   Spectra and time-series models (L0, sigtools v1.3.1; conventions of X-02)
 %     spectral   - help timeSeriesPreparation.spectral
@@ -48,6 +51,9 @@
 %                                (Politis-White, Patton correction).
 %     internal.dlyap           - Stationary covariance P = T P T' + Q, the one
 %                                Lyapunov solver of the toolbox.
+%     internal.fail            - Build or throw an error of the ported qc
+%                                units (NonGravForces.fail).
+%     internal.provenance      - Metadata record of the ported qc units.
 %     internal.requirePackage  - Refuse at the point of use when an optional
 %                                dependency is not on the path.
 %     internal.resampleOnto    - Interpolate a series onto new epochs, never
