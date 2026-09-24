@@ -58,9 +58,36 @@ True after the merge:
   explicit loop for `binnedMap`.
 - Precision: partial correlation equals the correlation of the residuals
   after regressing each variable on the rest.
-- Measured bands: the bootstrap sigma against the analytic OLS sigma. The
-  NumPy measurement comes before coding.
-- The count is predicted in the code commit.
+- Measured band (NumPy, 2026-09-24): over 100 realisations of 600 rows
+  with white errors, the bootstrap slope sigma was 0.86–1.21 of the OLS
+  sigma; the test holds 0.75–1.35. The intercept's bootstrap sigma ran up
+  to 1.36 of the OLS value, because each replicate re-centres Z, so no test
+  compares it with OLS.
+
+**Amendment:** the singularity threshold is rcond < 1e-12, not eps. With
+eps, an exactly dependent column can slip through on rounding (rcond
+around 1e-16). Both `regressDrivers` and `partialCorrelation` use 1e-12.
+
+**Fault injection:**
+- The references are backslash, the 3-variable formula, the residual
+  correlation and an explicit loop, all written in the tests.
+- Dropping the demeaning changes coef(1) away from mean(P).
+- The VIF gate refuses at 50 against 10 and passes at MaxVif 100.
+
+**Prediction** (before any run): **554 + 0 + 0 = 554**. That is 534 plus:
+- TestRegressDrivers 7 (reference 3, contract 1, metamorphic 1,
+  vectorisation 1, robustness 1).
+- TestPartialCorrelation 5 (reference 1, precision 1, contract 1,
+  metamorphic 1, robustness 1).
+- TestBinnedMap 4 (reference 1, contract 1, metamorphic 1, robustness 1).
+- TestConfig +1 (contract).
+- TestHelpExamples 49 -> 52 (contract).
+
+Per tag: contract 175, reference 198, precision 18, robustness 108,
+metamorphic 36, vectorisation 16, speed 3.
+
+**Cited from memory, not re-read** (debt): Kutner et al. 2005 sect. 10.5,
+Kuensch 1989 and Whittaker 1990.
 
 ---
 
@@ -1070,7 +1097,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-09 PR 2 on branch `claude/grace-timeseries-issues-28g3a4`: scope frozen.**
+**X-09 PR 2 on branch `claude/grace-timeseries-issues-28g3a4`: CI pending (predicted 554 + 0 + 0).**
 X-09 PR 1 merged (PR #47, `8182010`; CI 534 + 0 + 0).
 X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
@@ -1103,7 +1130,7 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | content | `docs/CONCEPT.md` Rev 0.17, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
 | code, `Contents.m`, CI, audit | X-00b: setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config`. X-04: `crnKernel`, `crnApply`, `Contents.m` 0.1.0 |
 | `docs/GUIDE.md` | rev 1.11 (release workflow; `v0.1.0` anomaly) |
-| `docs/CONCEPT.md` | Rev 0.19 (X-09: `drivers`, Box–Jenkins `correlate`, 7) |
+| `docs/CONCEPT.md` | Rev 0.20 (X-09: `drivers`, `correlate`, `regressDrivers`, `partialCorrelation`, `binnedMap`; 3.2, 7) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was

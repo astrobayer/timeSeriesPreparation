@@ -37,7 +37,9 @@ classdef Config
 %
 %     drivers (X-09): fields method ("pchip") and maxGap ([] = 1.5 x each
 %     driver's median step), the options of drivers, and maxLag ([] in
-%     samples, no default: correlate needs it given), CONCEPT 7.
+%     samples, no default: correlate needs it given), and maxVif (10, the
+%     VIF gate of regressDrivers; owner decision 2026-09-24, provisional
+%     until real data refine it), CONCEPT 7.
 %
 %     unc (X-07): the gate and the uncertainty stages (CONCEPT 6.1, rows 6
 %     and 7). minWeightFraction is the minimum-data gate of observability
@@ -87,7 +89,7 @@ classdef Config
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-24 10:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
@@ -104,7 +106,7 @@ classdef Config
         noise = struct()
         unc = struct("minWeightFraction", [], "blockLength", [], "nBoot", 1000, ...
             "level", 0.6827, "folds", 5)
-        drivers = struct("method", "pchip", "maxGap", [], "maxLag", [])
+        drivers = struct("method", "pchip", "maxGap", [], "maxLag", [], "maxVif", 10)
         run = struct()
     end
 
@@ -174,7 +176,7 @@ function known = schema(section)
         case "fill"
             known = ["method" "maxGap" "window"];
         case "drivers"
-            known = ["method" "maxGap" "maxLag"];
+            known = ["method" "maxGap" "maxLag" "maxVif"];
         case "unc"
             known = ["minWeightFraction" "blockLength" "nBoot" "level" "folds"];
         otherwise
