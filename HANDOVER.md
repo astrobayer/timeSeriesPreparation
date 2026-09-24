@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.22 · 2026-09-24 · X-05 PR-A (`.github/`: DATAPOOL for the `matlab` job; D-9 defect catalogue recorded; X-05 scope frozen) in review; X-09 merged (PR #48, `ffe0164`; issue #12 closed)**
+**Revision 0.23 · 2026-09-24 · X-05 PR-B (`qc` port, unchanged) in review; X-05 PR-A merged (PR #51, `dcc185a`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -83,7 +83,7 @@ profile `qc-ported`).
 
 ---
 
-## X-05 PR-A — DATAPOOL for the `matlab` job, D-9 catalogue, X-05 scope (issue #8); scope frozen 2026-09-24
+## X-05 PR-A — DATAPOOL for the `matlab` job, D-9 catalogue, X-05 scope (issue #8) — merged 2026-09-24 (PR #51, `dcc185a`); scope was frozen 2026-09-24
 
 Tier B. A `.github/` change, so it stands alone: it touches only
 `.github/workflows/ci.yml`, `.github/matlab-audit.json`,
@@ -1312,7 +1312,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-05 PR-A in review.**
+**X-05 PR-B in review.**
+X-05 PR-A merged (PR #51, `dcc185a`; CI 553 + 0 + 0).
 X-09 PR 2 merged (PR #48, `ffe0164`; CI 553 + 0 + 0; issue #12 closed).
 X-09 PR 1 merged (PR #47, `8182010`; CI 534 + 0 + 0).
 X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
