@@ -10,6 +10,85 @@ restates:
 
 ---
 
+## X-05 PR-C — `mask`, D-9 tests, release 0.2.0 (closes issue #8); scope frozen 2026-09-24 (X-05 PR-A)
+
+Tier B. Scope: X-05 PR-A below.
+
+**Owner decisions 2026-09-24 (third round):**
+- **qualflg: the header decides.** `decodeQualFlags` supplies each bit's
+  meaning from the file header. The presets remove the L1B fill flags
+  (ACT1B 5–7, KBR1B and LRI1B 6–7) and the phase break (KBR1B and LRI1B
+  bit 0); every other bit is reported and removes nothing. CONCEPT's "ACC
+  large-range mode, bit 4 (R-2 p. 32)" is corrected: in the GRACE-FO
+  ACT1B RL04 header, bit 4 is the CLK1B clock-offset extrapolation.
+- **SNR layer.** A sample is removed where an SNR column falls below a
+  fraction of its median: `Config.mask.snrFraction`, 0.5 for KBR1B and
+  LRI1B, provisional.
+- **Event lists.** Callers state their windows; a TN-01 helper is built
+  in. TN-01 MANV rows become [epoch, epoch + values(1) s]. The duration
+  reading was measured: the first GRACE-C row, 127 s, equals TN-01a's
+  "06:19:26 to 06:21:33" on 2018-05-24. TN-01a prose is never parsed.
+- **THR1B margin.** Half the CRN fit interval (70.35 s ACC, 35.35 s KBR).
+  Eclipse transitions use the same margin. LRI has no CRN preset, so its
+  margins must be given (`mask:marginMissing`).
+
+True after the merge:
+- **`mask(arc, ...)`** (L2) adds one named layer per source:
+  - `qualflg_b<k>`, `snr`, `thr`, `eclipse`, `events`, `crnEdge` (off by
+    default) and `user`;
+  - `info` returns the qualflg report, the SNR thresholds, the firing and
+    transition counts, and the calibration windows (`info.windows`).
+- `Config.mask`: `removeBits`, `snrFraction`, `thrMargin`,
+  `eclipseMargin`, `crnEdge`, with the presets above.
+- `TestMask`: every count is written out from the definition. The TN-01
+  window is checked on gracefoReading's fixture.
+- `TestDefectCatalogue` covers DC-1 … DC-8 on their real days in the
+  DATAPOOL. Each test first checks the recorded numbers, then the verdict.
+  The three synthetic classes behave as follows:
+  - a duplicated epoch is refused by `Arc`;
+  - an LRI1B phase break is removed;
+  - a 10-sigma level jump is reported by `qc.screen`, never masked.
+- Release **0.2.0**: `Contents.m`, every footer, README, CHANGELOG. The
+  release workflow tags the merge commit.
+- CONCEPT Rev 0.21: 6.1 row 1 as above; V-12 answered.
+
+**Measured before the push (2026-09-24, ci-actions `v1.3.2`):**
+- `matlab-audit`: 125 files at 0.2.0, **clean**.
+- `matlab-docs --check`: 61 files, **in sync**; the mask EXAMPLE is new.
+
+**Fault injection:**
+- The refusals each fire on a planted defect: wrong size, THR1B on-times
+  in seconds, eclipse value 2, a window ending before it starts, LRI1B
+  with no margin, and mask run twice.
+- DC-6 and DC-7 hold the negative: a reported bit must not remove.
+- DC-4 holds 2020-07-12 as a dip that must stay.
+
+**Prediction** (before any run): **622 + 0 + 0 = 622**. That is 598 (PR-B)
+plus:
+- TestMask 11 (contract 3, reference 5, metamorphic 2, robustness 1).
+- TestDefectCatalogue 11 (reference 8, robustness 3).
+- TestConfig +1 (contract).
+- TestHelpExamples 54 -> 55 (contract).
+
+Per tag: contract 187, reference 220, precision 23, robustness 119,
+metamorphic 44, vectorisation 16, vectorization 5, speed 8.
+- Without READING_DATA_POOL the eight DC tests are incomplete: 614 + 0 + 8.
+- Without gracefoReading as well, the qualflg and TN-01 tests of TestMask
+  and the synthetic LRI test are also incomplete.
+
+**Risks, stated:**
+- The DC tests read the DATAPOOL for the first time from the `matlab`
+  job.
+- DC-8 builds an `Arc` from a real THR1B day, which needs strictly
+  increasing epochs. That holds on gracefoReading's THR1B fixture (471 of
+  471), but 2020-01-04 D has not been checked.
+- A red here is a test or `mask` fix in this PR. The recorded D-9 numbers
+  change only on evidence.
+
+**Debt:** Tier A (no local MATLAB).
+
+---
+
 ## X-05 PR-B — `qc` port, unchanged (issue #8); scope frozen 2026-09-24 (X-05 PR-A)
 
 Tier B. Scope, decisions and pin: X-05 PR-A below.

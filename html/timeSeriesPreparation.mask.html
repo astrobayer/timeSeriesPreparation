@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.mask</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.mask</h1>
+<p>Named removal layers from flags, event lists, thrusters, eclipse, SNR and the caller.</p>
+<h2>Syntax</h2>
+<pre><code>[arc, info] = timeSeriesPreparation.mask(arc)
+[arc, info] = timeSeriesPreparation.mask(arc, QualFlags = aux, Thrusters = thr, Events = ev)
+[arc, info] = timeSeriesPreparation.mask(arc, Soe = soe, Eclipse = ecl, User = remove)</code></pre>
+<h2>Description</h2>
+<p>Stage 1 of CONCEPT 6.1. Each source below becomes one named layer of the arc (true = remove, Arc.addLayer), so a sample&#x27;s weight is 0 as soon as one layer removes it and every removal keeps its reason. A source that is not given adds no layer. Product defaults come from Config(arc).mask (owner decisions 2026-09-24): - qualflg: aux of the same file(s) (readL1b / readL1bMulti) is decoded with gracefoReading.decodeQualFlags, whose bit meanings are the file header&#x27;s own. Each bit in RemoveBits becomes a layer &quot;qualflg_b&lt;k&gt;&quot;. The presets remove the phase break (KBR1B and LRI1B bit 0) and the L1B fill flags, &quot;interpolated data point (due to gap)&quot; (ACT1B bits 5-7, KBR1B and LRI1B bits 6-7). Every other bit is reported in info.qualflg and removes nothing: the ACT1B clock-offset extrapolation (bits 3/4), the KBR1B time-tag bias correction (bit 5), the ACT1B Vp and residual bits (0, 2). - snr: every observation whose name contains &quot;SNR&quot; and whose median is positive; a sample is removed where one of them is below SnrFraction times its median over the arc (layer &quot;snr&quot;; preset 0.5 for KBR1B and LRI1B, provisional). - Thrusters: a THR1B Arc; every record with a positive on_time_* removes [t - ThrMargin, t + max on-time + ThrMargin] (layer &quot;thr&quot;). The default margin is half the fit interval Tf of the product&#x27;s CRN preset (crnKernel: 70.35 s ACC, 35.35 s KBR), the reach of a filtered firing. - Eclipse: a driver series (t, value in [0, 1], the illuminated fraction). Every sample of it strictly inside (0, 1), and every step between two samples whose values differ, is a transition; the transitions widened by EclipseMargin (default as ThrMargin) are removed (layer &quot;eclipse&quot;). - Events and Soe: official event lists (G-05). Events is a table of windows the caller states (tStart, tEnd int64 GPS ns, source, text), for instance a TN-01a entry, whose prose is never parsed here. Soe is gracefoReading.readEventList&#x27;s TN-01 table (TimeFormat &quot;mjd&quot;): its enabled MANV rows of the arc&#x27;s satellite (both for &quot;Y&quot;) become windows [epoch, epoch + values(1) s]. That values(1) is the duration was measured: the first GRACE-C MANV row (2018-05-24, 127 s) is TN-01a&#x27;s &quot;calibration maneuver from 06:19:26 to 06:21:33&quot; to the second. All windows remove (layer &quot;events&quot;) and are returned as calibration windows in info.windows. - CrnEdge: samples within half the CRN fit interval of a gap (a step above 1.5 median steps) are removed (layer &quot;crnEdge&quot;). Off by default: an L1B product already stops where its filter window runs out. - User: an N x 1 logical of the caller (layer &quot;user&quot;). Jumps are never masked here; they are qc&#x27;s (CONCEPT 6.1, row 2).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- The arc to mask; its product selects the preset.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>QualFlags</code></td><td>1,1</td><td><code>struct</code></td><td>none</td><td>aux of readL1b/readL1bMulti for the same rows as arc.</td></tr>
+<tr><td><code>RemoveBits</code></td><td>1,:</td><td><code>double</code></td><td>preset</td><td>qualflg bits that remove; [] removes none.</td></tr>
+<tr><td><code>SnrFraction</code></td><td>1,1</td><td><code>double</code></td><td>preset</td><td>Threshold as a fraction of the median SNR; NaN = no &quot;snr&quot; layer.</td></tr>
+<tr><td><code>Thrusters</code></td><td>1,1</td><td><code>Arc</code></td><td>none</td><td>THR1B arc (on_time_* in milliseconds).</td></tr>
+<tr><td><code>ThrMargin</code></td><td>1,1</td><td><code>double</code></td><td>preset</td><td>Seconds added on each side of a firing.</td></tr>
+<tr><td><code>Eclipse</code></td><td>1,1</td><td><code>struct</code></td><td>none</td><td>Fields t (int64 GPS ns, increasing) and value.</td></tr>
+<tr><td><code>EclipseMargin</code></td><td>1,1</td><td><code>double</code></td><td>preset</td><td>Seconds added on each side of a transition.</td></tr>
+<tr><td><code>Events</code></td><td>K,4</td><td><code>table</code></td><td>none</td><td>tStart, tEnd, source, text.</td></tr>
+<tr><td><code>Soe</code></td><td>J,8</td><td><code>table</code></td><td>none</td><td>TN-01 rows, TimeFormat &quot;mjd&quot;.</td></tr>
+<tr><td><code>CrnEdge</code></td><td>1,1</td><td><code>logical</code></td><td>preset</td><td>Add the &quot;crnEdge&quot; layer.</td></tr>
+<tr><td><code>User</code></td><td>N,1</td><td><code>logical</code></td><td>none</td><td>The caller&#x27;s layer.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- The arc with the new layers and a &quot;mask&quot; provenance entry.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: layers (table: name, removed, source); qualflg (table from decodeQualFlags plus removes, or empty); snr (table: column, median, threshold, removed); thrusters (firings, margin); eclipse (transitions, margin); windows (table: tStart, tEnd, source, text); settings (struct of the values used).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact: layers are comparisons of int64 epochs and of the stored values; margins are rounded to whole nanoseconds.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:mask:sizeMismatch</code></td><td>Inputs</td><td>QualFlags or User does not have one row per epoch of arc.</td></tr>
+<tr><td><code>timeSeriesPreparation:mask:badThrusters</code></td><td>Inputs</td><td>Thrusters has no on_time_* column or its unit is not milliseconds.</td></tr>
+<tr><td><code>timeSeriesPreparation:mask:badEclipse</code></td><td>Inputs</td><td>Eclipse lacks t or value, t is not an increasing int64 column, or value is outside [0, 1].</td></tr>
+<tr><td><code>timeSeriesPreparation:mask:badEvents</code></td><td>Inputs</td><td>Events or Soe lacks a variable, or a window ends before it starts.</td></tr>
+<tr><td><code>timeSeriesPreparation:mask:marginMissing</code></td><td>Inputs</td><td>a margin is needed but the product has no CRN preset to derive it from; give it. QualFlags without gracefoReading on the path is refused by internal.requirePackage on mask&#x27;s behalf (depMissing). A layer name that already exists (mask run twice on one arc) is</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:badLayer</code></td><td>Inputs</td><td>.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A user layer on a ten-sample arc; weights follow the layers.</p>
+<pre><code>t = int64(0:9)&#x27; * int64(1e9);
+aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;gps_time&#x27;, &#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;gps_time&#x27;, &#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACT1B_2020-01-01_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+arc = timeSeriesPreparation.Arc(t, zeros(10, 1), aux);
+[arc, info] = timeSeriesPreparation.mask(arc, User = (1:10)&#x27; &gt; 8);</code></pre>
+<h2>Limitations</h2>
+<p>Classic GRACE decimal qualflg is not decoded (gracefoReading reads bit strings only; X-13). LRI has no CRN preset (V-2), so its margins must be given. TN-01a windows are the caller&#x27;s reading of the list.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md 6.1 row 1; GRACE-FO L1 Data Product User Handbook, JPL D-56935 (R-2), PDF pp. 18, 20 (L1B gap filling); the qualflg meanings printed in the RL04 file headers; TN-01, TN-01a (D-4); HANDOVER X-05 (D-9, owner decisions 2026-09-24).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.Arc</code>, <code>timeSeriesPreparation.Config</code>, <code>timeSeriesPreparation.qc.screen</code>, <code>gracefoReading.decodeQualFlags</code>, <code>gracefoReading.readEventList</code></p>
+<p class="footer">timeSeriesPreparation v0.2.0 - generated from the help block of +timeSeriesPreparation/mask.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

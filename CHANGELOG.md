@@ -3,7 +3,11 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
-## Unreleased
+## 0.2.0 — 2026-09-24
+
+Second release (GUIDE section 7, Phase 2: X-05 → v0.2.0). Besides X-05 it
+carries X-06, X-02, X-07, X-08 and X-09, merged after 0.1.0.
+
 
 - `.github/` profile switch (PR #41): `+spectral` and `+tsmodels` are audited
   under the public help template and documented; the error catalogue lists
@@ -62,6 +66,17 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
   (`tests/qc`). Errors are now `timeSeriesPreparation:<unit>:<mnemonic>`
   through `internal.fail`; `internal.provenance` keeps the record's fields.
   `TestQcPort` holds every ported file to the SHA-256 of its original.
+- **X-05** `mask`: one named removal layer per source — qualflg bits with
+  the file header's meanings (presets remove the L1B fill flags and the
+  KBR1B/LRI1B phase break; ACT1B clock-offset extrapolation and KBR1B
+  time-tag bias correction are reported only), SNR below 0.5 of its median
+  (KBR1B, LRI1B), THR1B firings and eclipse transitions ± half the CRN fit
+  interval, TN-01 manoeuvre windows and caller-stated TN-01a windows, CRN
+  edges at gaps (off by default), a user layer. `Config.mask` holds the
+  presets.
+- **X-05** D-9: `TestDefectCatalogue` checks the eight defect classes on
+  their real days of 2020-01 and 2020-07 (DATAPOOL) and the three without
+  a real instance synthetically.
 
 ## 0.1.0 — 2026-09-23
 

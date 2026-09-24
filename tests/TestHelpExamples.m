@@ -10,7 +10,7 @@ classdef TestHelpExamples < matlab.unittest.TestCase
 %     generator's configuration.
 %
 %   COVERAGE
-%     'contract' - every documented EXAMPLE of timeSeriesPreparation v0.1.0 runs.
+%     'contract' - every documented EXAMPLE of timeSeriesPreparation v0.2.0 runs.
 
     methods (Test, TestTags = {'contract'})
         function timeSeriesPreparation_internal_blockLength_example1(testCase)
@@ -305,6 +305,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.fill: An AR(1) at 1 Hz with a 5 s gap, modelled and filled.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_fill_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.fill did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_mask_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.mask: A user layer on a ten-sample arc; weights follow the layers.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_mask_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.mask did not run cleanly.");
         end
 
         function timeSeriesPreparation_noise_example1(testCase)
@@ -665,6 +671,14 @@ function example_timeSeriesPreparation_fill_1()  %#ok<DEFNU>
     arc = timeSeriesPreparation.Arc(int64(0:1499)' * int64(1e9), x, aux);
     nm = timeSeriesPreparation.noise(arc, [1 0], MaxLag = 50);
     [filledArc, info] = timeSeriesPreparation.fill(arc, Method = "collocation", Model = nm, MaxGap = 10);
+end
+
+function example_timeSeriesPreparation_mask_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.mask, verbatim from its help block.
+    t = int64(0:9)' * int64(1e9);
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'gps_time', 'lin_accl_x'}}, "variableFieldNames", {{'gps_time', 'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-01_C_04.txt", "product", "ACT1B");
+    arc = timeSeriesPreparation.Arc(t, zeros(10, 1), aux);
+    [arc, info] = timeSeriesPreparation.mask(arc, User = (1:10)' > 8);
 end
 
 function example_timeSeriesPreparation_noise_1()  %#ok<DEFNU>

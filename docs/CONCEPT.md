@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.20 (DRAFT) · 2026-09-24 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.21 (DRAFT) · 2026-09-24 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.21 | X-05: `mask` (6.1 row 1) follows the file headers' qualflg meanings: GRACE-FO ACT1B bits 3/4 are the CLK1B clock-offset extrapolation, not a large-range mode, and are reported, not removed; the presets remove the phase break and the L1B fill flags. An `snr` layer (0.5 of the median, provisional) is added; TN-01 MANV rows become windows of their stated duration, TN-01a windows are the caller's; THR1B and eclipse margins are half the CRN fit interval. V-12 answered by D-9 (owner decisions 2026-09-24) |
 | 0.20 | X-09 PR 2: the remaining methods of 7 are three L2 units, `regressDrivers` (OLS on demeaned drivers, VIF gate 10 as a provisional Config default, block-bootstrap sigmas), `partialCorrelation` (inverse correlation matrix, block-bootstrap sigmas) and `binnedMap` (mean, sd, count per bin, the caller's edges) (3.2, 7; owner decisions 2026-09-24) |
 | 0.19 | X-09 PR 1: `drivers` aligns and checks supplied series (no physics, no per-revolution averaging); `correlate` pre-whitens both series with the residual axis's ARMA model (Box–Jenkins), the lag convention and the Bartlett effective sample size are fixed (7; owner decisions 2026-09-24) |
 | 0.18 | X-08: V-7 closed from the code (the sigtools Kalman filter only predicts). `collocation` is covariance collocation on the model's autocovariance, never extrapolated beyond its largest lag, not a Kalman smoother; `reference` follows X-09 (owner decisions 2026-09-24; 6.5, 9.3) |
@@ -283,7 +284,7 @@ no positional fallback.
 
 | # | stage | function | guarantee |
 |---|---|---|---|
-| 1 | mask | `mask` | qualflg layers via `decodeQualFlags`, including the **L1B fill flags**: ACC gaps ≤ 100 s and ranging gaps < 21 s are cubic-filled in L1B processing (R-2, PDF pp. 18, 20), and LRI1B bits 6/7 mark interpolated points > 5 s / ≤ 5 s from the CRN centre. Also the **ACC large-range-mode** bit 4 (R-2, PDF p. 32); THR1B windows (margins justified by the CRN span); eclipse transitions from a driver series; CRN edges; a user layer; **official event lists** (G-05) as layers and calibration windows |
+| 1 | mask | `mask` | qualflg layers via `decodeQualFlags`, with the meanings the file header states, including the **L1B fill flags**: ACC gaps ≤ 100 s and ranging gaps < 21 s are cubic-filled in L1B processing (R-2, PDF pp. 18, 20), and ACT1B bits 5–7 and KBR1B/LRI1B bits 6/7 mark interpolated points by their distance from the CRN centre. The presets remove the fill flags and the KBR1B/LRI1B phase break (bit 0); the rest is reported, not removed — among it GRACE-FO ACT1B bits 3/4, which the RL04 header defines as the extrapolated CLK1B clock offset (> 5 s / ≤ 5 s from the CRN centre), not the large-range mode an earlier revision read from R-2 p. 32; an **SNR** layer below a fraction of the median (0.5, provisional); THR1B windows ± half the CRN fit interval; eclipse transitions from a driver series ± the same; CRN edges at gaps (off by default); a user layer; **official event lists** (G-05) as layers and calibration windows: TN-01 MANV rows as [epoch, epoch + stated duration], TN-01a windows stated by the caller, since its prose is never parsed |
 | 2 | QC | `qc` | residual-based outliers; impulses (matched filter on the CRN impulse response, THR1B priors); jumps (reported and turned into parameters, never masked); after X-16, a **labelled template bank** (twang, heater, magnetic-torquer and thruster spikes) with one mask layer per type (X-17) |
 | 3 | align | `align`, `checkAlignment` | reference moved onto the observation epochs; lag diagnostic over ±60 s that warns above 1 s and never shifts silently (v3 F2) |
 | 4 | consistency | `crnKernel`, `crnApply` | exact ATBD kernel **as printed** (section 8), normalised at f0, DC gain 1 + 1.1e-7 (ACC) kept, never renormalised to unit DC; chunked per file day with half-span overlap, bit-identical to unchunked; NaN edges. **The convolution sum is evaluated only at the output epochs** (1 Hz for ACC1B from the 10 Hz grid): about 3.6e8 instead of 3.6e9 multiply-adds per day for 3 axes, pinned equal to full-rate convolution followed by sampling |
@@ -531,7 +532,7 @@ passed + failed + incomplete = total before every run.
 | V-9 | GRACE macro model (plates, areas, optical properties, mass), from the GRACE product specification; the document must be supplied, not recalled | N-07 |
 | V-10 | classic GRACE accelerometer thermal-control history, and which housekeeping product carries the accelerometer temperature | N-08 bias model and drivers |
 | V-11 | is there a published daily ACC bias/scale series (processing centre or science data system) usable as an external oracle? | ORC-10 external half |
-| V-12 | the defect catalogue: one real day per defect class, recorded as file, epoch range and expected verdict | X-05, L-02, N-02 tests |
+| V-12 | the defect catalogue: one real day per defect class, recorded as file, epoch range and expected verdict — **answered 2026-09-24** by D-9 (timeSeriesPreparation HANDOVER, X-05): 8 classes real, 3 synthetic only | X-05, L-02, N-02 tests |
 | V-13 | GRACE-FO accelerometer temperature housekeeping: product name and columns, from real files | N-11 |
 | V-14 | temperature source for LRI thermal coupling (zenith solar-array temperature), product and columns | L-09 |
 | V-15 | PO.DAAC/ISDC collection names, file naming and published checksums for every product in the data plan | G-06, GUIDE Stage B |

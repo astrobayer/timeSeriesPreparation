@@ -4,15 +4,17 @@ classdef TestConfig < matlab.unittest.TestCase
 %   DESCRIPTION
 %     The nine sections of CONCEPT 5 exist; crn holds preset (X-04), align
 %     its four options (X-06), fill its three (X-08), unc its five (X-07),
-%     drivers its four (X-09), the rest are empty.
+%     drivers its four (X-09), mask its five (X-05), the rest are empty.
 %     Config(arc) records mission and product and takes the crn preset and
 %     the minimum-data gate from the product. set refuses an unknown section or field;
 %     fault injection of the refusal is the refusal itself: a misspelt
 %     section and a field no schema lists must both fire.
 %
 %   COVERAGE
-%     contract       - the nine sections, empty but crn, align, fill, unc
-%                      and drivers; drivers' defaults ("pchip", [], [], 10); align's defaults (pchip, [], 60 s, 1 s) and
+%     contract       - the nine sections, empty but mask, crn, align, fill,
+%                      unc and drivers; mask's defaults and its presets
+%                      (ACT1B bits 5-7; KBR1B, LRI1B bits 0, 6, 7 and
+%                      snrFraction 0.5; others none); drivers' defaults ("pchip", [], [], 10); align's defaults (pchip, [], 60 s, 1 s) and
 %                      setting them; fill's defaults ("none", [], []) and
 %                      setting them; unc's defaults ([], [], 1000, 0.6827, 5) and
 %                      the gate 0.5 for ACC1B, ACT1B, KBR1B and LRI1B only;
@@ -25,14 +27,14 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function nineSectionsSomeEmpty(testCase)
             cfg = timeSeriesPreparation.Config();
             testCase.verifyEqual(cfg.Sections, ...
                 ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]);
-            for sec = setdiff(cfg.Sections, ["crn" "align" "fill" "unc" "drivers"], "stable")
+            for sec = setdiff(cfg.Sections, ["mask" "crn" "align" "fill" "unc" "drivers"], "stable")
                 testCase.verifyEqual(cfg.(sec), struct(), sec);
             end
             testCase.verifyEqual(cfg.crn, struct("preset", ""));
@@ -106,6 +108,27 @@ classdef TestConfig < matlab.unittest.TestCase
             end
             cfg = set(cfg, "unc", "minWeightFraction", 0.7);
             testCase.verifyEqual(cfg.unc.minWeightFraction, 0.7);
+        end
+
+        function maskDefaultsAndPresets(testCase)
+            cfg = timeSeriesPreparation.Config();
+            testCase.verifyEqual(cfg.mask, struct("removeBits", zeros(1, 0), "snrFraction", [], ...
+                "thrMargin", [], "eclipseMargin", [], "crnEdge", false));
+            t = int64(0:4)' * int64(1e9);
+            cases = {"ACT1B_2020-01-01_D_04.txt", "ACT1B", [5 6 7], []
+                     "KBR1B_2020-01-01_Y_04.txt", "KBR1B", [0 6 7], 0.5
+                     "LRI1B_2020-01-01_Y_04.txt", "LRI1B", [0 6 7], 0.5
+                     "MAS1B_2020-01-01_C_04.txt", "MAS1B", zeros(1, 0), []};
+            for k = 1:size(cases, 1)
+                aux = struct("obsNames", {{'x'}}, "variableNames", {{'x'}}, ...
+                    "variableFieldNames", {{'x'}}, "variableUnits", struct(), ...
+                    "fileName", cases{k, 1}, "product", cases{k, 2});
+                cfg = timeSeriesPreparation.Config(timeSeriesPreparation.Arc(t, zeros(5, 1), aux));
+                testCase.verifyEqual(cfg.mask.removeBits, cases{k, 3}, cases{k, 2});
+                testCase.verifyEqual(cfg.mask.snrFraction, cases{k, 4}, cases{k, 2});
+            end
+            cfg = set(cfg, "mask", "thrMargin", 10);
+            testCase.verifyEqual(cfg.mask.thrMargin, 10);
         end
 
         function crnPresetCanBeSet(testCase)

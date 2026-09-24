@@ -20,7 +20,7 @@ classdef TestBinnedMap < matlab.unittest.TestCase
 %                      map per call, O(N).
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'reference'})
         function equalsExplicitLoop(testCase)

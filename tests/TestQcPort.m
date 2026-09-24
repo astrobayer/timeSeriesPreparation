@@ -31,7 +31,7 @@ classdef TestQcPort < matlab.unittest.TestCase
 %                   equality.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-24 16:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 16:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         % Ported file (relative to the repository), SHA-256 of the original.
