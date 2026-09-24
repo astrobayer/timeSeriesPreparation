@@ -35,6 +35,10 @@ classdef Config
 %     default, a collocation without it refuses) and window ([] = the
 %     largest the covariance model allows), the options of fill.
 %
+%     drivers (X-09): fields method ("pchip") and maxGap ([] = 1.5 x each
+%     driver's median step), the options of drivers, and maxLag ([] in
+%     samples, no default: correlate needs it given), CONCEPT 7.
+%
 %     unc (X-07): the gate and the uncertainty stages (CONCEPT 6.1, rows 6
 %     and 7). minWeightFraction is the minimum-data gate of observability
 %     (CONCEPT 5.2): an axis keeping less weight than this refuses. The
@@ -73,17 +77,17 @@ classdef Config
 %     s = toStruct(cfg);
 %
 %   LIMITATIONS
-%     Only crn, align, fill and unc have fields so far; set refuses every other
-%     field until the stages define theirs.
+%     Only crn, align, fill, unc and drivers have fields so far; set
+%     refuses every other field until the stages define theirs.
 %
 %   REFERENCES
 %     docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults). R-1: GRACE
 %     L1B ATBD, JPL D-27672, App. B. R-2: GRACE-FO L1 Handbook, JPL D-56935.
 %
-%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability.
+%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-24 10:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
@@ -100,7 +104,7 @@ classdef Config
         noise = struct()
         unc = struct("minWeightFraction", [], "blockLength", [], "nBoot", 1000, ...
             "level", 0.6827, "folds", 5)
-        drivers = struct()
+        drivers = struct("method", "pchip", "maxGap", [], "maxLag", [])
         run = struct()
     end
 
@@ -169,6 +173,8 @@ function known = schema(section)
             known = ["method" "maxGap" "maxLag" "threshold"];
         case "fill"
             known = ["method" "maxGap" "window"];
+        case "drivers"
+            known = ["method" "maxGap" "maxLag"];
         case "unc"
             known = ["minWeightFraction" "blockLength" "nBoot" "level" "folds"];
         otherwise

@@ -36,6 +36,11 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:checkAlignment:grossOffset` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column lags by more than MaxLag/2, or its peak lies on the search edge. |
 | `timeSeriesPreparation:checkAlignment:offset` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column lags by more than Threshold. |
 | `timeSeriesPreparation:checkAlignment:undetermined` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column has no positive peak or too few valid pairs. |
+| `timeSeriesPreparation:correlate:badBootLag` | `+timeSeriesPreparation/correlate.m` | Input | a BootLags entry exceeds maxLag. |
+| `timeSeriesPreparation:correlate:epochMismatch` | `+timeSeriesPreparation/correlate.m` | Input | drv is not drivers' output on arc.t. |
+| `timeSeriesPreparation:correlate:irregularGrid` | `+timeSeriesPreparation/correlate.m` | Input | the epochs are not uniformly spaced. |
+| `timeSeriesPreparation:correlate:modelMismatch` | `+timeSeriesPreparation/correlate.m` | Input | model lacks a, b or mu, or its rows differ from the arc's axes, or a(:,1) or b(:,1) is not 1. |
+| `timeSeriesPreparation:correlate:tooFewPairs` | `+timeSeriesPreparation/correlate.m` | Input | an axis and a driver share fewer than 10 whitened samples at lag 0. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:crnApply:badKernel` | `+timeSeriesPreparation/crnApply.m` | Kernel | kernel lacks a field of crnKernel's output, or its taps are not Nf x 1. |
 | `timeSeriesPreparation:crnApply:emptyArc` | `+timeSeriesPreparation/crnApply.m` | Input | the arc holds no samples. An OutputEpochs that is not int64 is refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:crnApply:epochNotOnGrid` | `+timeSeriesPreparation/crnApply.m` | Grid | an output epoch is not on the input grid, or OutputEpochs is not strictly increasing. |
@@ -46,6 +51,9 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:crnKernel:unverifiedPreset` | `+timeSeriesPreparation/crnKernel.m` | Preset | "LRI": no CRN numbers for LRI1B are confirmed from a registered document yet. |
 | `timeSeriesPreparation:crossval:badLoss` | `+timeSeriesPreparation/crossval.m` | Input | lossFcn does not return a 1 x L double row of the same L for every fold. |
 | `timeSeriesPreparation:crossval:noTraining` | `+timeSeriesPreparation/crossval.m` | Input | Folds and Gap leave a fold without a training row or without a test row. |
+| `timeSeriesPreparation:drivers:badSeries` | `+timeSeriesPreparation/drivers.m` | Input | series lacks a field, or a driver's name is not a field name, its t is not an int64 strictly increasing column, or its value is not a real double column of t's size without Inf. |
+| `timeSeriesPreparation:drivers:duplicateName` | `+timeSeriesPreparation/drivers.m` | Input | two drivers share a name. |
+| `timeSeriesPreparation:drivers:unitUnknown` | `+timeSeriesPreparation/drivers.m` | Input | a driver states no unit. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:fill:irregularGrid` | `+timeSeriesPreparation/fill.m` | Input | the epochs are not uniformly spaced; resample first (align). |
 | `timeSeriesPreparation:fill:maxGapMissing` | `+timeSeriesPreparation/fill.m` | Input | "collocation" without MaxGap (it has no default, Q3). |
 | `timeSeriesPreparation:fill:modelMismatch` | `+timeSeriesPreparation/fill.m` | Input | Model lacks acv, dt or mu, or its columns or dt differ from the arc's. |
@@ -122,4 +130,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-115 identifier(s).
+123 identifier(s).

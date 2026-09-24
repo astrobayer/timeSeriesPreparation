@@ -253,6 +253,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.checkAlignment did not run cleanly.");
         end
 
+        function timeSeriesPreparation_correlate_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.correlate: A driver acting 5 s late on a white residual: the peak sits at +5.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_correlate_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.correlate did not run cleanly.");
+        end
+
         function timeSeriesPreparation_crnApply_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.crnApply: Filter a 10 Hz constant with the ACC kernel and keep 1 Hz samples.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_crnApply_1(), ...
@@ -269,6 +275,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.crossval: Loss of the training mean as a predictor of the test rows.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_crossval_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.crossval did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_drivers_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.drivers: beta' at 60 s onto a 1 s arc.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_drivers_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.drivers did not run cleanly.");
         end
 
         function timeSeriesPreparation_fill_example1(testCase)
@@ -552,6 +564,18 @@ function example_timeSeriesPreparation_checkAlignment_1()  %#ok<DEFNU>
     report = timeSeriesPreparation.checkAlignment(timeSeriesPreparation.Arc(t, x, aux("ACT1B")), timeSeriesPreparation.Arc(t, x, aux("MOD1B")));
 end
 
+function example_timeSeriesPreparation_correlate_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.correlate, verbatim from its help block.
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-01_C_04.txt", "product", "ACT1B");
+    rs = RandStream("twister", "Seed", 9);
+    d = randn(rs, 2005, 1);
+    t = int64(0:1999)' * int64(1e9);
+    arc = timeSeriesPreparation.Arc(t, randn(rs, 2000, 1) + 0.5 * d(1:2000), aux);
+    drv = timeSeriesPreparation.drivers(arc, struct("name", "d", "t", t, "value", d(6:2005), "unit", "1"));
+    white = struct("a", 1, "b", 1, "mu", 0);
+    res = timeSeriesPreparation.correlate(arc, drv, white, 10, BootLags = [], AcfLags = 5);
+end
+
 function example_timeSeriesPreparation_crnApply_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.crnApply, verbatim from its help block.
     k = timeSeriesPreparation.crnKernel("ACC");
@@ -572,6 +596,15 @@ function example_timeSeriesPreparation_crossval_1()  %#ok<DEFNU>
     x = filter(1, [1 -0.5], randn(RandStream("twister", "Seed", 4), 1000, 1));
     mse = @(tr, te) mean((te - mean(tr, "omitnan")).^2, "omitnan");
     [loss, info] = timeSeriesPreparation.crossval(x, mse, Folds = 5);
+end
+
+function example_timeSeriesPreparation_drivers_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.drivers, verbatim from its help block.
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-01_C_04.txt", "product", "ACT1B");
+    arc = timeSeriesPreparation.Arc(int64(0:599)' * int64(1e9), zeros(600, 1), aux);
+    tb = int64(0:60:600)';
+    beta = struct("name", "betaPrime", "t", tb * int64(1e9), "value", 30 + double(tb) / 600, "unit", "deg");
+    drv = timeSeriesPreparation.drivers(arc, beta);
 end
 
 function example_timeSeriesPreparation_fill_1()  %#ok<DEFNU>

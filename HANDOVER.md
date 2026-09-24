@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.19 · 2026-09-24 · X-08 `fill` in review (PR #46), CI green 515 + 0 + 0; X-07 library merged (PR #45, `fae4071`)**
+**Revision 0.20 · 2026-09-24 · X-09 PR 1 (`drivers`, lagged `correlate`) in review (PR #47), CI green 534 + 0 + 0; X-08 merged (PR #46, `a08cfc0`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,120 @@ restates:
 
 ---
 
-## X-08 — `fill` (issue #11, PR #46); scope frozen 2026-09-24
+## X-09 PR 1 — `drivers` and lagged `correlate` (issue #12, stays open for PR 2; PR #47); scope frozen 2026-09-24
+
+Tier B. Design: CONCEPT 7, 6.1 row 9, 10.1 row X-09 (needs X-07, merged).
+
+**Owner decisions 2026-09-24:**
+- **Two PRs.**
+  - PR 1: `drivers`, lagged correlation of pre-whitened series, the
+    effective sample size and block-bootstrap CIs.
+  - PR 2: regression with the VIF gate, partial correlation, and binned
+    (β′, u) maps.
+- **`drivers` aligns and validates supplied series and computes no
+  physics.** β′, u, eclipse, space weather, THR1B counts and SNR come from
+  other toolboxes (CONCEPT 7). There is no per-revolution averaging.
+- **Pre-whitening with a caller-supplied noise model.** `correlate` hides
+  no fit.
+
+True after the merge:
+- **`drivers`** (L2): `drv = drivers(arc, series, Method = "pchip", MaxGap = [])`.
+  - `series` is a (1,K) struct with fields `name`, `t` (int64 GPS ns,
+    increasing), `value` (double, NaN missing) and `unit`. A unit is
+    required (R5).
+  - Each driver goes onto `arc.t` by align's rule
+    (`internal.resampleOnto`). It is exact at coinciding epochs, never
+    interpolated across a hole, and never extrapolated.
+  - It returns a struct: `t`, `names`, `units`, `values` (N,K), `gap`
+    (N,K), `method`, and `maxGap` (1,K).
+  - Errors: `drivers:badSeries`, `drivers:duplicateName`,
+    `drivers:unitUnknown`.
+- **`correlate`** (L2), lagged correlation:
+  `res = correlate(arc, drv, model, maxLag, AcfLags, BootLags = 0, NBoot, BlockLength, Seed, Stage = "correlate", Level)`.
+  - **Pre-whitening follows Box and Jenkins.** Axis m and every driver are
+    filtered by the inverse of axis m's ARMA model (a/b, `noise`'s
+    output), each after removing its own mean. Each finite segment is
+    filtered from rest, and its first p samples are dropped. For AR models
+    that is exact; for MA terms the start-up transient decays like
+    theta^k. With the residual white, the null variance of r is 1/n
+    whatever the driver's own autocorrelation (Bartlett), so one model per
+    axis is enough.
+  - r(l, m, k) is the Pearson correlation over the complete pairs
+    (x'_t, d'_(t-l)), for l = -maxLag..maxLag samples. A positive lag
+    means the driver leads.
+  - nEff(m, k) = n / (1 + 2 sum_k rho_x'(k) rho_d'(k)), using the
+    gap-aware `tsmodels.tsAcf` of the whitened series up to AcfLags.
+  - The CI at every lag is Fisher z with nEff.
+  - At BootLags, a moving-block bootstrap of the pair rows is run through
+    `bootstrap` (automatic block length, seed from Stage).
+  - maxLag has no default (R5).
+  - Errors: `correlate:epochMismatch`, `correlate:modelMismatch`,
+    `correlate:irregularGrid`, `correlate:tooFewPairs` (and
+    `correlate:badBootLag`, see the amendment).
+- `Config.drivers`: method ("pchip"), maxGap ([]) and maxLag ([], no
+  default).
+- Records: CONCEPT 7 (the pre-whitening rule and the lag convention),
+  Contents, CHANGELOG, generated docs.
+
+**Tests planned:**
+- Reference: a white model reduces `correlate` to corrcoef of the shifted
+  vectors. A white transfer x_t = e_t + beta d_(t-l0) peaks at l0 with rho
+  = beta sd / sqrt(beta^2 sd^2 + se^2).
+- Precision: AR(1) pre-whitening returns the innovations exactly.
+- Metamorphic: two independent AR(0.95) series stay within the null band
+  after pre-whitening. They far exceed it before.
+- `drivers` equals `align` on a same-unit driver, bitwise.
+- Contract, vectorisation and robustness as usual.
+
+**Measured before coding (NumPy, 2026-09-24):**
+- AR(1) pre-whitening returns the innovations to 4e-16.
+- x_t = e_t + 0.5 d_(t-7), n = 4000: the peak lands at +7 in every
+  realisation. The scatter of r - 0.447 is 0.0122 (theory 0.0126), and the
+  worst of 300 is 0.038. Tests hold it to 0.065.
+- Two independent AR(0.95) series, n = 3000, lags -50..50. Before
+  pre-whitening, nEff/n is 0.039–0.069; after, 0.986–1.010. After
+  pre-whitening, max |r| sqrt(n) is at most 4.18 over 200 realisations.
+  Tests hold these to < 0.1, 0.95–1.05 and 5.5.
+- Lag-0 block-bootstrap sigma over (1 - r^2)/sqrt(n): 0.90–1.10 over 100
+  realisations. Tests hold it to 0.75–1.3.
+- Raw max |r| can be as small as 0.028, so no test asserts that the raw
+  correlation exceeds the band.
+
+**Amendment:** a new error, `correlate:badBootLag`, for a BootLags entry
+beyond maxLag. It replaces silent clamping.
+
+**Fault injection:**
+- The reference tests compute r independently with corrcoef, and the
+  pre-whitened reference with a direct `filter`.
+- Filtering only the residual (not the driver), or the wrong lag sign,
+  moves the transfer peak to -7 or changes r by O(0.1).
+- Each identifier's test plants its own trigger.
+
+**Prediction** (before any run): **534 + 0 + 0 = 534**. That is 515 plus:
+- TestDrivers 7 (reference 1, precision 1, contract 2, metamorphic 1,
+  vectorisation 1, robustness 1).
+- TestCorrelate 9 (reference 3, precision 1, contract 2, metamorphic 1,
+  vectorisation 1, robustness 1).
+- TestConfig +1 (contract).
+- TestHelpExamples 47 -> 49 (contract).
+
+Per tag: contract 168, reference 193, precision 17, robustness 105,
+metamorphic 33, vectorisation 15, speed 3.
+
+**Verdict, MATLAB R2026a, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:**
+CI run 35972395466 on `4587a5d` (2026-09-24): `audit` green; `matlab`
+green, **534 + 0 + 0 = 534**, every tag as predicted (contract 168,
+reference 193, precision 17, robustness 105, metamorphic 33,
+vectorisation 15, speed 3). TestDrivers 7 and TestCorrelate 9 all pass;
+no warning from `drivers`, `correlate`, `bootstrap` or `tsAcf`. Gate
+time 1034 s.
+
+**Cited from memory, not re-read** (debt): Box et al. 2015 ch. 12,
+Bartlett 1946 and Fisher 1921, all named in `correlate`'s help.
+
+---
+
+## X-08 — `fill` — merged 2026-09-24 (PR #46, `a08cfc0`; issue #11 closed); scope was frozen 2026-09-24
 
 Tier B (no local MATLAB; the MATLAB verdict is CI's). Design: CONCEPT
 6.5, 3.2 (no least-squares estimator; `fill` takes a covariance model),
@@ -903,7 +1016,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-08 in review (PR #46): CI green, 515 + 0 + 0.**
+**X-09 PR 1 in review (PR #47): CI green, 534 + 0 + 0.**
+X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
 X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0).
 lsqvce CI dependency merged (PR #43, `5afbd87`; CI 421 + 0 + 0).
@@ -921,7 +1035,7 @@ released nothing, as designed. `.github/` profile switch merged (PR #41,
 - 0.4: lsqvce V-6 answered; `v6.1.0` tagged on `21e470d` and released.
 
 C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
-`v1.3.2`). Next: X-08 (#11); X-05
+`v1.3.2`). Next: X-09 (#12, two PRs); X-05
 (#8) also waits on V-12 (defect catalogue, D-9).
 
 **GUIDE A5 done:** one issue per WP, X-00b … X-18 = #3–#21 (map in GUIDE Appendix A).
@@ -934,7 +1048,7 @@ C-01 and C-03 are merged in ci-actions (#6, closed 2026-09-20; tags up to
 | content | `docs/CONCEPT.md` Rev 0.17, `docs/GUIDE.md` rev 1.11, `docs/inputs/` (4 files), this HANDOVER, README; code as below |
 | code, `Contents.m`, CI, audit | X-00b: setup, gate, `ci.yml` (`audit`, `matlab`), shared audit and generator. X-01: `+spectral`, `+tsmodels`, `demos/`, `tests/sigtools/`. X-03: `Arc`, `Config`. X-04: `crnKernel`, `crnApply`, `Contents.m` 0.1.0 |
 | `docs/GUIDE.md` | rev 1.11 (release workflow; `v0.1.0` anomaly) |
-| `docs/CONCEPT.md` | Rev 0.18 (X-08: V-7 closed, `fill` collocation, 6.5) |
+| `docs/CONCEPT.md` | Rev 0.19 (X-09: `drivers`, Box–Jenkins `correlate`, 7) |
 | `docs/references/REFERENCES.md` | the register: R-1 … R-13 (documents in the DATAPOOL), P-1 … P-20 (papers) |
 
 **The move, measured.** SHA-256 of all six files at the copy commit was
