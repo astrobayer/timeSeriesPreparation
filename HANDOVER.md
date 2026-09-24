@@ -87,6 +87,23 @@ metamorphic 44, vectorisation 16, vectorization 5, speed 8.
 
 **Debt:** Tier A (no local MATLAB).
 
+**Verdict, CI run 36033100696 on `a2dcbff` (2026-09-24), MATLAB R2026a
+Update 5, gracefoReading `v1.1.0`, lsqvce `v6.1.3`, READING_DATA_POOL set:**
+- `audit` green.
+- `matlab` green on the first run: **622 + 0 + 0 = 622**, every tag as
+  predicted (contract 187, reference 220, precision 23, robustness 119,
+  metamorphic 44, vectorisation 16, vectorization 5, speed 8).
+- TestMask 11/11 and TestDefectCatalogue 11/11. The DC tests ran on the
+  real days, with nothing incomplete.
+- DC-5 logged its phase breaks: 2020-07-01 at 13590 s and 2020-07-09 at
+  82645 s, now in the D-9 table.
+- No new warning in the gate step. Gate time 1541 s.
+
+**Finding: the `matlab` job ran 27 min 7 s against its 30-min
+`timeout-minutes`.** The gate grew from 1159 s (PR-A) to 1541 s, and the
+DATAPOOL reads add to it. The next WP's tests may cross the limit. Raising
+it is a `.github/` change and stands alone (O-6).
+
 ---
 
 ## X-05 PR-B — `qc` port, unchanged (issue #8) — merged 2026-09-24 (PR #52, `b5633c0`); scope was frozen 2026-09-24 (X-05 PR-A)
@@ -239,7 +256,7 @@ ones the file headers themselves print (2020-07 headers).
 | DC-2 | gap across the day boundary | KBR1B Y 2020-01-14 → 2020-01-15 | last sample 01-14 82235 s; first sample 01-15 4675 s | one gap spanning both files; longer than the 21-s L1B fill limit, so the arc splits there |
 | DC-3 | gaps inside a day | KBR1B Y 2020-01-08; KBR1B Y 2020-07-09 | 01-08: starts 70170 s (+740 s), 78290 s (+610), 79215 s (+75), 82025 s (+100); 07-09: 81680 s (+965) | four (one) gap segments; each longer than 21 s, so none is an L1B fill |
 | DC-4 | KBR SNR drop | KBR1B Y 2020-01-14, `K_B_SNR` | minimum 288 at 82150 s (median of the day 774), just before DC-2's gap | flagged by the SNR layer (PR-C sets the threshold); smaller dips 2020-07-12 (723 at 61455 s) and 2020-07-17 (732 at 19145 s) stay unflagged |
-| DC-5 | KBR phase break (qualflg bit 0) | KBR1B Y 2020-07-01; KBR1B Y 2020-07-09 | one flagged sample each day (the scan counted, it did not print the epoch; PR-C's test locates and records it) | masked by the qualflg layer (bit 0) |
+| DC-5 | KBR phase break (qualflg bit 0) | KBR1B Y 2020-07-01; KBR1B Y 2020-07-09 | one flagged sample each day: 07-01 at 13590 s, 07-09 at 82645 s (logged by `TestDefectCatalogue`, CI run 36033100696) | masked by the qualflg layer (bit 0) |
 | DC-6 | ACT1B clock-offset extrapolation (qualflg bits 3/4) | ACT1B C 2020-01-08; ACT1B C 2020-07-16 | 01-08: bits 3/4 on ~16 200 samples; 07-16: bit 3 on 10 750 samples | a qualflg layer, **reported, not masked by default**: the header reads "extrapolated CLK1B clock offset, > 5 s (bit 3) / ≤ 5 s (bit 4) from the CRN centre" — a time-tag quality statement, not a data defect. (Corrects this session's first reading, "large-range mode", which was wrong.) |
 | DC-7 | KBR time-tag bias correction (qualflg bit 5) | KBR1B Y 2020-01-09 | all 17 182 samples | informational layer, **not masked**: the header reads "data corrected for time-tag bias in K or Ka phase" |
 | DC-8 | thruster-heavy day | THR1B D 2020-01-04 (with ACT1B D 2020-01-04) | 727 THR1B records against ~440 on a typical day | THR1B windows layer; `qc` impulses assigned to THR1B with confidence 1 |
@@ -1501,6 +1518,7 @@ This explains the ITSG gap. It is the first real entry for the defect catalogue
 | O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | **closed 2026-09-22** (PR #36 merged, `2ecf543`) | — | — |
 | O-2 | add the required checks `audit` and `matlab` to `Main Protection`; both contexts exist since run 35771631191 (2026-09-22) | open | owner | now |
 | O-4 | GUIDE A3 steps 6 and 7: gracefoReading #15 merged (`de87fbf`, merge commit, see F), NonGravForces #57 merged (`10c8504`) | **closed 2026-09-18** | owner | — |
+| O-6 | raise the `matlab` job's `timeout-minutes` (30) before the gate outgrows it: 27 min 7 s at X-05 PR-C (run 36033100696). A `.github/` change, its own PR | open | Session, owner merges | before the next WP that adds real-data tests |
 | O-5 | Regression month (CONCEPT ORC-10): keep 2020-01 and mask GRACE-D's safe mode 2020-01-18 05:05 … 2020-01-22 12:05 from the baseline (proposal; it then also tests event masking), or choose another month | open | owner | before N-10 |
 
 ---
