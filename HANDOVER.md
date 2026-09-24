@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.20 · 2026-09-24 · X-09 PR 1 (`drivers`, lagged `correlate`) scope frozen; X-08 merged (PR #46, `a08cfc0`)**
+**Revision 0.20 · 2026-09-24 · X-09 PR 1 (`drivers`, lagged `correlate`) in review (PR #47), CI green 534 + 0 + 0; X-08 merged (PR #46, `a08cfc0`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,7 @@ restates:
 
 ---
 
-## X-09 PR 1 — `drivers` and lagged `correlate` (issue #12, stays open for PR 2); scope frozen 2026-09-24
+## X-09 PR 1 — `drivers` and lagged `correlate` (issue #12, stays open for PR 2; PR #47); scope frozen 2026-09-24
 
 Tier B. Design: CONCEPT 7, 6.1 row 9, 10.1 row X-09 (needs X-07, merged).
 
@@ -109,6 +109,14 @@ beyond maxLag. It replaces silent clamping.
 
 Per tag: contract 168, reference 193, precision 17, robustness 105,
 metamorphic 33, vectorisation 15, speed 3.
+
+**Verdict, MATLAB R2026a, gracefoReading `v1.1.0`, lsqvce `v6.1.3`:**
+CI run 35972395466 on `4587a5d` (2026-09-24): `audit` green; `matlab`
+green, **534 + 0 + 0 = 534**, every tag as predicted (contract 168,
+reference 193, precision 17, robustness 105, metamorphic 33,
+vectorisation 15, speed 3). TestDrivers 7 and TestCorrelate 9 all pass;
+no warning from `drivers`, `correlate`, `bootstrap` or `tsAcf`. Gate
+time 1034 s.
 
 **Cited from memory, not re-read** (debt): Box et al. 2015 ch. 12,
 Bartlett 1946 and Fisher 1921, all named in `correlate`'s help.
@@ -1008,7 +1016,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-09 PR 1 on branch `claude/grace-timeseries-issues-28g3a4`: CI pending (predicted 534 + 0 + 0).**
+**X-09 PR 1 in review (PR #47): CI green, 534 + 0 + 0.**
 X-08 merged (PR #46, `a08cfc0`; CI 515 + 0 + 0).
 X-07 library merged (PR #45, `fae4071`; CI 499 + 0 + 0).
 X-07 merged (PR #44, `f7d3518`; CI 489 + 0 + 0).
