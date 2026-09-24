@@ -28,6 +28,7 @@ th { background: #f0f0f0; }
 <tr><td><a href="timeSeriesPreparation.Arc.html"><code>timeSeriesPreparation.Arc</code></a></td><td>One instrument time series on int64 GPS-ns epochs, with weights, layers and provenance.</td></tr>
 <tr><td><a href="timeSeriesPreparation.Config.html"><code>timeSeriesPreparation.Config</code></a></td><td>Instrument settings in nine sections, strict about field names.</td></tr>
 <tr><td><a href="timeSeriesPreparation.align.html"><code>timeSeriesPreparation.align</code></a></td><td>Move a reference series onto the epochs of an observation, units checked.</td></tr>
+<tr><td><a href="timeSeriesPreparation.binnedMap.html"><code>timeSeriesPreparation.binnedMap</code></a></td><td>Mean, standard deviation and count of a value in bins of two coordinates.</td></tr>
 <tr><td><a href="timeSeriesPreparation.bootstrap.html"><code>timeSeriesPreparation.bootstrap</code></a></td><td>Moving-block bootstrap of a statistic, one RNG substream per replicate.</td></tr>
 <tr><td><a href="timeSeriesPreparation.checkAlignment.html"><code>timeSeriesPreparation.checkAlignment</code></a></td><td>Report a time lag between observation and reference; never shift.</td></tr>
 <tr><td><a href="timeSeriesPreparation.correlate.html"><code>timeSeriesPreparation.correlate</code></a></td><td>Lagged correlation of pre-whitened residuals and drivers, with effective sample size and CIs.</td></tr>
@@ -45,6 +46,8 @@ th { background: #f0f0f0; }
 <tr><td><a href="timeSeriesPreparation.noise.html"><code>timeSeriesPreparation.noise</code></a></td><td>Residual noise model per axis: ARMA by exact ML with gaps, or PSD -&gt; ARMA.</td></tr>
 <tr><td><a href="timeSeriesPreparation.noiseReference.html"><code>timeSeriesPreparation.noiseReference</code></a></td><td>Published noise ASDs of the GRACE-FO instruments: LRI requirement, KBR, LRI laser, ACC.</td></tr>
 <tr><td><a href="timeSeriesPreparation.observability.html"><code>timeSeriesPreparation.observability</code></a></td><td>Identifiability metrics of a design before the fit, and the minimum-data gate.</td></tr>
+<tr><td><a href="timeSeriesPreparation.partialCorrelation.html"><code>timeSeriesPreparation.partialCorrelation</code></a></td><td>Partial correlation of each pair of columns given all others, with block-bootstrap sigmas.</td></tr>
+<tr><td><a href="timeSeriesPreparation.regressDrivers.html"><code>timeSeriesPreparation.regressDrivers</code></a></td><td>Regression of per-revolution parameters on drivers, with a VIF gate and block-bootstrap sigmas.</td></tr>
 <tr><td><a href="timeSeriesPreparation.spectral.allanVariance.html"><code>timeSeriesPreparation.spectral.allanVariance</code></a></td><td>Overlapping Allan variance and deviation, with confidence bounds and slopes.</td></tr>
 <tr><td><a href="timeSeriesPreparation.spectral.arma2acv.html"><code>timeSeriesPreparation.spectral.arma2acv</code></a></td><td>Exact auto-covariance / -correlation of a discrete-time ARMA process.</td></tr>
 <tr><td><a href="timeSeriesPreparation.spectral.arma2psd.html"><code>timeSeriesPreparation.spectral.arma2psd</code></a></td><td>One-sided PSD (or ASD) of a discrete-time ARMA process.</td></tr>

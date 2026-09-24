@@ -32,6 +32,12 @@
 %                       and units checked.
 %     correlate       - Lagged correlation of pre-whitened residuals and
 %                       drivers, with effective sample size and CIs.
+%     regressDrivers  - Regression of per-revolution parameters on drivers,
+%                       with a VIF gate and block-bootstrap sigmas.
+%     partialCorrelation - Partial correlation of each pair of columns given
+%                       all others, with block-bootstrap sigmas.
+%     binnedMap       - Mean, standard deviation and count of a value in bins
+%                       of two coordinates.
 %
 %   Spectra and time-series models (L0, sigtools v1.3.1; conventions of X-02)
 %     spectral   - help timeSeriesPreparation.spectral

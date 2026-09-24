@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.partialCorrelation</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.partialCorrelation</h1>
+<p>Partial correlation of each pair of columns given all others, with block-bootstrap sigmas.</p>
+<h2>Syntax</h2>
+<pre><code>res = timeSeriesPreparation.partialCorrelation(X)
+res = timeSeriesPreparation.partialCorrelation(X, Names = [], NBoot = 1000, BlockLength = [], Seed = 0, Stage = &quot;partialCorrelation&quot;, Level = 0.6827)</code></pre>
+<h2>Description</h2>
+<p>The partial correlation of CONCEPT 7 (e.g. a residual against beta&#x27; with the eclipse fraction held fixed): the correlation of columns i and j after the linear effect of every other column is removed from both. It is read from the inverse Q of the correlation matrix of the complete rows, rho_ij.rest = -Q_ij / sqrt(Q_ii Q_jj), with 1 on the diagonal. With two columns it is their ordinary correlation. sigma and ci come from a moving-block bootstrap of the rows (bootstrap; automatic Politis-White block length unless BlockLength; seed from Stage and Seed), because rows in time order are serially correlated (CONCEPT 8).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>X</code></td><td>R,V</td><td><code>double</code></td><td>&mdash;</td><td>- Variables in columns, rows in time order; NaN = missing (the row is dropped).</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Names</code></td><td>1,V</td><td><code>string</code></td><td>&quot;x1&quot;..&quot;xV&quot;</td><td>Column names.</td></tr>
+<tr><td><code>NBoot</code></td><td>1,1</td><td><code>double</code></td><td>1000</td><td>Bootstrap replicates.</td></tr>
+<tr><td><code>BlockLength</code></td><td>1,1</td><td><code>double</code></td><td>auto</td><td>Block length in rows.</td></tr>
+<tr><td><code>Seed</code></td><td>1,1</td><td><code>double</code></td><td>0</td><td>Caller&#x27;s seed.</td></tr>
+<tr><td><code>Stage</code></td><td>1,1</td><td><code>string</code></td><td>&quot;partialCorrelation&quot;</td><td>Stage of the seed.</td></tr>
+<tr><td><code>Level</code></td><td>1,1</td><td><code>double</code></td><td>0.6827</td><td>Two-sided level of ci.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>res</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: names (1,V); r, sigma (V,V), symmetric, diagonal 1 and 0; ci (2,V,V); nRows; blockLength; level.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>r equals the correlation of the residuals of i and j each regressed on the other columns (TestPartialCorrelation holds 1e-12) and, for three columns, (r_ij - r_ik r_jk) / sqrt((1 - r_ik^2)(1 - r_jk^2)). Its conditioning is that of the correlation matrix; nearly dependent columns refuse.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:partialCorrelation:tooFewVariables</code></td><td>Input</td><td>X has fewer than two columns, or Names the wrong length.</td></tr>
+<tr><td><code>timeSeriesPreparation:partialCorrelation:tooFewRows</code></td><td>Input</td><td>fewer than V + 2 complete rows. Options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+<tr><td><code>timeSeriesPreparation:partialCorrelation:collinear</code></td><td>Numerical</td><td>the correlation matrix is singular (reciprocal condition below 1e-12: a column constant or a combination of the others).</td></tr>
+</table>
+<h2>Example</h2>
+<p>A residual that depends on beta&#x27; only, beta&#x27; and eclipse correlated.</p>
+<pre><code>rs = RandStream(&quot;twister&quot;, &quot;Seed&quot;, 22);
+beta = randn(rs, 500, 1);
+eclipse = 0.7 * beta + randn(rs, 500, 1);
+residual = 0.5 * beta + randn(rs, 500, 1);
+res = timeSeriesPreparation.partialCorrelation([residual beta eclipse], Names = [&quot;residual&quot; &quot;betaPrime&quot; &quot;eclipse&quot;], NBoot = 200);</code></pre>
+<h2>Limitations</h2>
+<p>Linear and Gaussian in spirit; outliers act on r directly. The rows used are those complete in every column.</p>
+<h2>References</h2>
+<p>Whittaker, J. (1990). Graphical Models in Applied Multivariate Statistics. Wiley, ch. 5 (partial correlation from the inverse correlation matrix). docs/CONCEPT.md sections 7 and 8.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.regressDrivers</code>, <code>timeSeriesPreparation.correlate</code>, <code>timeSeriesPreparation.bootstrap</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/partialCorrelation.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.binnedMap</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.binnedMap</h1>
+<p>Mean, standard deviation and count of a value in bins of two coordinates.</p>
+<h2>Syntax</h2>
+<pre><code>map = timeSeriesPreparation.binnedMap(value, a, b, edgesA, edgesB)</code></pre>
+<h2>Description</h2>
+<p>The binned map of CONCEPT 7, e.g. a residual over (beta&#x27;, u). Each sample falls in the bin of its a and b by discretize&#x27;s rule: bins are [e_i, e_(i+1)), the last one closed [e_(n-1), e_n]. Samples with NaN in value, a or b, and samples outside the edges, are ignored. Per bin: the mean, the standard deviation (normalised by n - 1; NaN below two samples) and the count. Empty bins have mean NaN (owner decision 2026-09-24). The edges are the caller&#x27;s: a bin width is physics, not a default (R5).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>value</code></td><td>N,1</td><td><code>double</code></td><td>&mdash;</td><td>- The mapped quantity, e.g. a residual.</td></tr>
+<tr><td><code>a</code></td><td>N,1</td><td><code>double</code></td><td>&mdash;</td><td>- First coordinate, e.g. beta&#x27; in deg.</td></tr>
+<tr><td><code>b</code></td><td>N,1</td><td><code>double</code></td><td>&mdash;</td><td>- Second coordinate, e.g. u in deg.</td></tr>
+<tr><td><code>edgesA</code></td><td>1,:</td><td><code>double</code></td><td>&mdash;</td><td>- Bin edges of a, strictly increasing, at least two.</td></tr>
+<tr><td><code>edgesB</code></td><td>1,:</td><td><code>double</code></td><td>&mdash;</td><td>- Bin edges of b, likewise.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>map</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: mean, sd, count (numel(edgesA) - 1, numel(edgesB) - 1), rows along a; edgesA, edgesB; centresA, centresB (bin midpoints); nUsed, the samples inside the edges.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact accumulation per bin (accumarray); TestBinnedMap holds it against an explicit loop over the bins to 1e-12.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:binnedMap:sizeMismatch</code></td><td>Input</td><td>value, a and b are not vectors of one length.</td></tr>
+<tr><td><code>timeSeriesPreparation:binnedMap:badEdges</code></td><td>Input</td><td>an edge vector has fewer than two entries, is not strictly increasing, or is not finite.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A residual over beta&#x27; and u in 10 x 30 degree bins.</p>
+<pre><code>rs = RandStream(&quot;twister&quot;, &quot;Seed&quot;, 23);
+beta = 180 * rand(rs, 5000, 1) - 90;
+u = 360 * rand(rs, 5000, 1);
+r = 1e-9 * sind(u) .* cosd(beta) + 1e-10 * randn(rs, 5000, 1);
+map = timeSeriesPreparation.binnedMap(r, beta, u, -90:10:90, 0:30:360);</code></pre>
+<h2>Limitations</h2>
+<p>No wrap-around: an angle such as u must be mapped into the edges&#x27; range by the caller (u = 360 falls in the last bin, 0 in the first). No weighting and no robust statistics.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md section 7.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.drivers</code>, <code>timeSeriesPreparation.regressDrivers</code>, <code>discretize</code>, <code>accumarray</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/binnedMap.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

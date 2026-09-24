@@ -241,6 +241,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.align did not run cleanly.");
         end
 
+        function timeSeriesPreparation_binnedMap_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.binnedMap: A residual over beta' and u in 10 x 30 degree bins.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_binnedMap_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.binnedMap did not run cleanly.");
+        end
+
         function timeSeriesPreparation_bootstrap_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.bootstrap: sigma of the mean of an AR(1): larger than the naive 1/sqrt(N).
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_bootstrap_1(), ...
@@ -305,6 +311,18 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.observability: Bias and scale on a quiet arc: the estimates correlate near -1.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_observability_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.observability did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_partialCorrelation_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.partialCorrelation: A residual that depends on beta' only, beta' and eclipse correlated.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_partialCorrelation_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.partialCorrelation did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_regressDrivers_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.regressDrivers: A bias per revolution driven by beta' and the eclipse fraction.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_regressDrivers_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.regressDrivers did not run cleanly.");
         end
     end
 end
@@ -550,6 +568,15 @@ function example_timeSeriesPreparation_align_1()  %#ok<DEFNU>
     out = timeSeriesPreparation.align(obs, ref);
 end
 
+function example_timeSeriesPreparation_binnedMap_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.binnedMap, verbatim from its help block.
+    rs = RandStream("twister", "Seed", 23);
+    beta = 180 * rand(rs, 5000, 1) - 90;
+    u = 360 * rand(rs, 5000, 1);
+    r = 1e-9 * sind(u) .* cosd(beta) + 1e-10 * randn(rs, 5000, 1);
+    map = timeSeriesPreparation.binnedMap(r, beta, u, -90:10:90, 0:30:360);
+end
+
 function example_timeSeriesPreparation_bootstrap_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.bootstrap, verbatim from its help block.
     x = filter(1, [1 -0.5], randn(RandStream("twister", "Seed", 3), 2000, 1));
@@ -638,4 +665,21 @@ function example_timeSeriesPreparation_observability_1()  %#ok<DEFNU>
     t = int64(0:999)' * int64(1e9);
     model = 1e-7 + 1e-9 * sin((0:999)' / 100);
     report = timeSeriesPreparation.observability(timeSeriesPreparation.Arc(t, model, aux), [ones(1000, 1), model], Names = ["bias" "scale"]);
+end
+
+function example_timeSeriesPreparation_partialCorrelation_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.partialCorrelation, verbatim from its help block.
+    rs = RandStream("twister", "Seed", 22);
+    beta = randn(rs, 500, 1);
+    eclipse = 0.7 * beta + randn(rs, 500, 1);
+    residual = 0.5 * beta + randn(rs, 500, 1);
+    res = timeSeriesPreparation.partialCorrelation([residual beta eclipse], Names = ["residual" "betaPrime" "eclipse"], NBoot = 200);
+end
+
+function example_timeSeriesPreparation_regressDrivers_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.regressDrivers, verbatim from its help block.
+    rs = RandStream("twister", "Seed", 21);
+    Z = [randn(rs, 300, 1), rand(rs, 300, 1)];
+    P = 2 + Z * [0.3; -0.5] + 0.1 * randn(rs, 300, 1);
+    res = timeSeriesPreparation.regressDrivers(P, Z, DriverNames = ["betaPrime" "eclipse"], NBoot = 200);
 end

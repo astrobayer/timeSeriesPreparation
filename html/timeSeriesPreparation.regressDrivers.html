@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.regressDrivers</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.regressDrivers</h1>
+<p>Regression of per-revolution parameters on drivers, with a VIF gate and block-bootstrap sigmas.</p>
+<h2>Syntax</h2>
+<pre><code>res = timeSeriesPreparation.regressDrivers(P, Z)
+res = timeSeriesPreparation.regressDrivers(P, Z, Names = [], DriverNames = [], MaxVif = 10, NBoot = 1000, BlockLength = [], Seed = 0, Stage = &quot;regressDrivers&quot;, Level = 0.6827)</code></pre>
+<h2>Description</h2>
+<p>The regression of CONCEPT 7: gated per-revolution parameters (a bias or scale per revolution, from the application&#x27;s fit) on the drivers averaged per revolution by the caller. Rows are revolutions in time order, so that blocks of rows are blocks of time. - VIF gate: vif = diag(inv(corrcoef(Z))) on the rows complete in Z. A driver above MaxVif refuses (default 10, the common rule of thumb, Kutner et al. 2005; owner decision 2026-09-24, provisional); a caller that accepts collinear drivers raises MaxVif. - For each parameter j, ordinary least squares on the rows complete in P(:,j) and Z, with the drivers demeaned over those rows (CONCEPT 8: demeaned regressors decorrelate the intercept): P(:,j) = c0 + (Z - mean(Z)) c + e. coef(1,j) = c0, the mean of P(:,j); coef(2:end,j) = c. - sigma and ci: moving-block bootstrap of the rows [P(:,j) Z] (bootstrap; automatic Politis-White block length unless BlockLength; seed from Stage and Seed), each replicate refitted with its own demeaning (CONCEPT 8: naive sigmas were 5-14 times optimistic on GRACE residuals). - r2: 1 - SSE/SST of the fit.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>P</code></td><td>R,J</td><td><code>double</code></td><td>&mdash;</td><td>- Per-revolution parameters; NaN = gated out.</td></tr>
+<tr><td><code>Z</code></td><td>R,K</td><td><code>double</code></td><td>&mdash;</td><td>- Drivers per revolution; NaN = missing.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Names</code></td><td>1,J</td><td><code>string</code></td><td>&quot;p1&quot;..&quot;pJ&quot;</td><td>Parameter names.</td></tr>
+<tr><td><code>DriverNames</code></td><td>1,K</td><td><code>string</code></td><td>&quot;z1&quot;..&quot;zK&quot;</td><td>Driver names.</td></tr>
+<tr><td><code>MaxVif</code></td><td>1,1</td><td><code>double</code></td><td>10</td><td>VIF gate, &gt;= 1.</td></tr>
+<tr><td><code>NBoot</code></td><td>1,1</td><td><code>double</code></td><td>1000</td><td>Bootstrap replicates.</td></tr>
+<tr><td><code>BlockLength</code></td><td>1,1</td><td><code>double</code></td><td>auto</td><td>Block length in rows.</td></tr>
+<tr><td><code>Seed</code></td><td>1,1</td><td><code>double</code></td><td>0</td><td>Caller&#x27;s seed.</td></tr>
+<tr><td><code>Stage</code></td><td>1,1</td><td><code>string</code></td><td>&quot;regressDrivers&quot;</td><td>Stage of the seed.</td></tr>
+<tr><td><code>Level</code></td><td>1,1</td><td><code>double</code></td><td>0.6827</td><td>Two-sided level of ci.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>res</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: names (1,J), driverNames (1,K); coef, sigma (K+1,J), unit of P per unit of the driver, row 1 the intercept; ci (2,K+1,J); vif (1,K); r2, nRows, blockLength (1,J); level.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>coef is the least-squares solution by QR (backslash); with exact data it recovers the coefficients to rounding. The bootstrap slope sigma lay within 0.86-1.21 of the OLS sigma for white errors (NumPy, 100 realisations of 600 rows, 2026-09-24); for serially correlated errors it is the one that stays honest. The intercept&#x27;s bootstrap sigma also carries the scatter of the replicate means of Z.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:regressDrivers:sizeMismatch</code></td><td>Input</td><td>P and Z have different rows, or Names or DriverNames the wrong length.</td></tr>
+<tr><td><code>timeSeriesPreparation:regressDrivers:tooFewRows</code></td><td>Input</td><td>fewer than K + 2 complete rows for a parameter. Options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+<tr><td><code>timeSeriesPreparation:regressDrivers:collinear</code></td><td>Numerical</td><td>a driver&#x27;s VIF exceeds MaxVif, or the drivers are linearly dependent.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A bias per revolution driven by beta&#x27; and the eclipse fraction.</p>
+<pre><code>rs = RandStream(&quot;twister&quot;, &quot;Seed&quot;, 21);
+Z = [randn(rs, 300, 1), rand(rs, 300, 1)];
+P = 2 + Z * [0.3; -0.5] + 0.1 * randn(rs, 300, 1);
+res = timeSeriesPreparation.regressDrivers(P, Z, DriverNames = [&quot;betaPrime&quot; &quot;eclipse&quot;], NBoot = 200);</code></pre>
+<h2>Limitations</h2>
+<p>Linear in the drivers, one parameter at a time. The bootstrap percentile interval is first-order accurate. Per-revolution averaging and gating are the caller&#x27;s.</p>
+<h2>References</h2>
+<p>Kutner, M. H., Nachtsheim, C. J., Neter, J., Li, W. (2005). Applied Linear Statistical Models, 5th ed. McGraw-Hill, sect. 10.5 (VIF). Kuensch, H. R. (1989). Ann. Statist. 17, 1217-1241 (block bootstrap). docs/CONCEPT.md sections 7 and 8.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.bootstrap</code>, <code>timeSeriesPreparation.observability</code>, <code>timeSeriesPreparation.partialCorrelation</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/regressDrivers.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>
