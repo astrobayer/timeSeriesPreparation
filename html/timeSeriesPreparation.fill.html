@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.fill</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.fill</h1>
+<p>Report the gaps of an arc, or fill the short ones by covariance collocation.</p>
+<h2>Syntax</h2>
+<pre><code>[arc, info] = timeSeriesPreparation.fill(arc)
+[arc, info] = timeSeriesPreparation.fill(arc, Method = &quot;collocation&quot;, Model = nm, MaxGap = 10, Window = [])</code></pre>
+<h2>Description</h2>
+<p>The gap stage (CONCEPT 6.1 row 8, 6.5). A sample is missing on an axis when it is NaN, has weight 0 or was filled before; each axis has its own gaps, a gap being a run of missing samples on the uniform grid. - Method &quot;none&quot; (the default, Q3): nothing changes; info.gaps reports every gap. Splitting the arc there is the caller&#x27;s. - Method &quot;collocation&quot;: each interior gap of at most MaxGap seconds is replaced by the optimal (least-squares) prediction under the covariance model, x_g = mu + C_go C_oo^-1 (x_o - mu), with the prediction variance diag(C_gg - C_go C_oo^-1 C_og). The conditioning samples x_o are the observed samples within W samples either side of the gap. The covariances are the Toeplitz entries Model.acv(|i - j| + 1), never extrapolated: W is at most floor((L - k + 1) / 2) for a gap of k samples and a model to lag L, so that every pair in the window has a lag &lt;= L and the matrix used is the model&#x27;s own. Window lowers W further. For an AR(p) model with W &gt;= p the result equals the prediction from the whole record (the AR precision matrix is banded); for ARMA it converges as W grows (ACCURACY). - Method &quot;reference&quot; (a calibrated reference plus the collocated residual, CONCEPT 6.5) is deferred until the drivers exist (X-09) and refuses. Not filled, and reported with the reason: gaps touching the first or last sample (&quot;edge&quot;, which would be extrapolation), gaps longer than MaxGap (&quot;tooLong&quot;), and gaps the model is too short to bridge (&quot;beyondModel&quot;, W &lt; 1).</p>
+<p>The epochs stay. Filled values enter arc.obs, the row is flagged in arc.filled, and a &quot;fill&quot; entry is appended to the provenance (Arc.fillSamples). Every fit weighs filled rows 0 (CONCEPT 5). With Method &quot;none&quot; the arc is returned unchanged.</p>
+<p>The model is noise&#x27;s output or, e.g. from lsqvce, any struct with acv (L+1, M) in unit^2 at lags 0..L samples, dt (s) and mu (1, M) (CONCEPT 3.2: fill takes a covariance model; there is no estimator here).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Series on a uniform grid; missing samples are NaN, weight 0 or filled.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Method</code></td><td>1,1</td><td><code>string</code></td><td>&quot;none&quot;</td><td>&quot;none&quot;, &quot;collocation&quot; or &quot;reference&quot; (deferred).</td></tr>
+<tr><td><code>Model</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>Covariance model: fields acv (L+1, M), dt (s), mu (1, M); required by &quot;collocation&quot;.</td></tr>
+<tr><td><code>MaxGap</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>s [] Longest gap filled; no default, required by &quot;collocation&quot;.</td></tr>
+<tr><td><code>Window</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Largest W in samples, integer &gt;= 1; [] = the largest the model allows.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- The arc, filled where info.gaps.status is &quot;filled&quot;.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: method; maxGap; window; gaps, a struct of (K,1) columns - axis (string), first, last (sample indices), duration (s, samples times dt), status (&quot;filled&quot;, &quot;notRequested&quot;, &quot;edge&quot;, &quot;tooLong&quot;, &quot;beyondModel&quot;), width (W used, NaN where not filled); sigma (N, M) prediction standard deviation, NaN where not filled, unit of obs; nFilled (1, M) samples.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>A linear solve with the Cholesky factor of C_oo, whose condition is that of the model&#x27;s covariance over 2W + 1 lags. An AR(1) one-sample gap equals phi/(1 + phi^2) (x_(t-1) + x_(t+1)) and an AR(1) bridge of k samples its closed form to rounding (NumPy: 6e-16). An ARMA(1,1) with phi 0.6, theta 0.5 and a 20-sample gap differs from the whole-record prediction by at most 1.4e-3, 1.4e-6, 1.1e-12 and 4.7e-15 standard deviations for L = 40, 60, 100 and 140 (NumPy, 200 realisations, 2026-09-24): the error decays like max(|phi|, |theta|)^W. The fill is optimal only as far as the model is right.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:fill:irregularGrid</code></td><td>Input</td><td>the epochs are not uniformly spaced; resample first (align).</td></tr>
+<tr><td><code>timeSeriesPreparation:fill:maxGapMissing</code></td><td>Input</td><td>&quot;collocation&quot; without MaxGap (it has no default, Q3).</td></tr>
+<tr><td><code>timeSeriesPreparation:fill:modelMissing</code></td><td>Input</td><td>&quot;collocation&quot; without Model.</td></tr>
+<tr><td><code>timeSeriesPreparation:fill:modelMismatch</code></td><td>Input</td><td>Model lacks acv, dt or mu, or its columns or dt differ from the arc&#x27;s.</td></tr>
+<tr><td><code>timeSeriesPreparation:fill:referenceDeferred</code></td><td>Input</td><td>Method &quot;reference&quot;, which follows the drivers (X-09). Options outside their domain are refused by the arguments block with a MATLAB: identifier.</td></tr>
+<tr><td><code>timeSeriesPreparation:fill:notPositiveDefinite</code></td><td>Numerical</td><td>C_oo is not positive definite: Model.acv is not an autocovariance.</td></tr>
+</table>
+<h2>Example</h2>
+<p>An AR(1) at 1 Hz with a 5 s gap, modelled and filled.</p>
+<pre><code>aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACT1B_2020-01-01_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+x = filter(1, [1 -0.7], randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 5), 1500, 1));
+x(700:704) = NaN;
+arc = timeSeriesPreparation.Arc(int64(0:1499)&#x27; * int64(1e9), x, aux);
+nm = timeSeriesPreparation.noise(arc, [1 0], MaxLag = 50);
+[filledArc, info] = timeSeriesPreparation.fill(arc, Method = &quot;collocation&quot;, Model = nm, MaxGap = 10);</code></pre>
+<h2>Limitations</h2>
+<p>arc.filled is one flag per row (CONCEPT 5), so a row filled on one axis is weighed 0 on every axis. Gaps are filled independently: a neighbouring gap&#x27;s samples are missing in the window, not predicted. The model is taken as stationary over the window. &quot;reference&quot; is not available yet.</p>
+<h2>References</h2>
+<p>Moritz, H. (1980). Advanced Physical Geodesy. Wichmann, Karlsruhe, part B (least-squares collocation). Brockwell, P. J., Davis, R. A. (1991). Time Series: Theory and Methods, 2nd ed. Springer, sect. 5.1 (best linear prediction). docs/CONCEPT.md sections 3.2, 5, 6.5 and V-7 (answered 2026-09-24: the sigtools Kalman filter only predicts).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.noise</code>, <code>timeSeriesPreparation.spectral.arma2acv</code>, <code>timeSeriesPreparation.Arc</code></p>
+<p class="footer">timeSeriesPreparation v0.1.0 - generated from the help block of +timeSeriesPreparation/fill.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

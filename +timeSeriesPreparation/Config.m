@@ -31,6 +31,10 @@ classdef Config
 %     align and checkAlignment (CONCEPT 6.1, row 3). maxLag and threshold
 %     are CONCEPT's numbers; pchip is v2's measured choice (see align).
 %
+%     fill (X-08): fields method ("none", CONCEPT Q3), maxGap ([] s: no
+%     default, a collocation without it refuses) and window ([] = the
+%     largest the covariance model allows), the options of fill.
+%
 %     unc (X-07): the gate and the uncertainty stages (CONCEPT 6.1, rows 6
 %     and 7). minWeightFraction is the minimum-data gate of observability
 %     (CONCEPT 5.2): an axis keeping less weight than this refuses. The
@@ -69,17 +73,17 @@ classdef Config
 %     s = toStruct(cfg);
 %
 %   LIMITATIONS
-%     Only crn, align and unc have fields so far; set refuses every other
+%     Only crn, align, fill and unc have fields so far; set refuses every other
 %     field until the stages define theirs.
 %
 %   REFERENCES
 %     docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults). R-1: GRACE
 %     L1B ATBD, JPL D-27672, App. B. R-2: GRACE-FO L1 Handbook, JPL D-56935.
 %
-%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.observability.
+%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-23 20:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
@@ -92,7 +96,7 @@ classdef Config
         qc = struct()
         crn = struct("preset", "")
         align = struct("method", "pchip", "maxGap", [], "maxLag", 60, "threshold", 1)
-        fill = struct()
+        fill = struct("method", "none", "maxGap", [], "window", [])
         noise = struct()
         unc = struct("minWeightFraction", [], "blockLength", [], "nBoot", 1000, ...
             "level", 0.6827, "folds", 5)
@@ -163,6 +167,8 @@ function known = schema(section)
             known = "preset";
         case "align"
             known = ["method" "maxGap" "maxLag" "threshold"];
+        case "fill"
+            known = ["method" "maxGap" "window"];
         case "unc"
             known = ["minWeightFraction" "blockLength" "nBoot" "level" "folds"];
         otherwise

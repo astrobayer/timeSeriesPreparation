@@ -12,7 +12,8 @@ classdef TestArc < matlab.unittest.TestCase
 %                      name; header fallback; derive keeps metadata and
 %                      provenance and resets weights and layers.
 %     precision      - t and obs are stored bit for bit.
-%     robustness     - each refusal, of the constructor and of derive, fires
+%     robustness     - each refusal, of the constructor, derive and
+%                      fillSamples, fires
 %                      on its planted defect and the healthy triple passes.
 %     metamorphic    - permuting Columns permutes names, units and obs.
 %     vectorisation  - one 3-column arc equals three 1-column arcs, bitwise.
@@ -21,7 +22,7 @@ classdef TestArc < matlab.unittest.TestCase
 %     reference      - exempt here: real files are TestArcContract's.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function propertiesFromAux(testCase)
@@ -88,6 +89,22 @@ classdef TestArc < matlab.unittest.TestCase
             testCase.verifyEqual(out.weights, ones(3, 1));
             testCase.verifyEqual(fieldnames(out.layers), cell(0, 1));
             testCase.verifyEqual([out.provenance.stage], ["Arc" "addLayer" "stage"]);
+        end
+
+        function fillSamplesWritesUnderMask(testCase)
+            [t, obs, aux] = triple(5);
+            arc = timeSeriesPreparation.Arc(t, obs, aux);
+            mask = false(5, 3);
+            mask(2, 3) = true;
+            mask(4, 1) = true;
+            out = fillSamples(arc, obs + 100, mask, struct("n", 2));
+            expected = obs;
+            expected(mask) = obs(mask) + 100;
+            testCase.verifyEqual(out.obs, expected);
+            testCase.verifyEqual(out.filled, [false; true; false; true; false]);
+            testCase.verifyEqual(out.weights, arc.weights);
+            testCase.verifyEqual([out.provenance.stage], ["Arc" "fill"]);
+            testCase.verifyEqual(out.provenance(end).detail, struct("n", 2));
         end
 
         function mixedReleaseAcceptedOnRequest(testCase)
@@ -198,6 +215,25 @@ classdef TestArc < matlab.unittest.TestCase
             bad = obs; bad(1) = -Inf;
             testCase.verifyError(@() derive(arc, t, bad, "s"), ...
                 "timeSeriesPreparation:Arc:notFinite");
+        end
+
+        function fillSamplesRefusesBadData(testCase)
+            [t, obs, aux] = triple(5);
+            arc = timeSeriesPreparation.Arc(t, obs, aux);
+            mask = false(5, 3);
+            mask(2, 1) = true;
+            testCase.verifyError(@() fillSamples(arc, obs(:, 1:2), mask(:, 1:2)), ...
+                "timeSeriesPreparation:Arc:sizeMismatch");
+            testCase.verifyError(@() fillSamples(arc, obs, double(mask)), ...
+                "timeSeriesPreparation:Arc:sizeMismatch");
+            bad = obs;
+            bad(2, 1) = NaN;
+            testCase.verifyError(@() fillSamples(arc, bad, mask), ...
+                "timeSeriesPreparation:Arc:notFinite");
+            bad(2, 1) = 0;
+            bad(3, 1) = NaN;
+            out = fillSamples(arc, bad, mask);
+            testCase.verifyEqual(out.obs(3, 1), obs(3, 1));          % NaN outside mask unused
         end
 
         function badLayerRefused(testCase)

@@ -9,6 +9,7 @@
         <tocitem target="timeSeriesPreparation.crnApply.html">timeSeriesPreparation.crnApply</tocitem>
         <tocitem target="timeSeriesPreparation.crnKernel.html">timeSeriesPreparation.crnKernel</tocitem>
         <tocitem target="timeSeriesPreparation.crossval.html">timeSeriesPreparation.crossval</tocitem>
+        <tocitem target="timeSeriesPreparation.fill.html">timeSeriesPreparation.fill</tocitem>
         <tocitem target="timeSeriesPreparation.internal.blockLength.html">timeSeriesPreparation.internal.blockLength</tocitem>
         <tocitem target="timeSeriesPreparation.internal.dlyap.html">timeSeriesPreparation.internal.dlyap</tocitem>
         <tocitem target="timeSeriesPreparation.internal.requirePackage.html">timeSeriesPreparation.internal.requirePackage</tocitem>

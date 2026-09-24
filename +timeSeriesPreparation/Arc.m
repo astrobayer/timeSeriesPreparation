@@ -5,6 +5,7 @@ classdef Arc
 %     arc = timeSeriesPreparation.Arc(t, obs, aux)
 %     arc = timeSeriesPreparation.Arc(t, obs, aux, Columns = names, Frame = frame)
 %     arc = addLayer(arc, name, remove)
+%     arc = fillSamples(arc, values, mask, detail)
 %     arc = appendProvenance(arc, stage, detail)
 %     out = derive(arc, t, obs, stage, detail, Units = units)
 %     timeSeriesPreparation.Arc.requireOneRelease(arcs)
@@ -30,7 +31,10 @@ classdef Arc
 %     Weights and layers: a layer is a named N x 1 logical, true = remove.
 %     Layers are additive and can only remove: addLayer refuses to replace a
 %     layer, and weights = min over all layers (1 kept, 0 removed). filled
-%     is set by the gap stage (X-08) and is all false here. provenance is
+%     is set by the gap stage (X-08) through fillSamples, which writes
+%     values into obs where mask is true on the same epochs, flags those rows
+%     in filled and appends a "fill" provenance entry; it is all false
+%     otherwise. provenance is
 %     append-only, one entry per stage: stage, toolbox version, UTC time,
 %     detail.
 %
@@ -54,6 +58,9 @@ classdef Arc
 %     detail  (1,1) struct   -   Stage-specific provenance detail.
 %     arcs    (1,:) Arc      -   A campaign: an array of arcs.
 %     units   (1,:) string   -   derive: units of the new obs columns.
+%     values  (N,M) double   -   fillSamples: filled observations; only the
+%                                entries under mask are used, finite.
+%     mask    (N,M) logical  -   fillSamples: true = entry filled.
 %
 %   OPTIONS
 %     Columns            (1,:) string   [all]     Observation names to keep,
@@ -81,8 +88,10 @@ classdef Arc
 %     Observations:
 %       timeSeriesPreparation:Arc:sizeMismatch - obs is not a real double, or
 %           its rows differ from numel(t) or its columns from
-%           numel(aux.obsNames).
-%       timeSeriesPreparation:Arc:notFinite - obs holds Inf (NaN is allowed).
+%           numel(aux.obsNames); for fillSamples, values or mask is not the
+%           size of obs, or not double and logical.
+%       timeSeriesPreparation:Arc:notFinite - obs holds Inf (NaN is allowed);
+%           for fillSamples, a value under mask is NaN or Inf.
 %       timeSeriesPreparation:Arc:unknownColumn - Columns names an observation
 %           the file does not have, or names one twice.
 %     Metadata:
@@ -114,7 +123,7 @@ classdef Arc
 %   See also timeSeriesPreparation.Config, gracefoReading.readL1b, gracefoReading.readL1bMulti.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.1.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.1.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (SetAccess = private)
         t = int64.empty(0, 1)
@@ -268,6 +277,30 @@ classdef Arc
             arc.weights = min(arc.weights, double(~remove));
             arc = appendProvenance(arc, "addLayer", struct( ...
                 "layer", name, "removed", nnz(remove)));
+        end
+
+        function arc = fillSamples(arc, values, mask, detail)
+            arguments
+                arc (1,1) timeSeriesPreparation.Arc
+                values
+                mask
+                detail (1,1) struct = struct()
+            end
+            if ~isa(values, "double") || ~isreal(values) || ~isequal(size(values), size(arc.obs)) ...
+                    || ~islogical(mask) || ~isequal(size(mask), size(arc.obs))
+                error("timeSeriesPreparation:Arc:sizeMismatch", ...
+                    "fillSamples needs real double values and a logical mask, " + ...
+                    "both %d x %d; got %s %s and %s %s.", size(arc.obs, 1), ...
+                    size(arc.obs, 2), mat2str(size(values)), class(values), ...
+                    mat2str(size(mask)), class(mask));
+            end
+            if ~all(isfinite(values(mask)))
+                error("timeSeriesPreparation:Arc:notFinite", ...
+                    "A filled value is NaN or Inf; a fill must be finite.");
+            end
+            arc.obs(mask) = values(mask);
+            arc.filled = arc.filled | any(mask, 2);
+            arc = appendProvenance(arc, "fill", detail);
         end
 
         function arc = appendProvenance(arc, stage, detail)

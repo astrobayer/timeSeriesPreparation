@@ -32,6 +32,13 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
   LRI ranging requirement (Abich et al. 2019) and the KBR, LRI-laser and
   accelerometer ASD models of Darbeheshti et al. (2017), each read from the
   source page, with derivatives for rate and acceleration.
+- **X-08** `fill`: reports the gaps of each axis (method `none`, the
+  default) or fills interior gaps up to `MaxGap` by covariance collocation
+  on the noise model's autocovariance (`collocation`), with the prediction
+  sigma. The window is capped at the model's largest lag. Filled rows are
+  flagged in `Arc.filled` through the new `Arc.fillSamples`. V-7 closed:
+  the sigtools Kalman filter has no smoother. `reference` follows X-09.
+- `Config.fill` (method, maxGap, window).
 
 ## 0.1.0 — 2026-09-23
 

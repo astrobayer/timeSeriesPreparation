@@ -26,13 +26,14 @@ th { background: #f0f0f0; }
 <pre><code>arc = timeSeriesPreparation.Arc(t, obs, aux)
 arc = timeSeriesPreparation.Arc(t, obs, aux, Columns = names, Frame = frame)
 arc = addLayer(arc, name, remove)
+arc = fillSamples(arc, values, mask, detail)
 arc = appendProvenance(arc, stage, detail)
 out = derive(arc, t, obs, stage, detail, Units = units)
 timeSeriesPreparation.Arc.requireOneRelease(arcs)</code></pre>
 <h2>Description</h2>
 <p>The container every stage of this toolbox reads and returns (CONCEPT 5). It is built from gracefoReading&#x27;s triple [t, obs, aux] by FIELD NAMES - aux.obsNames, variableNames, variableFieldNames, variableUnits and fileName/product (readL1b) or fileNames/products (readL1bMulti) - and calls no gracefoReading function, so it works without the reader installed. Time must be int64 GPS nanoseconds (&#x27;TimeFormat&#x27; &quot;gpsns&quot;): a double cannot hold 2020-era GPS nanoseconds (about 6.3e17 &gt; 2^53) without rounding. Columns are selected by name; there is no positional fallback.</p>
 <p>Release rule (CONCEPT 5.2): the L1B release of every file is read from its name (&lt;PRODUCT&gt;_&lt;date&gt;_&lt;sat&gt;_&lt;RR&gt;), or from the header line &quot;product_version:&quot; when the name does not carry it, and stored in release and provenance. An arc whose files come from more than one release refuses unless AllowMixedRelease is true; requireOneRelease applies the same rule to a campaign (an array of arcs).</p>
-<p>Weights and layers: a layer is a named N x 1 logical, true = remove. Layers are additive and can only remove: addLayer refuses to replace a layer, and weights = min over all layers (1 kept, 0 removed). filled is set by the gap stage (X-08) and is all false here. provenance is append-only, one entry per stage: stage, toolbox version, UTC time, detail.</p>
+<p>Weights and layers: a layer is a named N x 1 logical, true = remove. Layers are additive and can only remove: addLayer refuses to replace a layer, and weights = min over all layers (1 kept, 0 removed). filled is set by the gap stage (X-08) through fillSamples, which writes values into obs where mask is true on the same epochs, flags those rows in filled and appends a &quot;fill&quot; provenance entry; it is all false otherwise. provenance is append-only, one entry per stage: stage, toolbox version, UTC time, detail.</p>
 <p>derive is how a stage returns data on new epochs (crnApply, later align): the result keeps names, mission, product, satellite, release, files and frame, carries the provenance and appends the stage&#x27;s entry; weights, layers and filled start afresh, because they belong to the old epochs.</p>
 <h2>Inputs</h2>
 <table>
@@ -46,6 +47,8 @@ timeSeriesPreparation.Arc.requireOneRelease(arcs)</code></pre>
 <tr><td><code>detail</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Stage-specific provenance detail.</td></tr>
 <tr><td><code>arcs</code></td><td>1,:</td><td><code>Arc</code></td><td>&mdash;</td><td>- A campaign: an array of arcs.</td></tr>
 <tr><td><code>units</code></td><td>1,:</td><td><code>string</code></td><td>&mdash;</td><td>- derive: units of the new obs columns.</td></tr>
+<tr><td><code>values</code></td><td>N,M</td><td><code>double</code></td><td>&mdash;</td><td>- fillSamples: filled observations; only the entries under mask are used, finite.</td></tr>
+<tr><td><code>mask</code></td><td>N,M</td><td><code>logical</code></td><td>&mdash;</td><td>- fillSamples: true = entry filled.</td></tr>
 </table>
 <h2>Options</h2>
 <table>
@@ -66,8 +69,8 @@ timeSeriesPreparation.Arc.requireOneRelease(arcs)</code></pre>
 <tr><th>identifier</th><th>cause</th><th>condition</th></tr>
 <tr><td><code>timeSeriesPreparation:Arc:timeFormat</code></td><td>Time</td><td>t is not an int64 column vector (read with &#x27;TimeFormat&#x27;, &quot;gpsns&quot;).</td></tr>
 <tr><td><code>timeSeriesPreparation:Arc:timeNotIncreasing</code></td><td>Time</td><td>t is not strictly increasing.</td></tr>
-<tr><td><code>timeSeriesPreparation:Arc:sizeMismatch</code></td><td>Observations</td><td>obs is not a real double, or its rows differ from numel(t) or its columns from numel(aux.obsNames).</td></tr>
-<tr><td><code>timeSeriesPreparation:Arc:notFinite</code></td><td>Observations</td><td>obs holds Inf (NaN is allowed).</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:sizeMismatch</code></td><td>Observations</td><td>obs is not a real double, or its rows differ from numel(t) or its columns from numel(aux.obsNames); for fillSamples, values or mask is not the size of obs, or not double and logical.</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:notFinite</code></td><td>Observations</td><td>obs holds Inf (NaN is allowed); for fillSamples, a value under mask is NaN or Inf.</td></tr>
 <tr><td><code>timeSeriesPreparation:Arc:unknownColumn</code></td><td>Observations</td><td>Columns names an observation the file does not have, or names one twice.</td></tr>
 <tr><td><code>timeSeriesPreparation:Arc:auxField</code></td><td>Metadata</td><td>aux lacks a required field.</td></tr>
 <tr><td><code>timeSeriesPreparation:Arc:mixedProduct</code></td><td>Metadata</td><td>the files hold different products or satellites.</td></tr>
