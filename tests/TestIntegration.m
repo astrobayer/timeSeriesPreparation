@@ -65,6 +65,7 @@ classdef TestIntegration < matlab.unittest.TestCase
             [ti, gi, auxi] = gracefoReading.readItsgProduct(files(1), TimeFormat = "gpsns");
             ref = timeSeriesPreparation.Arc(ti, gi, itsgAux(auxi, names, files(1)));
 
+            timingDiagnostic(arc.t, arc.obs, ti, gi, auxi);   % TEMPORARY (ITSG timing), removed before merge
             res = timeSeriesPreparation.run(arc, Reference = ref, QualFlags = aux);
             testCase.verifyEqual(res.diagnostics.stages(1:3), ["mask" "align" "qc"]);
             testCase.verifyLessThan(abs(res.diagnostics.alignment.lag), [1 1 1]);
@@ -158,4 +159,53 @@ function arc = actArc(t, obs, fileName, product)
     aux = struct("obsNames", {c}, "variableNames", {c}, "variableFieldNames", {c}, ...
         "variableUnits", units, "fileName", fileName, "product", product);
     arc = timeSeriesPreparation.Arc(t, obs, aux);
+end
+
+function timingDiagnostic(t, a, ti, gi, auxi)
+% TEMPORARY diagnostic for the ACT1B-ITSG time offset (owner 2026-09-25):
+% which sampling convention of ITSG's 10 s values gives zero lag. Prints
+% only; removed before the merge.
+    fprintf("DIAG itsg first/last %d %d, n %d; act first/last %d %d, n %d\n", ...
+        ti(1), ti(end), numel(ti), t(1), t(end), numel(t));
+    fprintf("DIAG itsg header: %s\n", strjoin(string(auxi.comments), " | "));
+    sa = double(t - t(1)) / 1e9;                  % ACT seconds of day (1 Hz)
+    si = double(ti - t(1)) / 1e9;                 % ITSG seconds of day
+    in = si >= 30 & si <= sa(end) - 30;
+    si = si(in); g = gi(in, :);
+    hyp = ["inst" "centred10" "trailing10" "leading10" "centred5"];
+    win = [0 0; -5 5; -10 0; 0 10; -2.5 2.5];
+    lags = (-20:20)';
+    for h = 1:numel(hyp)
+        S = smoothAct(sa, a, win(h, 1), win(h, 2));
+        for m = 1:3
+            r = NaN(numel(lags), 1);
+            for q = 1:numel(lags)
+                x = interp1(sa, S(:, m), si + lags(q), "linear");
+                y = g(:, m);
+                ok = isfinite(x) & isfinite(y);
+                xh = x(ok) - movmean(x(ok), 61); yh = y(ok) - movmean(y(ok), 61);
+                c = corrcoef(xh, yh); r(q) = c(1, 2);
+            end
+            [rb, k] = max(r);
+            d = 0;
+            if k > 1 && k < numel(lags)
+                den = r(k-1) - 2 * r(k) + r(k+1);
+                if den < 0, d = 0.5 * (r(k-1) - r(k+1)) / den; end
+            end
+            fprintf("DIAG %-10s axis %d: best lag %+6.2f s (ITSG(t) ~ ACT(t+lag)), r %.5f, r(0) %.5f\n", ...
+                hyp(h), m, lags(k) + d, rb, r(lags == 0));
+        end
+    end
+end
+
+function S = smoothAct(sa, a, lo, hi)
+% Mean of the 1 Hz ACT over [s+lo, s+hi] at every ACT epoch s (inst: itself).
+    if lo == 0 && hi == 0
+        S = a; return
+    end
+    S = NaN(size(a));
+    for m = 1:size(a, 2)
+        v = a(:, m);
+        S(:, m) = movmean(v, [-lo hi] .* [1 1], "omitnan", "SamplePoints", sa);
+    end
 end
