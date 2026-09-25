@@ -31,9 +31,10 @@ Tier B. CONCEPT 6.6 with the owner's decisions of 2026-09-25:
 - `Config.run.cacheDir`, default "" = off (R5).
 - `internal.contentHash`: the SHA-256 of a canonical byte stream.
   - Supported types: numeric, logical, char, string, struct, cell,
-    table, datetime, Arc.
-  - Arc is hashed by content, without provenance.
-  - A function handle refuses.
+    table, datetime.
+  - A function handle or an object (Arc included) refuses: contentHash
+    is L0 (CONCEPT 3.2). `run` hashes an Arc as a struct of its content,
+    without provenance.
   - Pinned against a Python rebuild of the stream.
 - `internal.stageCache`: load, or compute and store; it returns a status.
 - `run`: the four stages go through the cache. The key is contentHash(
@@ -50,6 +51,13 @@ identifiers); docs in sync (69).
 
 Per tag: contract 204, reference 244, precision 23, robustness 125,
 metamorphic 44, vectorisation 21, speed 8.
+
+**CI round 1 (2fbc37b): 668 + 1 + 0.** TestLayering/repositoryPackageIsLayered
+found "+internal/contentHash.m: upward call from L0 'internal' to L1 'Arc'".
+Fix: the Arc branch moves from contentHash to `run` (arcContent); the
+provenance check moves from contentHashPinned (now: contentHash refuses an
+Arc) to changedInputOrSettingMisses (an arc with added provenance hits).
+Prediction unchanged: 669 + 0 + 0.
 
 **Risks, stated:**
 - MAT round trips of Arc objects and tables are used for the first time.

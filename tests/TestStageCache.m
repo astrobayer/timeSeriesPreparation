@@ -9,8 +9,8 @@ classdef TestStageCache < matlab.unittest.TestCase
 %     return what the first computed, isequaln. bootstrap and crossval
 %     are never cached (function-handle input). The key is
 %     internal.contentHash, pinned against a Python rebuild of its byte
-%     stream; it ignores provenance and changes with one byte of input or
-%     one setting. Fault injection: a changed sample and a changed setting
+%     stream; run's key ignores provenance and changes with one byte of
+%     input or one setting. Fault injection: a changed sample and a changed setting
 %     must miss, a corrupted file must be rewritten, an unwritable folder
 %     must report "unsaved", and a function handle must refuse to hash.
 %     The arcs are TestRun's: three sinusoids plus seeded white noise at
@@ -21,15 +21,16 @@ classdef TestStageCache < matlab.unittest.TestCase
 %                      with a function handle are "not cached".
 %     reference      - a second run hits and equals the first (qc, noise,
 %                      correlation; crn separately); contentHash equals the
-%                      Python rebuild and ignores provenance.
-%     robustness     - a changed sample or setting misses; a corrupted file
+%                      Python rebuild and refuses an Arc (L0).
+%     robustness     - a changed sample or setting misses, added provenance
+%                      hits; a corrupted file
 %                      is rewritten; an unwritable folder is "unsaved"; a
 %                      function handle refuses to hash.
 %     precision, speed, vectorisation, metamorphic - exempt: the cache adds
 %                      no arithmetic; a hit is the stored value itself.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-25 23:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-25 23:55 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function offByDefault(testCase)
@@ -107,9 +108,8 @@ classdef TestStageCache < matlab.unittest.TestCase
                 "40227623b648a612552d1d3ee04c07d5013520f932d94327a12d1b2554717715");
             testCase.verifyEqual(h("qc", struct("hampelWindow", 61)), ...
                 "5bdcf53a514ff0c8eeba0139dc6c1bfbcc3125d4aa8ad79ea3b8a8b19310fc93");
-            arc = pair(10);
-            testCase.verifyEqual(h(appendProvenance(arc, "other", struct())), h(arc), ...
-                "Provenance carries times; the key must ignore it.");
+            testCase.verifyError(@() h(pair(10)), "timeSeriesPreparation:contentHash:unsupported", ...
+                "contentHash is L0 and knows no Arc; run hashes an Arc's content (CONCEPT 3.2).");
             testCase.verifyNotEqual(h([1 2]), h("12"));
             testCase.verifyNotEqual(h(int32(1)), h(1));
         end
@@ -129,6 +129,10 @@ classdef TestStageCache < matlab.unittest.TestCase
             c = timeSeriesPreparation.run(arc, Reference = ref, ...
                 Config = set(cfg, "qc", "hampelWindow", 31));
             testCase.verifyEqual(c.diagnostics.cache.status(1), "miss");
+            d = timeSeriesPreparation.run(appendProvenance(arc, "other", struct()), ...
+                Reference = ref, Config = cfg);
+            testCase.verifyEqual(d.diagnostics.cache.status', ["hit" "hit"], ...
+                "Provenance carries times; the key must ignore it.");
         end
 
         function corruptFileRewritten(testCase)

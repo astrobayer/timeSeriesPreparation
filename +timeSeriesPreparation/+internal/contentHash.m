@@ -18,9 +18,11 @@ function h = contentHash(varargin)
 %         field order;
 %       - cell: size, then each cell;
 %       - table: its variable names, then each variable;
-%       - datetime: its time zone and the POSIX seconds;
-%       - Arc: t, obs, names, units, weights, layers and filled. The
-%         provenance is left out, because it carries creation times.
+%       - datetime: its time zone and the POSIX seconds.
+%     Objects are refused: this L0 helper knows no class of the package
+%     (CONCEPT 3.2). run hashes an Arc as a struct of its content (t, obs,
+%     names, units, weights, layers, filled), leaving out the provenance,
+%     which carries creation times.
 %     Every value starts with a type tag, so [1 2] and "12" or a struct and
 %     a cell never share a stream. A function handle refuses: what it
 %     computes cannot be read from it (func2str misses captured variables
@@ -48,7 +50,7 @@ function h = contentHash(varargin)
 %   ERRORS
 %     Input:
 %       timeSeriesPreparation:contentHash:unsupported - a value of another
-%           class, e.g. a function handle or an object other than Arc.
+%           class, e.g. a function handle or an object (an Arc included).
 %
 %   EXAMPLE
 %     % Two equal settings structs give one key; a changed field another.
@@ -67,7 +69,7 @@ function h = contentHash(varargin)
 %   See also timeSeriesPreparation.internal.stageCache, timeSeriesPreparation.run.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-25 23:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-25 23:55 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     md = java.security.MessageDigest.getInstance("SHA-256");
     for k = 1:nargin
@@ -79,15 +81,7 @@ end
 % ------------------------------------------------------------------------
 
 function feed(md, v)
-    if isa(v, "timeSeriesPreparation.Arc")
-        tag(md, "Arc", size(v));
-        for a = reshape(v, 1, [])
-            for p = ["t" "obs" "names" "units" "weights" "layers" "filled"]
-                bytes(md, unicode2native(char(p), "UTF-8"));
-                feed(md, a.(p));
-            end
-        end
-    elseif isstring(v)
+    if isstring(v)
         tag(md, "string", size(v));
         for s = reshape(v, 1, [])
             if ismissing(s)

@@ -168,7 +168,7 @@ function res = run(arc, options)
 %   See also timeSeriesPreparation.Config, timeSeriesPreparation.internal.stageCache, timeSeriesPreparation.mask, timeSeriesPreparation.align, timeSeriesPreparation.qc.screen, timeSeriesPreparation.noise, timeSeriesPreparation.fill, timeSeriesPreparation.correlate.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-25 23:55 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc timeSeriesPreparation.Arc
@@ -396,12 +396,29 @@ function [outs, cache] = cached(cache, stage, nOut, compute, varargin)
         cache.table(end+1, :) = {stage, "", "off", "cfg.run.cacheDir is empty"};
         return
     end
+    for k = 1:numel(varargin)
+        if isa(varargin{k}, "timeSeriesPreparation.Arc")
+            varargin{k} = arcContent(varargin{k});
+        end
+    end
     key = timeSeriesPreparation.internal.contentHash(stage, ...
         timeSeriesPreparation.internal.toolboxVersion(), varargin{:});
     [outs, status] = timeSeriesPreparation.internal.stageCache(cache.dir, stage, key, nOut, compute);
     reasons = dictionary(["hit" "miss" "rewritten" "unsaved"], ["loaded from " + stage + "/" + key + ".mat", ...
         "computed and stored", "unreadable file recomputed and stored", "computed; storing failed"]);
     cache.table(end+1, :) = {stage, key, status, reasons(status)};
+end
+
+function c = arcContent(arc)
+% An Arc as the struct its cache key is built from: the content, without
+% the provenance (it carries creation times). internal.contentHash is L0
+% and refuses objects (CONCEPT 3.2).
+    c = struct("class", "timeSeriesPreparation.Arc", "arcs", {cell(size(arc))});
+    for k = 1:numel(arc)
+        a = arc(k);
+        c.arcs{k} = struct("t", a.t, "obs", a.obs, "names", a.names, "units", a.units, ...
+            "weights", a.weights, "layers", a.layers, "filled", a.filled);
+    end
 end
 
 function cache = uncached(cache, stage)
