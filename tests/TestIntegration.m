@@ -161,63 +161,79 @@ function arc = actArc(t, obs, fileName, product)
     arc = timeSeriesPreparation.Arc(t, obs, aux);
 end
 
-function timingDiagnostic(t, a, ti, gi, auxi, arc, ref)
-% TEMPORARY diagnostic for the ACT1B-ITSG time offset (owner 2026-09-25),
-% second round: the lag per frequency band, for ITSG taken as
-% instantaneous and as the 10 s mean ending at its epoch; and
-% checkAlignment with the ITSG epochs moved 5 s earlier (to the centre
-% of such an interval). A pure time offset gives one lag in every band.
-% Prints only; removed before the merge.
-    sa = double(t - t(1)) / 1e9;
-    si = double(ti - t(1)) / 1e9;
-    in = si >= 60 & si <= sa(end) - 60;
-    si = si(in); g = gi(in, :);
-    bands = ["full" "hp610s" "hp120s" "bp610-2820s"];
-    hyp = ["inst" "trailing10"];
-    win = [0 0; -10 0];
-    lags = (-30:30)';
-    for h = 1:numel(hyp)
-        S = smoothAct(sa, a, win(h, 1), win(h, 2));
-        for b = 1:numel(bands)
-            out = strings(1, 3);
-            for m = 1:3
-                r = NaN(numel(lags), 1);
-                for q = 1:numel(lags)
-                    x = interp1(sa, S(:, m), si + lags(q), "linear");
-                    y = g(:, m);
-                    ok = isfinite(x) & isfinite(y);
-                    c = corrcoef(band(x(ok), b), band(y(ok), b));
-                    r(q) = c(1, 2);
-                end
-                [rb, k] = max(r);
-                d = 0;
-                if k > 1 && k < numel(lags)
-                    den = r(k-1) - 2 * r(k) + r(k+1);
-                    if den < 0, d = 0.5 * (r(k-1) - r(k+1)) / den; end
-                end
-                out(m) = sprintf("%+6.2f s (r %.4f)", lags(k) + d, rb);
+function timingDiagnostic(t, a, ti, gi, auxi, arc, ref) %#ok<INUSD>
+% TEMPORARY diagnostic for the ACT1B-ITSG timing (owner 2026-09-25), round
+% 3: the ITSG README lines on the product; the cross-spectral transfer
+% ITSG / ACT1B (gain, phase, coherence, implied delay) per frequency, for
+% C 2020-01-02 and 2020-01-03 and D 2020-01-02. A delay tau gives phase
+% -2 pi f tau at every f; a 10 s mean ending at the epoch gives tau = 5 s
+% and gain sinc(10 f). Prints only; removed before the merge.
+    pool = string(getenv("READING_DATA_POOL"));
+    readme = fullfile(pool, "ITSG", "README.txt");
+    if isfile(readme)
+        L = splitlines(string(fileread(readme)));
+        hit = find(contains(L, ["nonConservative" "accelerometer" "Accelerometer" "ACC" "filter" "averag" "10 s" "10s" "time tag" "epoch"], "IgnoreCase", false));
+        keep = unique(max(1, min(numel(L), hit + (-2:2))));
+        fprintf("DIAG3 README %s, %d lines, %d shown\n", readme, numel(L), numel(keep));
+        for k = reshape(keep, 1, [])
+            fprintf("DIAG3 R%04d %s\n", k, L(k));
+        end
+    else
+        d = dir(fullfile(pool, "ITSG"));
+        fprintf("DIAG3 no README at %s; ITSG folder: %s\n", readme, strjoin(string({d.name}), " "));
+    end
+    cases = ["C" "GRACEFO-1" "2020-01-02"; "C" "GRACEFO-1" "2020-01-03"; "D" "GRACEFO-2" "2020-01-02"];
+    for c = 1:size(cases, 1)
+        [sat, isat, day] = deal(cases(c, 1), cases(c, 2), cases(c, 3));
+        f1 = fullfile(pool, "GRACEFO", "L1B", "RL04", "2020", day, "ACT1B_" + day + "_" + sat + "_04.txt");
+        f2 = gracefoReading.findItsgFiles(fullfile(pool, isat), "nonConservativeForces", ...
+            DateRange = [datetime(day) datetime(day)], Satellite = isat);
+        if ~isfile(f1) || isempty(f2)
+            fprintf("DIAG3 %s %s: files missing\n", sat, day); continue
+        end
+        [ta, aa, auxa] = gracefoReading.readL1b(f1, "TimeFormat", "gpsns");
+        A = timeSeriesPreparation.Arc(ta, aa, auxa, Columns = ["lin_accl_x" "lin_accl_y" "lin_accl_z"]);
+        [tg, gg] = gracefoReading.readItsgProduct(f2(1), TimeFormat = "gpsns");
+        [on, k] = ismember(tg, A.t);
+        X = A.obs(k(on), :); Y = gg(on, :);
+        for m = 1:3
+            [f, G, P, C] = transfer(X(:, m), Y(:, m), 10);
+            sel = [3 6 13 26 51 77 103 128 154 179 205 230 250];
+            sel = sel(sel <= numel(f));
+            fprintf("DIAG3 %s %s axis %d  f[mHz]: %s\n", sat, day, m, strjoin(compose("%7.2f", 1e3 * f(sel)), ""));
+            fprintf("DIAG3 %s %s axis %d  gain   : %s\n", sat, day, m, strjoin(compose("%7.3f", G(sel)), ""));
+            fprintf("DIAG3 %s %s axis %d  coh    : %s\n", sat, day, m, strjoin(compose("%7.3f", C(sel)), ""));
+            fprintf("DIAG3 %s %s axis %d  tau[s] : %s\n", sat, day, m, strjoin(compose("%7.2f", -P(sel) ./ (2 * pi * f(sel))), ""));
+            w = C > 0.9 & f > 2e-3;
+            if nnz(w) > 3
+                tauLs = -sum(C(w) .* f(w) .* P(w)) / sum(C(w) .* 2 * pi .* f(w) .^ 2);
+                fprintf("DIAG3 %s %s axis %d  LS delay over coh>0.9, f>2 mHz (%d bins): %.2f s\n", sat, day, m, nnz(w), tauLs);
             end
-            fprintf("DIAG2 %-10s %-12s x %s | y %s | z %s\n", hyp(h), bands(b), out(1), out(2), out(3));
         end
     end
-    shifted = timeSeriesPreparation.Arc(ref.t - int64(5e9), ref.obs, itsgAux(auxi, ref.names, "shifted"));
-    rep = timeSeriesPreparation.checkAlignment(arc, shifted);
-    fprintf("DIAG2 checkAlignment, ITSG epochs - 5 s: lag %s; verdict %s\n", ...
-        mat2str(rep.lag, 4), strjoin(rep.verdict, " "));
-    rep = timeSeriesPreparation.checkAlignment(arc, ref);
-    fprintf("DIAG2 checkAlignment, ITSG as read:      lag %s; verdict %s\n", ...
-        mat2str(rep.lag, 4), strjoin(rep.verdict, " "));
 end
 
-function v = band(v, b)
-% The bands of DIAG2 on the 10 s grid: mean removed; minus a 61-sample
-% (610 s) or 13-sample (130 s) moving mean; 61- minus 283-sample means.
-    switch b
-        case 1, v = v - mean(v);
-        case 2, v = v - movmean(v, 61);
-        case 3, v = v - movmean(v, 13);
-        case 4, v = movmean(v, 61) - movmean(v, 283);
+function [f, G, P, C] = transfer(x, y, dt)
+% Welch cross-spectrum, Hann segments of 512 samples, 50 % overlap, each
+% segment linearly detrended; G = |Sxy|/Sxx, P = angle(Sxy) with
+% Sxy = conj(X) Y (y delayed by tau: P = -2 pi f tau), C = |Sxy|^2/(Sxx Syy).
+    n = 512; h = 0.5 * (1 - cos(2 * pi * (0:n - 1)' / n));
+    starts = 1:n / 2:numel(x) - n + 1;
+    Sxx = 0; Syy = 0; Sxy = 0;
+    for s0 = starts
+        idx = s0:s0 + n - 1;
+        xs = x(idx); ys = y(idx);
+        if any(~isfinite([xs; ys])), continue; end
+        tt = (1:n)';
+        xs = xs - [ones(n, 1) tt] * ([ones(n, 1) tt] \ xs);
+        ys = ys - [ones(n, 1) tt] * ([ones(n, 1) tt] \ ys);
+        X = fft(h .* xs); Y = fft(h .* ys);
+        Sxx = Sxx + abs(X) .^ 2; Syy = Syy + abs(Y) .^ 2; Sxy = Sxy + conj(X) .* Y;
     end
+    K = n / 2;
+    f = (1:K - 1)' / (n * dt);
+    Sxx = Sxx(2:K); Syy = Syy(2:K); Sxy = Sxy(2:K);
+    G = abs(Sxy) ./ Sxx; P = angle(Sxy); C = abs(Sxy) .^ 2 ./ (Sxx .* Syy);
 end
 
 function S = smoothAct(sa, a, lo, hi)
