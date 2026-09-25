@@ -73,6 +73,18 @@ metamorphic 44, vectorisation 21, speed 8.
 - The UTC conversion relies on converting a `UTCLeapSeconds` datetime to
   `UTC`; `qcSpikeEventInUtc` pins the result.
 
+**Verdict, CI run 36111847556 on `9774c55` (2026-09-25), MATLAB R2026a:**
+- `audit` green.
+- `matlab` green on the first run: **657 + 0 + 0 = 657**, every tag as
+  predicted (contract 200, reference 239, precision 23, robustness 122,
+  metamorphic 44, vectorisation 21, speed 8). Gate time 1192 s.
+- TestRun 12/12, including the UTC epoch of the planted spike and the
+  CRN-filtered reference. The UTCLeapSeconds conversion works.
+- One expected warning in TestRun: in `qcSpikeEventInUtc` the planted
+  1e-6 spike pulls checkAlignment's x lag to -1.59 s ("offset"). That is
+  the diagnostic doing its job on a deliberately disturbed arc, and
+  nothing is shifted.
+
 ---
 
 ## X-05b `.github/` follow-up — `qc` under the public template; 2026-09-24
