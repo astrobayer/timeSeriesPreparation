@@ -59,6 +59,10 @@ provenance check moves from contentHashPinned (now: contentHash refuses an
 Arc) to changedInputOrSettingMisses (an arc with added provenance hits).
 Prediction unchanged: 669 + 0 + 0.
 
+**CI verdict (ae56ee0, run 36195219643): 669 + 0 + 0 = 669, green.**
+Per tag as predicted: contract 204, reference 244, precision 23,
+robustness 125, metamorphic 44, vectorisation 21, speed 8. audit green.
+
 **Risks, stated:**
 - MAT round trips of Arc objects and tables are used for the first time.
   A hit must be isequaln to the computation, and the test checks this.
