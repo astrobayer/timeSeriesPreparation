@@ -24,7 +24,7 @@ id, citation, where the owner's copy lives, what it is needed for.
 | R-6 | GRACE-FO TN-01 SOE, TN-01a SCE, TN-01b KBR/GPS statistics (living documents); GRACE TN-01 SOE (2018) and TN-03 SOE format description | `<ROOT>\GRACEFO\DOCUMENTS\TECHNICAL_NOTES\<date>\`, `<ROOT>\GRACE\DOCUMENTS\TECHNICAL_NOTES\` | G-05, X-05, V-12 |
 | R-7 | JPL: *GRACE-FO Level-1 Release Notes* (log, last entry 2022-05-10: ACX, LRI phase-jump processing from 2020-06-27); GRACE-FO SDS newsletters 001–028 | `<ROOT>\GRACEFO\DOCUMENTS\RELEASE_NOTES\`, `…\NEWSLETTER\` | V-16, event history |
 | R-8 | AEI: *AEI LRI1B release notes* (v52); Misfeldt et al. 2023 (see P-11) | `<ROOT>\GRACEFO\L1B\AEI_v52\` | ORC-13, L-09 |
-| R-9 | TU Graz ITSG operational products: `README.txt`, `README_referenceFrames.txt` | `<ROOT>\ITSG\` | V-4 |
+| R-9 | TU Graz ITSG operational products: `README.txt` (revised 2025-10-16; read 2026-09-25: GPS time, 10 s, both midnights, SRF, m/s², nothing on filtering), `README_referenceFrames.txt` | `<ROOT>\ITSG\` | V-4, V-17 |
 | R-10 | Bettadpur, S. (2009): *GRACE TN-02, Recommendation for a-priori Bias & Scale Parameters for Level-1B ACC Data* (v2) — convention f_new = bias + scale × f_ACC1B | `<ROOT>\GRACE\DOCUMENTS\TECHNICAL_NOTES\TN-02_ACC_Calibration_v2.pdf` | ORC-10 (classic), N-08 priors |
 | R-11 | Thomas, J. B. (1999): *An Analysis of Gravity-Field Estimation Based on Intersatellite Dual-1-Way Biased Ranging*, JPL Publication 98-15 — the CRN filter's origin (App. A.3.4, p. A-16 = PDF p. 102; scanned, no text layer) | `<ROOT>\GRACE\DOCUMENTS\ANCILLARY\An_Analysis_of_Gravity_Field_Estimation_based_on_Inter-satellite_Dual_One-Way_Biased_Ranging.pdf` | ORC-1 |
 | R-12 | GRACE TN-04 (guide to GFZ RL03 / JPL RL02), GRACE JPL L1 release notes RL00/RL01; GRACE SDS newsletters 2004–2017 | `<ROOT>\GRACE\DOCUMENTS\TECHNICAL_NOTES\`, `…\RELEASE_NOTES\`, `…\NEWSLETTER\` | classic event history |
@@ -35,7 +35,7 @@ id, citation, where the owner's copy lives, what it is needed for.
 | id | citation | needed for |
 |---|---|---|
 | P-1 | Bandikova, T., McCullough, C., Kruizinga, G. L., Save, H., Christophe, B. (2019): GRACE accelerometer data transplant, Adv. Space Res. 64:623–644, doi:10.1016/j.asr.2019.05.021 | V-5, ORC-12 |
-| P-2 | Behzadpour, S., Mayer-Gürr, T., Krauss, S. (2021): GRACE Follow-On accelerometer data recovery, JGR Solid Earth 126:e2020JB021297, doi:10.1029/2020JB021297 | V-4, V-10, N-11 |
+| P-2 | Behzadpour, S., Mayer-Gürr, T., Krauss, S. (2021): GRACE Follow-On accelerometer data recovery, JGR Solid Earth 126:e2020JB021297, doi:10.1029/2020JB021297 — owner's copy read 2026-09-25 (App. A: TU Graz's ACT1A→ACT1B steps 1–10, CLK1B time, 7th-order CRN 35 mHz over 140.7 s, decimation to 1 s) | V-4, V-10, V-17, N-11 |
 | P-3 | Harvey, N., McCullough, C. M., Save, H. (2022): Modeling GRACE-FO accelerometer data for the version 04 release, Adv. Space Res., doi:10.1016/j.asr.2021.09.008 | V-5, ORC-12 |
 | P-4 | Klinger, B., Mayer-Gürr, T. (2016): The role of accelerometer data calibration within GRACE gravity field recovery, Adv. Space Res. 58:1597–1609, doi:10.1016/j.asr.2016.08.007 | N-02, N-11 |
 | P-5 | Kvas, A. et al. (2019): ITSG-Grace2018, JGR Solid Earth, doi:10.1029/2019JB017415 | context |

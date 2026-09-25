@@ -9,13 +9,23 @@ classdef TestIntegration < matlab.unittest.TestCase
 %     qualflg against ITSG nonConservativeForces of the same day
 %     (GRACEFO-1, 10 s, SRF, calibrated accelerometer data; V-4), through
 %     run with the ACT1B preset. The ITSG file holds 8 641 epochs, both
-%     midnights; at the 8 640 of them on the ACT1B day, where align takes
-%     the reference bit for bit, the kept samples of each axis are fitted
-%     as obs = b + s * ref by least squares, the convention of qc.residuals
-%     and of V-4 (on 2020-01-01 C the z axis gives s = 0.919 this way and
-%     1.075 the other way; V-4's z is 0.864). Required, from V-4's
-%     measurement of 0.984 / 0.973 / 0.955 and 1.066 / 0.915 / 0.864:
-%       - checkAlignment's lag below 1 s on every axis;
+%     midnights. V-17 (CONCEPT 9.3; owner decision 2026-09-25): ITSG is
+%     about 3 s late against ACT1B (x and z, 2.5-10 mHz, C and D, two
+%     days) and band-limited to about 10 mHz, from an undocumented step of
+%     its 10 s product (README 2025-10-16 and P-2 App. A read: TU Graz's
+%     own ACT1B is timed like JPL's). The test, as the caller, moves the
+%     ITSG epochs 3 s earlier; run never shifts. At the 8 640
+%     shifted epochs on the ACT1B day, where align takes the reference bit
+%     for bit, the kept samples of each axis are fitted as ref = b + s *
+%     obs, V-4's direction (CI 2026-09-25: the other direction gave 0.906
+%     / 1.032 / 1.058, r^2 / s of V-4's values). Required, from V-4's
+%     0.984 / 0.973 / 0.955 and 1.066 / 0.915 / 0.864:
+%       - the delay of ITSG against ACT1B over 2.5-10 mHz (cross-spectral
+%         phase, bins of coherence > 0.5, least squares weighted by the
+%         coherence) below 1 s on x and z after the shift; y is logged
+%         (too little signal). run's full-band checkAlignment lags are
+%         logged, not asserted: for this pair they measure low-frequency
+%         shape, not timing, and have the opposite sign (V-17);
 %       - correlation >= 0.95 / 0.95 / 0.93;
 %       - each scale within 5 % of V-4's (owner decision 2026-09-25).
 %
@@ -29,7 +39,8 @@ classdef TestIntegration < matlab.unittest.TestCase
 %     sigma_s about 1e-4).
 %
 %   COVERAGE
-%     reference      - the real day meets the V-4 thresholds; the synthetic
+%     reference      - the real day, ITSG moved by V-17, meets the V-4
+%                      thresholds; the synthetic
 %                      arc's planted truth is recovered.
 %     contract, precision, robustness, metamorphic, vectorisation, speed -
 %                      exempt: TestRun holds run's contract and each
@@ -40,7 +51,8 @@ classdef TestIntegration < matlab.unittest.TestCase
 
     properties (Constant)
         V4Corr  = [0.95 0.95 0.93]      % thresholds; measured 0.984 / 0.973 / 0.955
-        V4Scale = [1.066 0.915 0.864]   % V-4, obs = b + s * ref
+        V4Scale = [1.066 0.915 0.864]   % V-4, ref = b + s * obs
+        ItsgDelay = int64(3e9)          % V-17: ITSG late against ACT1B, ns
     end
 
     methods (Test, TestTags = {'reference'})
@@ -63,12 +75,14 @@ classdef TestIntegration < matlab.unittest.TestCase
             testCase.assertNotEmpty(files, "No ITSG nonConservativeForces of 2020-01-02 below " + ...
                 fullfile(pool, "GRACEFO-1"));
             [ti, gi, auxi] = gracefoReading.readItsgProduct(files(1), TimeFormat = "gpsns");
-            ref = timeSeriesPreparation.Arc(ti, gi, itsgAux(auxi, names, files(1)));
+            % V-17: ITSG is ~3 s late against ACT1B; the caller moves it, run never does.
+            ref = timeSeriesPreparation.Arc(ti - testCase.ItsgDelay, gi, itsgAux(auxi, names, files(1)));
 
-            timingDiagnostic(arc.t, arc.obs, ti, gi, auxi, arc, ref);   % TEMPORARY (ITSG timing), removed before merge
             res = timeSeriesPreparation.run(arc, Reference = ref, QualFlags = aux);
             testCase.verifyEqual(res.diagnostics.stages(1:3), ["mask" "align" "qc"]);
-            testCase.verifyLessThan(abs(res.diagnostics.alignment.lag), [1 1 1]);
+            testCase.log(matlab.unittest.Verbosity.Terse, sprintf("run's full-band lags " + ...
+                "(V-17: low-frequency shape, not timing): %+.2f / %+.2f / %+.2f s", ...
+                res.diagnostics.alignment.lag));
 
             [on, k] = ismember(ref.t, res.arc.t);
             testCase.assertEqual(nnz(on), 8640, "ITSG epochs on the ACT1B day (V-4: 8 640).");
@@ -77,7 +91,11 @@ classdef TestIntegration < matlab.unittest.TestCase
             x = res.reference.obs(k, :);
             keep = res.arc.weights(k) > 0 & all(isfinite([x y]), 2);
             testCase.verifyGreaterThan(nnz(keep), 0.9 * 8640);
-            [s, r] = fitScale(x(keep, :), y(keep, :));
+            tau = bandDelay(y, x, 10);
+            testCase.log(matlab.unittest.Verbosity.Terse, sprintf( ...
+                "V-17 band delay after the shift: %+.2f / %+.2f / %+.2f s (y reported)", tau));
+            testCase.verifyLessThan(abs(tau([1 3])), [1 1], "x and z delay, 2.5-10 mHz, after the V-17 shift");
+            [s, r] = fitScale(y(keep, :), x(keep, :));      % ref = b + s * obs, as V-4
             testCase.verifyGreaterThanOrEqual(r, testCase.V4Corr);
             testCase.verifyLessThanOrEqual(abs(s ./ testCase.V4Scale - 1), 0.05 * [1 1 1]);
         end
@@ -161,89 +179,30 @@ function arc = actArc(t, obs, fileName, product)
     arc = timeSeriesPreparation.Arc(t, obs, aux);
 end
 
-function timingDiagnostic(t, a, ti, gi, auxi, arc, ref) %#ok<INUSD>
-% TEMPORARY diagnostic for the ACT1B-ITSG timing (owner 2026-09-25), round
-% 3: the ITSG README lines on the product; the cross-spectral transfer
-% ITSG / ACT1B (gain, phase, coherence, implied delay) per frequency, for
-% C 2020-01-02 and 2020-01-03 and D 2020-01-02. A delay tau gives phase
-% -2 pi f tau at every f; a 10 s mean ending at the epoch gives tau = 5 s
-% and gain sinc(10 f). Prints only; removed before the merge.
-    pool = string(getenv("READING_DATA_POOL"));
-    readme = fullfile(pool, "ITSG", "README.txt");
-    if isfile(readme)
-        L = splitlines(string(fileread(readme)));
-        hit = find(contains(L, ["nonConservative" "accelerometer" "Accelerometer" "ACC" "filter" "averag" "10 s" "10s" "time tag" "epoch"], "IgnoreCase", false));
-        keep = unique(max(1, min(numel(L), hit + (-2:2))));
-        fprintf("DIAG3 README %s, %d lines, %d shown\n", readme, numel(L), numel(keep));
-        for k = reshape(keep, 1, [])
-            fprintf("DIAG3 R%04d %s\n", k, L(k));
+function tau = bandDelay(x, y, dt)
+% Delay of y against x per column, y(t) = x(t - tau), from the Welch
+% cross-spectrum (Hann segments of 512 samples, 50 % overlap, each
+% linearly detrended) over 2.5-10 mHz: phase P = -2 pi f tau, fitted by
+% least squares over the bins of coherence C > 0.5, weighted by C.
+    n = 512;
+    h = 0.5 * (1 - cos(2 * pi * (0:n - 1)' / n));
+    D = [ones(n, 1), (1:n)'];
+    f = (1:n / 2 - 1)' / (n * dt);
+    band = f >= 2.5e-3 & f <= 10e-3;
+    tau = NaN(1, size(x, 2));
+    for m = 1:size(x, 2)
+        Sxx = 0; Syy = 0; Sxy = 0;
+        for s0 = 1:n / 2:size(x, 1) - n + 1
+            xs = x(s0:s0 + n - 1, m); ys = y(s0:s0 + n - 1, m);
+            if any(~isfinite([xs; ys])), continue; end
+            X = fft(h .* (xs - D * (D \ xs)));
+            Y = fft(h .* (ys - D * (D \ ys)));
+            Sxx = Sxx + abs(X) .^ 2; Syy = Syy + abs(Y) .^ 2; Sxy = Sxy + conj(X) .* Y;
         end
-    else
-        d = dir(fullfile(pool, "ITSG"));
-        fprintf("DIAG3 no README at %s; ITSG folder: %s\n", readme, strjoin(string({d.name}), " "));
-    end
-    cases = ["C" "GRACEFO-1" "2020-01-02"; "C" "GRACEFO-1" "2020-01-03"; "D" "GRACEFO-2" "2020-01-02"];
-    for c = 1:size(cases, 1)
-        [sat, isat, day] = deal(cases(c, 1), cases(c, 2), cases(c, 3));
-        f1 = fullfile(pool, "GRACEFO", "L1B", "RL04", "2020", day, "ACT1B_" + day + "_" + sat + "_04.txt");
-        f2 = gracefoReading.findItsgFiles(fullfile(pool, isat), "nonConservativeForces", ...
-            DateRange = [datetime(day) datetime(day)], Satellite = isat);
-        if ~isfile(f1) || isempty(f2)
-            fprintf("DIAG3 %s %s: files missing\n", sat, day); continue
-        end
-        [ta, aa, auxa] = gracefoReading.readL1b(f1, "TimeFormat", "gpsns");
-        A = timeSeriesPreparation.Arc(ta, aa, auxa, Columns = ["lin_accl_x" "lin_accl_y" "lin_accl_z"]);
-        [tg, gg] = gracefoReading.readItsgProduct(f2(1), TimeFormat = "gpsns");
-        [on, k] = ismember(tg, A.t);
-        X = A.obs(k(on), :); Y = gg(on, :);
-        for m = 1:3
-            [f, G, P, C] = transfer(X(:, m), Y(:, m), 10);
-            sel = [3 6 13 26 51 77 103 128 154 179 205 230 250];
-            sel = sel(sel <= numel(f));
-            fprintf("DIAG3 %s %s axis %d  f[mHz]: %s\n", sat, day, m, strjoin(compose("%7.2f", 1e3 * f(sel)), ""));
-            fprintf("DIAG3 %s %s axis %d  gain   : %s\n", sat, day, m, strjoin(compose("%7.3f", G(sel)), ""));
-            fprintf("DIAG3 %s %s axis %d  coh    : %s\n", sat, day, m, strjoin(compose("%7.3f", C(sel)), ""));
-            fprintf("DIAG3 %s %s axis %d  tau[s] : %s\n", sat, day, m, strjoin(compose("%7.2f", -P(sel) ./ (2 * pi * f(sel))), ""));
-            w = C > 0.9 & f > 2e-3;
-            if nnz(w) > 3
-                tauLs = -sum(C(w) .* f(w) .* P(w)) / sum(C(w) .* 2 * pi .* f(w) .^ 2);
-                fprintf("DIAG3 %s %s axis %d  LS delay over coh>0.9, f>2 mHz (%d bins): %.2f s\n", sat, day, m, nnz(w), tauLs);
-            end
-        end
-    end
-end
-
-function [f, G, P, C] = transfer(x, y, dt)
-% Welch cross-spectrum, Hann segments of 512 samples, 50 % overlap, each
-% segment linearly detrended; G = |Sxy|/Sxx, P = angle(Sxy) with
-% Sxy = conj(X) Y (y delayed by tau: P = -2 pi f tau), C = |Sxy|^2/(Sxx Syy).
-    n = 512; h = 0.5 * (1 - cos(2 * pi * (0:n - 1)' / n));
-    starts = 1:n / 2:numel(x) - n + 1;
-    Sxx = 0; Syy = 0; Sxy = 0;
-    for s0 = starts
-        idx = s0:s0 + n - 1;
-        xs = x(idx); ys = y(idx);
-        if any(~isfinite([xs; ys])), continue; end
-        tt = (1:n)';
-        xs = xs - [ones(n, 1) tt] * ([ones(n, 1) tt] \ xs);
-        ys = ys - [ones(n, 1) tt] * ([ones(n, 1) tt] \ ys);
-        X = fft(h .* xs); Y = fft(h .* ys);
-        Sxx = Sxx + abs(X) .^ 2; Syy = Syy + abs(Y) .^ 2; Sxy = Sxy + conj(X) .* Y;
-    end
-    K = n / 2;
-    f = (1:K - 1)' / (n * dt);
-    Sxx = Sxx(2:K); Syy = Syy(2:K); Sxy = Sxy(2:K);
-    G = abs(Sxy) ./ Sxx; P = angle(Sxy); C = abs(Sxy) .^ 2 ./ (Sxx .* Syy);
-end
-
-function S = smoothAct(sa, a, lo, hi)
-% Mean of the 1 Hz ACT over [s+lo, s+hi] at every ACT epoch s (inst: itself).
-    if lo == 0 && hi == 0
-        S = a; return
-    end
-    S = NaN(size(a));
-    for m = 1:size(a, 2)
-        v = a(:, m);
-        S(:, m) = movmean(v, [-lo hi] .* [1 1], "omitnan", "SamplePoints", sa);
+        k = 2:n / 2;
+        C = abs(Sxy(k)) .^ 2 ./ (Sxx(k) .* Syy(k));
+        P = angle(Sxy(k));
+        w = band & C > 0.5;
+        tau(m) = -sum(C(w) .* f(w) .* P(w)) / sum(C(w) .* 2 * pi .* f(w) .^ 2);
     end
 end

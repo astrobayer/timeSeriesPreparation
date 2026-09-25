@@ -23,17 +23,18 @@ integration tests (owner decisions 2026-09-24; scale tolerance
     `GRACEFO-1`, read with gracefoReading `readItsgProduct`), through
     `run` with the ACT1B preset. The file holds 8 641 epochs (both
     midnights); 8 640 lie on the ACT1B day.
-  - At the ITSG epochs, each axis is fitted as obs = b + s * ref.
-  - Required: |lag| < 1 s; correlation >= 0.95 / 0.95 / 0.93; each scale
-    within 5 % of 1.066 / 0.915 / 0.864.
-- **Scale direction.** V-4 did not record which way it fitted. Checked
-  on the 2020-01-01 C sample (600 s against the ITSG fixture): the z axis
-  correlates at 0.994, and ACT = b + s * ITSG gives s = 0.919, the reverse
-  1.075. V-4's z is 0.864, so V-4 fitted obs = b + s * ref, which is also
-  qc.residuals' convention. The x and y axes of 600 s carry too little
-  signal to say (r 0.62 and 0.31). If CI shows the scales near the
-  reciprocals, this reading is wrong; the fix is the direction, never
-  the tolerance.
+  - The ITSG epochs are moved 3 s earlier (V-17, owner decision
+    2026-09-25). At the shifted ITSG epochs, each axis is fitted as
+    ref = b + s * obs (V-4's direction).
+  - Required:
+    - the band delay (2.5–10 mHz) is below 1 s on x and z;
+    - correlation >= 0.95 / 0.95 / 0.93;
+    - each scale is within 5 % of 1.066 / 0.915 / 0.864.
+    - run's full-band lags are logged, not asserted.
+- **Scale direction.** First read wrong (from a 600 s sample): I took obs
+  = b + s * ref. CI showed V-4's direction, ref = b + s * obs (see the
+  second run below). The direction was fixed; the tolerance was not
+  touched.
 - `TestIntegration/syntheticTruthRecovered`:
   - Arc: six hours at 1 Hz, planted b and s, white noise 1e-10, three
     5e-9 spikes, a 30 s gap.
@@ -59,7 +60,46 @@ did not run and are unchanged. Everything else was as predicted
 (synthetic test green; contract 200, reference 240 + 1 + 1, the rest
 equal).
 
+**Second run (run on `0d0f7ad`): 658 + 1 + 0.** Correlation passed.
+- Scales: the fit ran in the wrong direction. V-4 fitted ref = b + s * obs;
+  the other direction gave 0.906 / 1.032 / 1.058, which equals r^2 / s of
+  V-4's values (the two slopes of one data set multiply to r^2). Fixed.
+- Lag: checkAlignment gave −14.97 / +3.02 / +3.05 s. The owner said it is a
+  time offset and asked for the cause before 1.0.
+
+**V-17 investigation (2026-09-25; three temporary diagnostics in CI, runs
+36160272643, 36162760916, 36166998289, since removed):**
+- The lag depends on the band, so it is not a pure clock offset.
+  - Full band: −15 / +3 / +3 s.
+  - High-pass 610 s: −3.1 / −5.1 / −3.9 s (ITSG late).
+  - The same band with ITSG taken as a 10 s trailing mean: +1.8 / −0.1 /
+    +1.1 s.
+- Cross-spectral phase over 2.5–10 mHz, weighted by coherence, ITSG late
+  by: x 3.1 / 5.4 / 2.6 s, z 3.0 / 3.0 / 1.3 s (C 01-02, C 01-03, D
+  01-02); y undetermined (0.8 / −2.3 / −2.0 s). Coherence is below 0.3
+  above about 15 mHz. Below 2 mHz the phase is not a delay, and that range
+  sets the full-band lag, with the opposite sign.
+- Sources read (owner's copies): the ITSG README (2025-10-16) says only
+  GPS time and 10 s sampling. P-2 App. A: TU Graz's ACT1B is timed like
+  JPL's (CLK1B, zero-phase CRN). The delay therefore comes from the
+  undocumented step that makes the 10 s product.
+- **Owner decisions:**
+  - V-17 recorded and closed (CONCEPT 0.24, 9.3).
+  - The test moves the ITSG epochs 3 s earlier.
+  - Timing is checked by the band delay (|tau| < 1 s on x and z; y
+    logged). run's full-band lags are logged, not asserted.
+- **Correction recorded:** my first proposal claimed that the 3 s shift
+  brings the full-band y/z lag to about 0. It brings it to about +6 s,
+  because the two measures have opposite signs. The owner decided again
+  with this corrected.
+
+Prediction unchanged: **659 + 0 + 0**.
+
 **Risks, stated:**
+- The band delay after the shift is predicted from the diagnostic (x
+  3.07 − 3, z 2.99 − 3 s on C 01-02, from 3 bins). The test fits every
+  bin of 2.5–10 mHz with coherence > 0.5, so it can differ by a few
+  tenths of a second.
 - First read of the ITSG day in CI. If the file is missing below
   `GRACEFO-1`, the assertion names the folder.
 - `qc.screen` on a full day (86 400 x 3) runs for the first time in this

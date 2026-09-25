@@ -11,9 +11,13 @@ is complete: every stage of CONCEPT 6.1 and the single point of access
 
 - **X-10** integration tests (`TestIntegration`): ACT1B GRACE-C of
   2020-01-02 through `run` against ITSG nonConservativeForces, held to the
-  V-4 thresholds (lag < 1 s; correlation >= 0.95 / 0.95 / 0.93; scales
-  within 5 % of 1.066 / 0.915 / 0.864); and a synthetic arc whose planted
+  V-4 thresholds (correlation >= 0.95 / 0.95 / 0.93; scales within 5 % of
+  1.066 / 0.915 / 0.864) and to V-17 (band delay < 1 s on x and z); and a synthetic arc whose planted
   spikes, gap, noise level, bias and scale `run` recovers.
+- V-17 (CONCEPT 9.3): ITSG `nonConservativeForces` is about 3 s late
+  against JPL ACT1B and band-limited to about 10 mHz; the integration test
+  moves the ITSG epochs and checks the band delay (x, z < 1 s). The scales
+  are fitted in V-4's direction, ref = b + s * obs.
 - CI: the `matlab` job's timeout is 60 min (O-6, PR #54).
 - **X-05b** `qc`: help in this repository's template, errors raised with
   literal identifiers (catalogued once the `.github` follow-up lands),

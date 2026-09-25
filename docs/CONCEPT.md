@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.23 (DRAFT) · 2026-09-25 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.24 (DRAFT) · 2026-09-25 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.24 | X-10 PR-2: V-17 measured and closed — ITSG `nonConservativeForces` is about 3 s late against ACT1B and band-limited to about 10 mHz; callers comparing the two move the ITSG epochs (9.3; owner decisions 2026-09-25) |
 | 0.23 | X-10: `run` executes the reference stages in data order, crn → align → qc (the CRN filter needs the reference on its raw grid, QC the reference on the observation epochs); every other stage keeps its 6.1 position. A stage without its input is skipped and listed with its reason (6.1; owner decision 2026-09-24: input-driven; order confirmed 2026-09-25) |
 | 0.22 | X-05b inserted before X-10: the ported `qc` takes this repository's conventions before release 1.0, numbers gated by equality to the port (10.1; owner decision 2026-09-24) |
 | 0.21 | X-05: `mask` (6.1 row 1) follows the file headers' qualflg meanings: GRACE-FO ACT1B bits 3/4 are the CLK1B clock-offset extrapolation, not a large-range mode, and are reported, not removed; the presets remove the phase break and the L1B fill flags. An `snr` layer (0.5 of the median, provisional) is added; TN-01 MANV rows become windows of their stated duration, TN-01a windows are the caller's; THR1B and eclipse margins are half the CRN fit interval. V-12 answered by D-9 (owner decisions 2026-09-24) |
@@ -630,6 +631,7 @@ page, or real bytes with the file named.
 | V-14 | **closed** | LHK1B carries LRI housekeeping (TM_RLU_TEMP, TMA_PMH_TEMP, …) but **no solar-array temperature**; RL04 L1B has none. AEI RTC1B provides the range thermal-coupling correction directly, so L-09 uses RTC1B | real LHK1B; D-6 |
 | V-15 | **closed** | PO.DAAC `GRACEFO_L1B_ASCII_GRAV_JPL_RL04`; ISDC daily archives `.noLRI` / `.LRI` / `.ACX`, each with an MD5 list; ITSG and ZARM publish no checksums | GUIDE Stage B runs |
 | V-16 | **closed** | ACX: AC0 thruster model, ACU transplant without thrusts (pitch offsets), ACS SRP/albedo correction, ACM drag and other forces; **ACH = ACU + ACS + ACM + AC0** (linear components), replacing ACT. Present every day of 2020-01 | R-7 (entry 2022-05-10); ISDC listing |
+| V-17 | **closed** 2026-09-25 | ITSG `nonConservativeForces` is **about 3 s late against JPL ACT1B** and **band-limited to about 10 mHz**. Cross-spectral phase over 2.5–10 mHz, weighted by coherence: x 3.1 / 5.4 / 2.6 s, z 3.0 / 3.0 / 1.3 s (C 2020-01-02, C 2020-01-03, D 2020-01-02); y has too little signal (0.8 / −2.3 / −2.0 s). Coherence falls below 0.3 above about 15 mHz on every axis. Below 2 mHz the phase is not a delay (different low-frequency content, e.g. TU Graz's own calibration), and it sets checkAlignment's full-band lag (−15 / +3 / +3 s, the opposite sign), which is therefore no timing measure for this pair. TU Graz's own ACT1B is timed like JPL's (P-2 App. A: GPS time via CLK1B, zero-phase CRN), and the README (2025-10-16) states only GPS time and 10 s sampling, so the delay comes from an undocumented step of the 10 s product. A caller comparing the two moves the ITSG epochs 3 s earlier; `run` never shifts | R-9 (README 2025-10-16); P-2 App. A; CI diagnostics on PR #58 (runs 36160272643, 36162760916, 36166998289) |
 
 **Further measured facts from Stage C**
 - **AF → SRF for GRACE-FO ACT (C):** x_SRF = z_AF, y_SRF = x_AF,
