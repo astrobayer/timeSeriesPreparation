@@ -1,12 +1,51 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.26 · 2026-09-24 · X-05b (`qc` conventions, numbers unchanged) in review; O-6 merged (PR #54, `7c7fb7b`)**
+**Revision 0.27 · 2026-09-25 · X-05b merged (PR #55, `5489ccb`); its `.github/` follow-up in review**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
 restates:
 - `docs/CONCEPT.md` — the design, with the design decisions in its section 11;
 - `docs/GUIDE.md` — the order of work and every procedure.
+
+---
+
+## X-05b `.github/` follow-up — `qc` under the public template; 2026-09-24
+
+A `.github/` change, so it stands alone: `.github/matlab-audit.json`,
+`.github/matlab-docs.json` and the files generated from them, as PR #41
+did after X-02.
+
+True after the merge:
+- The audit profile `qc-ported` is gone. `+timeSeriesPreparation/+qc/*.m`
+  is audited under `public` (the full template, identifiers and warnings),
+  and `tests/qc/*.m` under `tests`.
+- The generator documents `+qc`. There are 6 new pages, and the
+  catalogue lists **157** identifiers (20 of them `qc`).
+  **6 new help examples** run in `TestHelpExamples`.
+
+**Fault injection (2026-09-24, ci-actions `v1.3.2`)**, each on a copy:
+
+| injected fault | finding |
+|---|---|
+| `hampel` raises an undocumented `…:inputWindowX` | A6 |
+| `screen`'s help without SYNTAX | A2 |
+
+The healthy tree is **clean**: 125 files. `matlab-docs --check`: 66 files,
+**in sync**.
+
+**Prediction** (before any run): **643 + 0 + 0 = 643**. That is X-05b's
+637 with TestHelpExamples growing from 54 to 60 (+6, contract): contract
+193, reference 234, precision 23, robustness 120, metamorphic 44,
+vectorisation 21, speed 8.
+
+**CI verdict** (run 36102900717, head `ee9f31b`, 2026-09-25): **643 + 0 + 0
+= 643**, as predicted. Per tag: contract 193, reference 234, precision 23,
+robustness 120, metamorphic 44, vectorisation 21, speed 8. Audit green.
+
+**Risk, stated:** the six `qc` EXAMPLEs run for the first time, each
+warning-free. A red here is a help-text fix in this PR, never a numerical
+one.
 
 ---
 

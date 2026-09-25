@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.qc.residuals</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.qc.residuals</h1>
+<p>Residuals of measured minus modelled observations under a preliminary calibration, optionally whitened.</p>
+<h2>Syntax</h2>
+<pre><code>r = timeSeriesPreparation.qc.residuals(y_meas, y_model)
+[r, info] = timeSeriesPreparation.qc.residuals(y_meas, y_model, Bias = b, Scale = S, Whitening = &quot;highpass&quot;, Window = 601)</code></pre>
+<h2>Description</h2>
+<p>r_raw = y_meas - (b + y_model * S&#x27;), per channel (columns), with the caller&#x27;s preliminary calibration (defaults b = 0, S = I: the plain difference). Whitening prepares the residual for the detectors, which assume white noise: &quot;none&quot;        r = r_raw; &quot;difference&quot;  r = diff(r_raw), NaN in the first row: flattens the 1/f accelerometer noise, doubles the white-noise variance, turns a level jump into a one-sample impulse; &quot;highpass&quot;    r = r_raw - movmean(r_raw, Window, &quot;omitnan&quot;): removes bias drift slower than Window samples and keeps jumps and pulses shorter than Window/2 (the choice for detectJumps). NaN samples propagate (they never enter the moving mean) and are never invented; the detectors handle them. Ported from NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>y_meas</code></td><td>K,M</td><td><code>double</code></td><td>&mdash;</td><td>- K samples of M channels, e.g. ACT1B accelerations.</td></tr>
+<tr><td><code>y_model</code></td><td>K,M</td><td><code>double</code></td><td>&mdash;</td><td>- Modelled observable at the same samples.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Bias</code></td><td>1,M</td><td><code>double</code></td><td>zeros</td><td>Preliminary bias, 1xM or KxM.</td></tr>
+<tr><td><code>Scale</code></td><td>M,M</td><td><code>double</code></td><td>eye</td><td>Preliminary scale, diagonal as 1xM or full MxM.</td></tr>
+<tr><td><code>Whitening</code></td><td>1,1</td><td><code>string</code></td><td>&quot;none&quot;</td><td>&quot;none&quot;, &quot;difference&quot; or &quot;highpass&quot;.</td></tr>
+<tr><td><code>Window</code></td><td>1,1</td><td><code>double</code></td><td>&mdash;</td><td>Odd length &gt;= 3 in samples; required by &quot;highpass&quot;.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>r</code></td><td>K,M</td><td><code>double</code></td><td>&mdash;</td><td>- Whitened residuals, units of y_meas.</td></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: raw (K,M, before whitening), sigmaRobust (1,M, 1.4826 MAD of r, NaN-free), whitening, window, provenance.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Arithmetic only. &quot;highpass&quot; keeps h (1 - 1/2) of a step of height h at its centre over Window/2 samples on either side; &quot;difference&quot; is exact for a step (one sample of height h). The robust sigma is consistent with the standard deviation for Gaussian noise; for 1/f noise it overestimates by up to 10 % inside short windows.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:residuals:inputShape</code></td><td>Input</td><td>y_meas and y_model are not KxM of one size, or Bias or Scale has the wrong size.</td></tr>
+<tr><td><code>timeSeriesPreparation:residuals:inputWindow</code></td><td>Input</td><td>&quot;highpass&quot; without an odd Window &gt;= 3.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Residuals of three channels under a preliminary scale, high-passed.</p>
+<pre><code>rs = RandStream(&quot;twister&quot;, &quot;Seed&quot;, 1);
+y = randn(rs, 1000, 3); m = 0.9 * y + 0.1 * randn(rs, 1000, 3);
+[r, info] = timeSeriesPreparation.qc.residuals(y, m, Scale = [1.1 1.1 1.1], Whitening = &quot;highpass&quot;, Window = 61);</code></pre>
+<h2>Limitations</h2>
+<p>The preliminary calibration is the caller&#x27;s; nothing is fitted here.</p>
+<h2>References</h2>
+<p>Klinger, B., Mayer-Guerr, T. (2016). The role of accelerometer data calibration within GRACE gravity field recovery. Adv. Space Res. 58, 1597-1609. NonGravForces.qc 0.12.0 (3cc0123).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.qc.screen</code>, <code>timeSeriesPreparation.qc.hampel</code>, <code>timeSeriesPreparation.qc.detectJumps</code></p>
+<p class="footer">timeSeriesPreparation v0.2.0 - generated from the help block of +timeSeriesPreparation/+qc/residuals.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

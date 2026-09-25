@@ -55,6 +55,42 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.internal.toolboxVersion did not run cleanly.");
         end
 
+        function timeSeriesPreparation_qc_detectImpulses_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.qc.detectImpulses: One raised-cosine pulse of 8 sigma in white noise.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_detectImpulses_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.qc.detectImpulses did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_qc_detectJumps_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.qc.detectJumps: A 4-sigma step in 1000 white samples.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_detectJumps_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.qc.detectJumps did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_qc_eventTable_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.qc.eventTable: A jump and an outlier.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_eventTable_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.qc.eventTable did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_qc_hampel_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.qc.hampel: One planted outlier in white noise.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_hampel_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.qc.hampel did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_qc_residuals_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.qc.residuals: Residuals of three channels under a preliminary scale, high-passed.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_residuals_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.qc.residuals did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_qc_screen_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.qc.screen: A spike and a step in white noise, no pulse template.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_screen_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.qc.screen did not run cleanly.");
+        end
+
         function timeSeriesPreparation_spectral_allanVariance_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.spectral.allanVariance: White noise: the Allan deviation falls with slope -1/2.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_spectral_allanVariance_1(), ...
@@ -376,6 +412,48 @@ end
 function example_timeSeriesPreparation_internal_toolboxVersion_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.internal.toolboxVersion, verbatim from its help block.
     v = timeSeriesPreparation.internal.toolboxVersion();
+end
+
+function example_timeSeriesPreparation_qc_detectImpulses_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.qc.detectImpulses, verbatim from its help block.
+    x = 1e-9 * randn(RandStream("twister", "Seed", 3), 3000, 1);
+    h = sin(pi * (0:29)' / 30).^2; x(1000:1029) = x(1000:1029) + 8e-9 * h;
+    t = datetime(2020, 1, 1, "TimeZone", "UTC") + seconds((0:2999)');
+    events = timeSeriesPreparation.qc.detectImpulses(x, Epoch = t, Response = h);
+end
+
+function example_timeSeriesPreparation_qc_detectJumps_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.qc.detectJumps, verbatim from its help block.
+    x = randn(RandStream("twister", "Seed", 5), 1000, 1); x(601:end) = x(601:end) + 4;
+    t = datetime(2020, 1, 1, "TimeZone", "UTC") + seconds((0:999)');
+    [events, info] = timeSeriesPreparation.qc.detectJumps(x, Epoch = t);
+end
+
+function example_timeSeriesPreparation_qc_eventTable_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.qc.eventTable, verbatim from its help block.
+    t = datetime(2020, 1, 1, "TimeZone", "UTC") + seconds([10; 20]);
+    T = timeSeriesPreparation.qc.eventTable(t, t, ["outlier"; "jump"], ["x"; "all"], [1e-8; 2e-9], [1e-9; 1e-9], ["unassigned"; "eclipse"], [0.9; 0.5]);
+end
+
+function example_timeSeriesPreparation_qc_hampel_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.qc.hampel, verbatim from its help block.
+    x = randn(RandStream("twister", "Seed", 2), 1000, 1); x(500) = 12;
+    mask = timeSeriesPreparation.qc.hampel(x);
+end
+
+function example_timeSeriesPreparation_qc_residuals_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.qc.residuals, verbatim from its help block.
+    rs = RandStream("twister", "Seed", 1);
+    y = randn(rs, 1000, 3); m = 0.9 * y + 0.1 * randn(rs, 1000, 3);
+    [r, info] = timeSeriesPreparation.qc.residuals(y, m, Scale = [1.1 1.1 1.1], Whitening = "highpass", Window = 61);
+end
+
+function example_timeSeriesPreparation_qc_screen_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.qc.screen, verbatim from its help block.
+    x = 1e-9 * randn(RandStream("twister", "Seed", 4), 3000, 1);
+    x(700) = 3e-8; x(2500:end) = x(2500:end) + 5e-9;
+    t = datetime(2020, 1, 1, "TimeZone", "UTC") + seconds((0:2999)');
+    [mask, events] = timeSeriesPreparation.qc.screen(x, zeros(3000, 1), t);
 end
 
 function example_timeSeriesPreparation_spectral_allanVariance_1()  %#ok<DEFNU>

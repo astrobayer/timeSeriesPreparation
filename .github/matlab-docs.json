@@ -9,8 +9,7 @@
     "+timeSeriesPreparation"
   ],
   "exclude": [
-    "**/Contents.m",
-    "+timeSeriesPreparation/+qc/*.m"
+    "**/Contents.m"
   ],
   "entries": "template",
   "output": "html",
