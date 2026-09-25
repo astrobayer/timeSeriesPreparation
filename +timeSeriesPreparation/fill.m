@@ -127,7 +127,7 @@ function [arc, info] = fill(arc, options)
 %   See also timeSeriesPreparation.noise, timeSeriesPreparation.spectral.arma2acv, timeSeriesPreparation.Arc.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc (1,1) timeSeriesPreparation.Arc

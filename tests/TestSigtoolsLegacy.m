@@ -16,7 +16,7 @@ classdef TestSigtoolsLegacy < matlab.unittest.TestCase
 %     contract   - runAllTests runs exactly 29 cases, all of them named here.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (TestParameter)
         Case = {'test_acf_whitenoise', 'test_acf_known', 'test_pacf_ar1', ...

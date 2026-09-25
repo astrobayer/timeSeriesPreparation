@@ -11,15 +11,15 @@ rangingPreparation (LRI/KBR):
 - bootstrap and cross-validation;
 - correlation analysis.
 
-**Status: release 0.2.0 (X-05).** Skeleton and CI (X-00b), sigtools v1.3.1
+**Status: release 1.0.0 (X-10).** Skeleton and CI (X-00b), sigtools v1.3.1
 as `+spectral` / `+tsmodels` (X-01, conventions X-02), `Arc` and `Config`
 (X-03), the exact ATBD CRN kernel and its output-epoch application (X-04),
 masks and the residual quality control ported from NonGravForces (X-05),
 alignment (X-06), bootstrap, cross-validation, observability and noise
 models (X-07), gaps (X-08) and driver correlation (X-09). The defect
-catalogue D-9 is tested on its real days. Since 0.2.0: `run`, the stages
-on one arc as each one's input is given, and every `Config` section (X-10
-PR-1). Changes: `CHANGELOG.md`.
+catalogue D-9 is tested on its real days. `run` chains the stages on one
+arc as each one's input is given, and a real day against ITSG meets the
+V-4 thresholds (X-10). Changes: `CHANGELOG.md`.
 
 ```matlab
 setupTimeSeriesPreparation();              % toolbox and demos on the path; reports gracefoReading
