@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.internal.contentHash</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.internal.contentHash</h1>
+<p>SHA-256 of the content of values, as 64 lowercase hex digits.</p>
+<h2>Syntax</h2>
+<pre><code>h = timeSeriesPreparation.internal.contentHash(v1, v2, ...)</code></pre>
+<h2>Description</h2>
+<p>The key of the stage cache (X-14, CONCEPT 6.6) is the SHA-256 of the stage, the toolbox version, the resolved settings and the input contents. This function feeds a canonical byte stream of its arguments to one SHA-256 (java.security.MessageDigest), so equal content gives equal keys on every machine and in every session: - numeric and logical arrays: class name, size, then the raw little-endian bytes (real part, then imaginary part); - char and string: size, then each element&#x27;s UTF-8 bytes with its length (a missing string has its own tag); - struct: size, then per element each field name and value, in field order; - cell: size, then each cell; - table: its variable names, then each variable; - datetime: its time zone and the POSIX seconds; - Arc: t, obs, names, units, weights, layers and filled. The provenance is left out, because it carries creation times. Every value starts with a type tag, so [1 2] and &quot;12&quot; or a struct and a cell never share a stream. A function handle refuses: what it computes cannot be read from it (func2str misses captured variables and the code of named functions).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>varargin</code></td><td>1,:</td><td><code>cell</code></td><td>&mdash;</td><td>- Values to hash, in order, each of a type above.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>h</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- 64 lowercase hexadecimal digits.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact: the SHA-256 of the canonical bytes. The stream is specified above so it can be rebuilt elsewhere. A Python rebuild (hashlib, 2026-09-25) gives, and TestStageCache pins: contentHash(uint8(&#x27;abc&#x27;)) = 40227623b648a612552d1d3ee04c07d5013520f932d94327a12d1b2554717715 contentHash(&quot;qc&quot;, struct(&quot;hampelWindow&quot;, 61)) = 5bdcf53a514ff0c8eeba0139dc6c1bfbcc3125d4aa8ad79ea3b8a8b19310fc93 The tag of a value is its type name in UTF-8, a zero byte and its size as little-endian doubles; a string element is prefixed by its byte count as a tagged double.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:contentHash:unsupported</code></td><td>Input</td><td>a value of another class, e.g. a function handle or an object other than Arc.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Two equal settings structs give one key; a changed field another.</p>
+<pre><code>a = timeSeriesPreparation.internal.contentHash(&quot;qc&quot;, struct(&quot;hampelWindow&quot;, 61));
+b = timeSeriesPreparation.internal.contentHash(&quot;qc&quot;, struct(&quot;hampelWindow&quot;, 31));</code></pre>
+<h2>Limitations</h2>
+<p>Field order matters: struct(&quot;a&quot;, 1, &quot;b&quot;, 2) and struct(&quot;b&quot;, 2, &quot;a&quot;, 1) hash differently. The callers build their settings in a fixed order.</p>
+<h2>References</h2>
+<p>NIST FIPS 180-4, Secure Hash Standard (2015), SHA-256 and example B.1; docs/CONCEPT.md 6.6 (stage cache).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.internal.stageCache</code>, <code>timeSeriesPreparation.run</code></p>
+<p class="footer">timeSeriesPreparation v1.0.0 - generated from the help block of +timeSeriesPreparation/+internal/contentHash.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

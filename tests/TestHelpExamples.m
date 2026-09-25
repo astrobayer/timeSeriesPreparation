@@ -19,6 +19,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.internal.blockLength did not run cleanly.");
         end
 
+        function timeSeriesPreparation_internal_contentHash_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.internal.contentHash: Two equal settings structs give one key; a changed field another.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_contentHash_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.internal.contentHash did not run cleanly.");
+        end
+
         function timeSeriesPreparation_internal_dlyap_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.internal.dlyap: AR(1) with phi = 0.9: the stationary variance is 1/(1 - 0.81).
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_dlyap_1(), ...
@@ -41,6 +47,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.internal.resampleOnto: A 5 s series with one NaN, resampled at 1 s; the hole stays NaN.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_resampleOnto_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.internal.resampleOnto did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_internal_stageCache_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.internal.stageCache: The cache off: compute runs and nothing is stored.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_stageCache_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.internal.stageCache did not run cleanly.");
         end
 
         function timeSeriesPreparation_internal_stageSeed_example1(testCase)
@@ -387,6 +399,12 @@ function example_timeSeriesPreparation_internal_blockLength_1()  %#ok<DEFNU>
     b = timeSeriesPreparation.internal.blockLength(x);
 end
 
+function example_timeSeriesPreparation_internal_contentHash_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.internal.contentHash, verbatim from its help block.
+    a = timeSeriesPreparation.internal.contentHash("qc", struct("hampelWindow", 61));
+    b = timeSeriesPreparation.internal.contentHash("qc", struct("hampelWindow", 31));
+end
+
 function example_timeSeriesPreparation_internal_dlyap_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.internal.dlyap, verbatim from its help block.
     P = timeSeriesPreparation.internal.dlyap(0.9, 1, 1e-14, 60);
@@ -408,6 +426,11 @@ function example_timeSeriesPreparation_internal_resampleOnto_1()  %#ok<DEFNU>
     y = sin((0:5:60)' / 20); y(7) = NaN;
     tq = int64(0:60)' * int64(1e9);
     yq = timeSeriesPreparation.internal.resampleOnto(t, y, isfinite(y), tq, "pchip", []);
+end
+
+function example_timeSeriesPreparation_internal_stageCache_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.internal.stageCache, verbatim from its help block.
+    [outs, status] = timeSeriesPreparation.internal.stageCache("", "demo", "0", 1, @() magic(3));
 end
 
 function example_timeSeriesPreparation_internal_stageSeed_1()  %#ok<DEFNU>

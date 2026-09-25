@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.24 (DRAFT) · 2026-09-25 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.25 (DRAFT) · 2026-09-25 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.25 | X-14: the stage cache covers crn, qc, noise and correlation; stages with a function-handle input (bootstrap, crossval) are never cached; hits are reported in `diagnostics.cache` and provenance, one MAT file per key, no eviction (6.6; owner decisions 2026-09-25) |
 | 0.24 | X-10 PR-2: V-17 measured and closed — ITSG `nonConservativeForces` is about 3 s late against ACT1B and band-limited to about 10 mHz; callers comparing the two move the ITSG epochs (9.3; owner decisions 2026-09-25) |
 | 0.23 | X-10: `run` executes the reference stages in data order, crn → align → qc (the CRN filter needs the reference on its raw grid, QC the reference on the observation epochs); every other stage keeps its 6.1 position. A stage without its input is skipped and listed with its reason (6.1; owner decision 2026-09-24: input-driven; order confirmed 2026-09-25) |
 | 0.22 | X-05b inserted before X-10: the ported `qc` takes this repository's conventions before release 1.0, numbers gated by equality to the port (10.1; owner decision 2026-09-24) |
@@ -414,6 +415,12 @@ are estimated by `lsqvce.fit`.
   fingerprint.
 - A cache hit is reported, never silent. gracefoReading's `CacheDir` covers
   reading; this cache covers the stages.
+- Cached stages (X-14): crn, qc, noise and correlation, the expensive
+  ones. bootstrap and crossval take a function handle, which cannot be
+  hashed, so they are never cached. Each cacheable stage gets a row in
+  `diagnostics.cache` (hit, miss, rewritten, unsaved, off, not cached),
+  and the run entry of provenance carries the table. One MAT file per key
+  under `cacheDir/<stage>/`; no eviction.
 
 **Regression baseline.**
 - After N-03, the results for the reference month 2020-01 (satellites C and

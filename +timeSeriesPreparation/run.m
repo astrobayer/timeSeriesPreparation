@@ -64,6 +64,19 @@ function res = run(arc, options)
 %                     with cfg.unc (NBoot, BlockLength, Level).
 %     Seeds: noise, bootstrap and correlate take cfg.run.seed.
 %
+%     Stage cache (X-14, CONCEPT 6.6; owner decisions 2026-09-25). With
+%     cfg.run.cacheDir set, the expensive stages crn, qc, noise and
+%     correlation keep their outputs in cacheDir/<stage>/<key>.mat. The
+%     key is the SHA-256 (internal.contentHash) of the stage, the toolbox
+%     version, the stage's inputs (arcs by content, not provenance) and its
+%     settings. A stored key is loaded instead of computed. Each cacheable
+%     stage run gets a row in diagnostics.cache (hit, miss, rewritten,
+%     unsaved, or off), and the run entry of provenance carries the table.
+%     bootstrap and crossval take a function handle, which cannot be
+%     hashed, so they are never cached; their row says so. The cheap
+%     stages (mask, align, gate, fill) always compute. "" (the default)
+%     is off (R5).
+%
 %   INPUTS
 %     arc  (1,1) Arc   -   The observation; its product selects the preset.
 %
@@ -104,8 +117,10 @@ function res = run(arc, options)
 %                                   residual (Arc); noise (noise's model);
 %                                   gate (observability's report);
 %                                   bootstrap, crossval (struct of the
-%                                   result and info); fill (fill's info).
-%                                   A field of a skipped stage is [].
+%                                   result and info); fill (fill's info);
+%                                   cache (K,4) table of stage, key,
+%                                   status and reason. A field of a
+%                                   skipped stage is [].
 %       correlation  struct or []   correlate's result.
 %       flags        (1,1) struct   events (N,8) qc.eventTable of the
 %                                   qc detections; alignment (1,M) string,
@@ -114,7 +129,7 @@ function res = run(arc, options)
 %                                   arc.weights; nFilled, the rows filled.
 %       config       (1,1) struct   toStruct of the settings used.
 %       provenance   (1,:) struct   arc's provenance, ending with the
-%                                   "run" entry (stages, skipped,
+%                                   "run" entry (stages, skipped, cache,
 %                                   configHash).
 %
 %   ACCURACY
@@ -143,14 +158,14 @@ function res = run(arc, options)
 %
 %   LIMITATIONS
 %     One arc per call; campaigns follow (CONCEPT 6.6). qc.screen gets no
-%     impulse or jump priors from run. The stage cache (X-14) and the report
-%     (X-11) do not exist yet.
+%     impulse or jump priors from run. The report (X-11) does not exist
+%     yet. The cache has no eviction and no locking (internal.stageCache).
 %
 %   REFERENCES
 %     docs/CONCEPT.md sections 4 (result fields), 6.1 (stages), 6.5 (gaps);
 %     HANDOVER X-10 (owner decisions 2026-09-24).
 %
-%   See also timeSeriesPreparation.Config, timeSeriesPreparation.mask, timeSeriesPreparation.align, timeSeriesPreparation.qc.screen, timeSeriesPreparation.noise, timeSeriesPreparation.fill, timeSeriesPreparation.correlate.
+%   See also timeSeriesPreparation.Config, timeSeriesPreparation.internal.stageCache, timeSeriesPreparation.mask, timeSeriesPreparation.align, timeSeriesPreparation.qc.screen, timeSeriesPreparation.noise, timeSeriesPreparation.fill, timeSeriesPreparation.correlate.
 %
 %   ---------------------------------------------------------------------
 %   timeSeriesPreparation v1.0.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
@@ -190,7 +205,10 @@ function res = run(arc, options)
     stages = strings(1, 0);
     skipped = table(strings(0, 1), strings(0, 1), 'VariableNames', ["stage" "reason"]);
     dg = struct("stages", [], "skipped", [], "mask", [], "alignment", [], "qc", [], ...
-        "residual", [], "noise", [], "gate", [], "bootstrap", [], "crossval", [], "fill", []);
+        "residual", [], "noise", [], "gate", [], "bootstrap", [], "crossval", [], "fill", [], ...
+        "cache", []);
+    cache = struct("dir", string(cfg.run.cacheDir), "table", table(strings(0, 1), strings(0, 1), ...
+        strings(0, 1), strings(0, 1), 'VariableNames', ["stage" "key" "status" "reason"]));
     flags = struct("events", timeSeriesPreparation.qc.eventTable(), ...
         "alignment", strings(1, 0), "weightFraction", NaN, "nFilled", 0);
     reference = [];
@@ -213,8 +231,12 @@ function res = run(arc, options)
     elseif ~cfg.run.filterReference
         skipped = skip(skipped, "crn", "cfg.run.filterReference is false");
     else
-        ref = timeSeriesPreparation.crnApply(ref, timeSeriesPreparation.crnKernel(cfg.crn.preset), ...
-            OutputEpochs = arc.t);
+        kernelPreset = cfg.crn.preset;
+        refIn = ref;
+        [outs, cache] = cached(cache, "crn", 1, @() timeSeriesPreparation.crnApply(refIn, ...
+            timeSeriesPreparation.crnKernel(kernelPreset), OutputEpochs = arc.t), ...
+            refIn, kernelPreset, arc.t);
+        ref = outs{1};
         stages(end+1) = "crn";
     end
 
@@ -239,12 +261,15 @@ function res = run(arc, options)
         skipped = skip(skipped, "qc", sprintf("qc.screen takes 1 or 3 columns; the arc has %d", M));
     else
         q = cfg.qc;
-        [qmask, events, qinfo] = timeSeriesPreparation.qc.screen(arc.obs, reference.obs, ...
-            utcOf(arc.t), Bias = options.Bias, Scale = options.Scale, ...
+        y = arc.obs; ym = reference.obs; tq = arc.t;
+        [outs, cache] = cached(cache, "qc", 3, @() timeSeriesPreparation.qc.screen(y, ym, ...
+            utcOf(tq), Bias = options.Bias, Scale = options.Scale, ...
             Whitening = q.whitening, Window = q.window, HampelWindow = q.hampelWindow, ...
             HampelThreshold = q.hampelThreshold, Response = options.Response, ...
             ImpulseThreshold = q.impulseThreshold, JumpModel = q.jumpModel, ...
-            JumpPenalty = q.jumpPenalty, JumpMinSegment = q.jumpMinSegment);
+            JumpPenalty = q.jumpPenalty, JumpMinSegment = q.jumpMinSegment), ...
+            y, ym, tq, options.Bias, options.Scale, options.Response, q);
+        [qmask, events, qinfo] = outs{:};
         dg.qc = struct("mask", qmask, "events", events, "info", qinfo);
         flags.events = events;
         arc = addLayer(arc, "qc", any(qmask, 2));
@@ -271,8 +296,12 @@ function res = run(arc, options)
     if isempty(n.order)
         skipped = skip(skipped, "noise", "cfg.noise.order not stated");
     else
-        nm = timeSeriesPreparation.noise(s, n.order, Method = n.method, MaxLag = n.maxLag, ...
-            Lags = n.lags, WelchAverages = n.welchAverages, Seed = cfg.run.seed);
+        seed = cfg.run.seed;
+        sIn = s;
+        [outs, cache] = cached(cache, "noise", 1, @() timeSeriesPreparation.noise(sIn, n.order, ...
+            Method = n.method, MaxLag = n.maxLag, Lags = n.lags, ...
+            WelchAverages = n.welchAverages, Seed = seed), sIn, n, seed);
+        nm = outs{1};
         dg.noise = nm;
         stages(end+1) = "noise";
     end
@@ -296,6 +325,7 @@ function res = run(arc, options)
         [stat, binfo] = timeSeriesPreparation.bootstrap(x, options.Statistic, NBoot = u.nBoot, ...
             BlockLength = u.blockLength, Seed = cfg.run.seed, Level = u.level);
         dg.bootstrap = struct("stat", stat, "info", binfo);
+        cache = uncached(cache, "bootstrap");
         stages(end+1) = "bootstrap";
     end
     if isempty(options.Loss)
@@ -303,6 +333,7 @@ function res = run(arc, options)
     else
         [loss, cinfo] = timeSeriesPreparation.crossval(x, options.Loss, Folds = u.folds);
         dg.crossval = struct("loss", loss, "info", cinfo);
+        cache = uncached(cache, "crossval");
         stages(end+1) = "crossval";
     end
 
@@ -328,18 +359,22 @@ function res = run(arc, options)
     elseif isempty(d.maxLag)
         skipped = skip(skipped, "correlation", "cfg.drivers.maxLag not stated");
     else
-        drv = timeSeriesPreparation.drivers(arc, options.Drivers, Method = d.method, MaxGap = d.maxGap);
-        correlation = timeSeriesPreparation.correlate(s, drv, nm, d.maxLag, NBoot = u.nBoot, ...
-            BlockLength = u.blockLength, Seed = cfg.run.seed, Level = u.level);
+        seed = cfg.run.seed;
+        sIn = s; tc = arc.t; series = options.Drivers;
+        [outs, cache] = cached(cache, "correlation", 1, @() correlationStage(arc, sIn, ...
+            series, nm, d, u, seed), sIn, tc, series, nm, d, u, seed);
+        correlation = outs{1};
         stages(end+1) = "correlation";
     end
 
     dg.stages = stages;
     dg.skipped = skipped;
+    dg.cache = cache.table;
     flags.weightFraction = mean(arc.weights);
     flags.nFilled = nnz(arc.filled);
     c = toStruct(cfg);
     arc = appendProvenance(arc, "run", struct("stages", stages, "skipped", skipped.stage', ...
+        "cache", cache.table, ...
         "configHash", string(lower(dec2hex(timeSeriesPreparation.internal.stageSeed( ...
         string(jsonencode(c)), 0), 8)))));
 
@@ -350,6 +385,37 @@ function res = run(arc, options)
 end
 
 % ------------------------------------------------------------------------
+
+function [outs, cache] = cached(cache, stage, nOut, compute, varargin)
+% One cacheable stage (X-14): with cache.dir "" it only computes; otherwise
+% its key is the SHA-256 of stage, toolbox version and the given inputs
+% and settings, and internal.stageCache loads or computes and stores.
+    if cache.dir == ""
+        outs = cell(1, nOut);
+        [outs{:}] = compute();
+        cache.table(end+1, :) = {stage, "", "off", "cfg.run.cacheDir is empty"};
+        return
+    end
+    key = timeSeriesPreparation.internal.contentHash(stage, ...
+        timeSeriesPreparation.internal.toolboxVersion(), varargin{:});
+    [outs, status] = timeSeriesPreparation.internal.stageCache(cache.dir, stage, key, nOut, compute);
+    reasons = dictionary(["hit" "miss" "rewritten" "unsaved"], ["loaded from " + stage + "/" + key + ".mat", ...
+        "computed and stored", "unreadable file recomputed and stored", "computed; storing failed"]);
+    cache.table(end+1, :) = {stage, key, status, reasons(status)};
+end
+
+function cache = uncached(cache, stage)
+% bootstrap and crossval take a caller's function handle; its behaviour
+% cannot be hashed, so they always compute (owner decision 2026-09-25).
+    cache.table(end+1, :) = {string(stage), "", "not cached", "function-handle input"};
+end
+
+function res = correlationStage(arc, s, series, nm, d, u, seed)
+% drivers onto arc.t, then correlate: the correlation stage as one unit.
+    drv = timeSeriesPreparation.drivers(arc, series, Method = d.method, MaxGap = d.maxGap);
+    res = timeSeriesPreparation.correlate(s, drv, nm, d.maxLag, NBoot = u.nBoot, ...
+        BlockLength = u.blockLength, Seed = seed, Level = u.level);
+end
 
 function v = orNaN(v)
 % mask's sentinel for "the preset": NaN where the Config leaves a value empty.
