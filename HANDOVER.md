@@ -39,6 +39,10 @@ The healthy tree is **clean**: 125 files. `matlab-docs --check`: 66 files,
 193, reference 234, precision 23, robustness 120, metamorphic 44,
 vectorisation 21, speed 8.
 
+**CI verdict** (run 36102900717, head `ee9f31b`, 2026-09-25): **643 + 0 + 0
+= 643**, as predicted. Per tag: contract 193, reference 234, precision 23,
+robustness 120, metamorphic 44, vectorisation 21, speed 8. Audit green.
+
 **Risk, stated:** the six `qc` EXAMPLEs run for the first time, each
 warning-free. A red here is a help-text fix in this PR, never a numerical
 one.
