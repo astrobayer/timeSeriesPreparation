@@ -1,12 +1,89 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.27 · 2026-09-25 · X-05b merged (PR #55, `5489ccb`); its `.github/` follow-up in review**
+**Revision 0.28 · 2026-09-25 · X-10 PR-1 (`run`, full `Config`) in review; X-05b `.github/` follow-up merged (PR #56, `675b242`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
 restates:
 - `docs/CONCEPT.md` — the design, with the design decisions in its section 11;
 - `docs/GUIDE.md` — the order of work and every procedure.
+
+---
+
+## X-10 PR-1 — `run` and the full `Config`; scope frozen 2026-09-25
+
+Tier B. The first of X-10's two PRs (owner decisions 2026-09-24): `run`
+for one arc, every Config section with its fields, and the contract test
+of the result fields. PR-2 adds the integration tests (ACT1B C 2020-01-02
+against ITSG, V-4 thresholds; a synthetic arc with planted truth) and
+releases 1.0.0.
+
+**Scope (frozen):**
+- `run(arc, ...)`, L3. Each stage runs when its input is given, and a
+  skipped stage is listed with its reason in `diagnostics.skipped`:
+  - mask always (sources QualFlags, Thrusters, Eclipse, Events, Soe, User);
+  - crn when a Reference is given and `cfg.run.filterReference` is true;
+  - align and checkAlignment when a Reference is given;
+  - qc (`qc.screen`, layer `qc`) when a Reference is given and the arc
+    has 1 or 3 columns;
+  - noise when `cfg.noise.order` is given, on the residual (with a
+    Reference) or on the arc;
+  - gate when a Design is given; bootstrap / crossval when a Statistic /
+    Loss is given;
+  - fill always ("none" reports); collocation only without a Reference
+    (with one the model is the residual's, which is fill's deferred
+    method "reference");
+  - correlation when Drivers, the noise model and `cfg.drivers.maxLag`
+    exist.
+- **Execution order.** crn → align → qc run in data order: the CRN
+  filter needs the reference on its raw grid, and QC needs it on the
+  observation epochs. The other stages keep their 6.1 order. This is
+  recorded in CONCEPT 0.23, 6.1. **Owner confirmed the order on
+  2026-09-25.**
+- **Result fields** exactly `arc`, `reference`, `diagnostics`,
+  `correlation`, `flags`, `config`, `provenance` (CONCEPT 4), pinned by
+  `TestRun`. The pin is fault-injected: a result with a field added or
+  removed must fail it.
+- Epochs reach `qc.screen` as UTC: GPS minus the leap seconds of the date,
+  counted in `UTCLeapSeconds`. A spike planted at 00:05:00 UTC on
+  2020-01-02 (GPS 00:05:18) must carry that time in its event.
+- `Config`: `qc` (the eight options of qc.screen, with its defaults),
+  `noise` (order [] because R5 gives it no default; method "exact",
+  maxLag 100, lags 20, welchAverages 32, noise's defaults) and `run`
+  (filterReference [] = not stated; seed 0). No product preset changes.
+- Not in scope: campaign mode (an arc array refuses with
+  `run:campaignDeferred`), the stage cache (X-14), the report (X-11), and
+  qc priors from run.
+
+**Measured before the push (2026-09-25, ci-actions `v1.3.2`):** audit
+clean (127 files, 158 identifiers); docs in sync (67).
+
+**Prediction** (before any run): **657 + 0 + 0 = 657**. That is 643 plus:
+- TestRun +12: contract 5, reference 5, robustness 2;
+- TestConfig +1 (`qcNoiseRunDefaultsAndSet`, contract);
+- TestHelpExamples +1 (`run`, contract).
+
+Per tag: contract 200, reference 239, precision 23, robustness 122,
+metamorphic 44, vectorisation 21, speed 8.
+
+**Risks, stated:**
+- MATLAB is not available in this session, so the new code first runs in
+  CI. A red is a wiring or test fault, fixed in this PR. The stages
+  themselves are unchanged.
+- The UTC conversion relies on converting a `UTCLeapSeconds` datetime to
+  `UTC`; `qcSpikeEventInUtc` pins the result.
+
+**Verdict, CI run 36111847556 on `9774c55` (2026-09-25), MATLAB R2026a:**
+- `audit` green.
+- `matlab` green on the first run: **657 + 0 + 0 = 657**, every tag as
+  predicted (contract 200, reference 239, precision 23, robustness 122,
+  metamorphic 44, vectorisation 21, speed 8). Gate time 1192 s.
+- TestRun 12/12, including the UTC epoch of the planted spike and the
+  CRN-filtered reference. The UTCLeapSeconds conversion works.
+- One expected warning in TestRun: in `qcSpikeEventInUtc` the planted
+  1e-6 spike pulls checkAlignment's x lag to -1.59 s ("offset"). That is
+  the diagnostic doing its job on a deliberately disturbed arc, and
+  nothing is shifted.
 
 ---
 

@@ -15,8 +15,8 @@ classdef Config
 %     Config(arc) records the arc's mission and product and returns the
 %     preset for that product (CONCEPT 5).
 %
-%     Each stage adds its fields, defaults and presets in its own work
-%     package; the other sections are still empty. An option whose default
+%     Each section holds the options of its stage (X-10: every section
+%     has its fields; run passes them on). An option whose default
 %     would be an assumption defaults to empty (R5). Applications take a
 %     Config as 'Preproc' and hash it with their own options; toStruct gives
 %     them a plain struct to hash.
@@ -62,6 +62,20 @@ classdef Config
 %     automatic, Politis-White), nBoot (1000), level (0.6827, 1 sigma) and
 %     folds (5) are the defaults of bootstrap and crossval.
 %
+%     qc (X-10): the options of qc.screen - whitening ("none"), window
+%     ([]), hampelWindow (61 samples), hampelThreshold (4 sigma),
+%     impulseThreshold (5 sigma), jumpModel ("level"), jumpPenalty ([] =
+%     BIC) and jumpMinSegment (30 samples) - with qc.screen's own
+%     defaults, ported from NonGravForces 0.12.0; no product sets others.
+%
+%     noise (X-10): order ([p q], no default, R5: without it run skips the
+%     noise stage) and noise's options method ("exact"), maxLag (100
+%     samples), lags (20) and welchAverages (32), with noise's defaults.
+%
+%     run (X-10): filterReference ([] = not stated; true filters the
+%     reference with the crn preset before align, false leaves it; see
+%     run) and seed (0), the caller's seed of the random stages.
+%
 %   INPUTS
 %     arc      (1,1) Arc      -   The arc whose product selects the preset.
 %     section  (1,1) string   -   One of Config.Sections.
@@ -90,17 +104,18 @@ classdef Config
 %     s = toStruct(cfg);
 %
 %   LIMITATIONS
-%     Only mask, crn, align, fill, unc and drivers have fields so far; set
-%     refuses every other field until the stages define theirs.
+%     Presets exist for ACC1B, ACT1B, KBR1B and LRI1B; any other product
+%     gets the defaults. The classic GRACE presets beyond crn follow in
+%     X-13.
 %
 %   REFERENCES
 %     docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults). R-1: GRACE
 %     L1B ATBD, JPL D-27672, App. B. R-2: GRACE-FO L1 Handbook, JPL D-56935.
 %
-%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.mask, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
+%   See also timeSeriesPreparation.Arc, timeSeriesPreparation.run, timeSeriesPreparation.mask, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.2.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
@@ -111,15 +126,18 @@ classdef Config
         product = ""
         mask = struct("removeBits", zeros(1, 0), "snrFraction", [], "thrMargin", [], ...
             "eclipseMargin", [], "crnEdge", false)
-        qc = struct()
+        qc = struct("whitening", "none", "window", [], "hampelWindow", 61, ...
+            "hampelThreshold", 4, "impulseThreshold", 5, "jumpModel", "level", ...
+            "jumpPenalty", [], "jumpMinSegment", 30)
         crn = struct("preset", "")
         align = struct("method", "pchip", "maxGap", [], "maxLag", 60, "threshold", 1)
         fill = struct("method", "none", "maxGap", [], "window", [])
-        noise = struct()
+        noise = struct("order", [], "method", "exact", "maxLag", 100, "lags", 20, ...
+            "welchAverages", 32)
         unc = struct("minWeightFraction", [], "blockLength", [], "nBoot", 1000, ...
             "level", 0.6827, "folds", 5)
         drivers = struct("method", "pchip", "maxGap", [], "maxLag", [], "maxVif", 10)
-        run = struct()
+        run = struct("filterReference", [], "seed", 0)
     end
 
     methods
@@ -200,6 +218,13 @@ function known = schema(section)
             known = ["method" "maxGap" "maxLag" "maxVif"];
         case "unc"
             known = ["minWeightFraction" "blockLength" "nBoot" "level" "folds"];
+        case "qc"
+            known = ["whitening" "window" "hampelWindow" "hampelThreshold" ...
+                "impulseThreshold" "jumpModel" "jumpPenalty" "jumpMinSegment"];
+        case "noise"
+            known = ["order" "method" "maxLag" "lags" "welchAverages"];
+        case "run"
+            known = ["filterReference" "seed"];
         otherwise
             known = strings(1, 0);
     end

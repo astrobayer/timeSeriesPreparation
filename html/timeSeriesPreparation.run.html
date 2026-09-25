@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.run</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.run</h1>
+<p>The instrument stages on one arc, each run when its input is given.</p>
+<h2>Syntax</h2>
+<pre><code>res = timeSeriesPreparation.run(arc)
+res = timeSeriesPreparation.run(arc, Reference = ref, Config = cfg)
+res = timeSeriesPreparation.run(arc, QualFlags = aux, Thrusters = thr, Eclipse = ecl, Events = ev, Soe = soe, User = remove)
+res = timeSeriesPreparation.run(arc, Reference = ref, Response = h, Bias = b, Scale = S, Design = X, Statistic = f, Loss = g, Drivers = series)</code></pre>
+<h2>Description</h2>
+<p>The single point of access at instrument level (CONCEPT 4). The stages of CONCEPT 6.1 run on one arc, and each runs only when its input exists (owner decision 2026-09-24). A stage without its input is skipped and listed with the reason in diagnostics.skipped; no input is assumed. Each stage is the L2 function of the same name, called with the settings of Config (default Config(arc), the preset of the arc&#x27;s product).</p>
+<p>Execution order. The 6.1 table lists QC before align and align before the CRN consistency stage. QC needs the reference on the observation epochs, and the CRN filter needs the reference on its own raw grid, so run executes those three in data order: crn, align, qc. Every other stage keeps its 6.1 position. The order actually run is diagnostics.stages. mask          always: mask(arc, ...) with the sources given (QualFlags, Thrusters, Eclipse, Events, Soe, User) and cfg.mask. Without a source it adds only what the arc itself implies (the SNR layer of a KBR1B/LRI1B preset). crn           Reference given and cfg.run.filterReference true: crnApply(ref, crnKernel(cfg.crn.preset), OutputEpochs = arc.t). A reference that is not CRN-filtered is filtered like the L1B data; whether it is, is the caller&#x27;s statement ([] = not stated, skipped). align         Reference given: align(arc, ref) with cfg.align (the filtered reference if crn ran), and checkAlignment with cfg.align; its lag verdicts go to flags. align&#x27;s layer &quot;alignGap&quot; is added to arc. qc            Reference given and arc with 1 or 3 columns: qc.screen on arc and the aligned reference, with Bias, Scale, Response and cfg.qc; the rows it masks on any axis form the layer &quot;qc&quot;. Epochs are passed as UTC: GPS minus the leap seconds of the date. noise         cfg.noise.order given: noise(s, order) with cfg.noise, s the residual arc (arc minus Bias + Scale x reference, with arc&#x27;s layers) when a Reference is given, else arc. gate          Design given: observability(arc, X) with cfg.unc.minWeightFraction. Its minimum-data refusal stops the run. bootstrap     Statistic given: bootstrap(x, Statistic) with cfg.unc, x = s.obs with removed rows NaN. crossval      Loss given: crossval(x, Loss) with cfg.unc.folds. fill          always: fill(arc, ...) with cfg.fill. &quot;none&quot; reports the gaps. &quot;collocation&quot; fills arc with the noise model, so it needs the noise stage, and a model of arc itself: with a Reference the model is the residual&#x27;s, and filling arc from it is fill&#x27;s deferred method &quot;reference&quot;, so it is skipped. correlation   Drivers given, the noise stage run and cfg.drivers.maxLag given: drivers(arc, Drivers) with cfg.drivers, then correlate(s, drv, model, maxLag) with cfg.unc (NBoot, BlockLength, Level). Seeds: noise, bootstrap and correlate take cfg.run.seed.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- The observation; its product selects the preset.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Config</code></td><td>1,1</td><td><code>Config</code></td><td>Config(arc)</td><td>Settings.</td></tr>
+<tr><td><code>Reference</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>Reference with arc&#x27;s columns and units (a model, a second instrument).</td></tr>
+<tr><td><code>QualFlags</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>As mask.</td></tr>
+<tr><td><code>Thrusters</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>As mask (THR1B).</td></tr>
+<tr><td><code>Eclipse</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>As mask.</td></tr>
+<tr><td><code>Events</code></td><td>:,4</td><td><code>table</code></td><td>&mdash;</td><td>As mask.</td></tr>
+<tr><td><code>Soe</code></td><td>:,:</td><td><code>table</code></td><td>&mdash;</td><td>As mask.</td></tr>
+<tr><td><code>User</code></td><td>N,1</td><td><code>logical</code></td><td>&mdash;</td><td>As mask.</td></tr>
+<tr><td><code>Response</code></td><td>L,1</td><td><code>double</code></td><td>&mdash;</td><td>Pulse template of qc.screen; [] skips its impulse step.</td></tr>
+<tr><td><code>Bias</code></td><td>1,M</td><td><code>double</code></td><td>&mdash;</td><td>Preliminary bias of the residual, as qc.residuals.</td></tr>
+<tr><td><code>Scale</code></td><td>M,M</td><td><code>double</code></td><td>&mdash;</td><td>Preliminary scale, as qc.residuals.</td></tr>
+<tr><td><code>Design</code></td><td>N,P</td><td><code>double</code></td><td>&mdash;</td><td>Regressors for the gate.</td></tr>
+<tr><td><code>Names</code></td><td>1,P</td><td><code>string</code></td><td>&mdash;</td><td>Their names.</td></tr>
+<tr><td><code>Statistic</code></td><td>1,1</td><td><code>function_handle</code></td><td>&mdash;</td><td>statFcn of bootstrap.</td></tr>
+<tr><td><code>Loss</code></td><td>1,1</td><td><code>function_handle</code></td><td>&mdash;</td><td>lossFcn of crossval.</td></tr>
+<tr><td><code>Drivers</code></td><td>1,K</td><td><code>struct</code></td><td>&mdash;</td><td>series of drivers.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>res</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Exactly these fields, in this order (CONCEPT 4; pinned by TestRun): arc (1,1) Arc The observation with its layers, weights and fills. reference Arc or [] The reference on arc.t ([] without one). diagnostics (1,1) struct stages (1,:) string, the stages run in order; skipped (K,2) table of stage and reason; mask (mask&#x27;s info); alignment (checkAlignment&#x27;s report); qc (struct of mask, events and info of qc.screen); residual (Arc); noise (noise&#x27;s model); gate (observability&#x27;s report); bootstrap, crossval (struct of the result and info); fill (fill&#x27;s info). A field of a skipped stage is []. correlation struct or [] correlate&#x27;s result. flags (1,1) struct events (N,8) qc.eventTable of the qc detections; alignment (1,M) string, checkAlignment&#x27;s verdicts (empty if not run); weightFraction, the mean of arc.weights; nFilled, the rows filled. config (1,1) struct toStruct of the settings used. provenance (1,:) struct arc&#x27;s provenance, ending with the &quot;run&quot; entry (stages, skipped, configHash).</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Each stage&#x27;s own; run adds no arithmetic but the residual, obs minus (Bias + reference x Scale&#x27;), qc.residuals&#x27; formula. A stage&#x27;s result equals the direct call of that stage on the same inputs, bit for bit (TestRun).</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:run:campaignDeferred</code></td><td>Input</td><td>arc is an array of arcs; campaign mode (CONCEPT 6.6) is a later work package. The identifiers of the stages propagate; a stage that refuses stops the run.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A 1 Hz ACT1B-like arc against its signal: mask, align, QC, gaps.</p>
+<pre><code>t = int64(0:599)&#x27; * int64(1e9);
+aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACT1B_2020-01-02_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+s = 1e-7 * sin(2 * pi * (0:599)&#x27; / 300);
+x = s + 1e-9 * randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 1), 600, 1);
+arc = timeSeriesPreparation.Arc(t, x, aux);
+ref = timeSeriesPreparation.Arc(t, s, aux);
+res = timeSeriesPreparation.run(arc, Reference = ref);
+res.diagnostics.stages</code></pre>
+<h2>Limitations</h2>
+<p>One arc per call; campaigns follow (CONCEPT 6.6). qc.screen gets no impulse or jump priors from run. The stage cache (X-14) and the report (X-11) do not exist yet.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md sections 4 (result fields), 6.1 (stages), 6.5 (gaps); HANDOVER X-10 (owner decisions 2026-09-24).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.Config</code>, <code>timeSeriesPreparation.mask</code>, <code>timeSeriesPreparation.align</code>, <code>timeSeriesPreparation.qc.screen</code>, <code>timeSeriesPreparation.noise</code>, <code>timeSeriesPreparation.fill</code>, <code>timeSeriesPreparation.correlate</code></p>
+<p class="footer">timeSeriesPreparation v0.2.0 - generated from the help block of +timeSeriesPreparation/run.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

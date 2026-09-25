@@ -17,7 +17,9 @@ as `+spectral` / `+tsmodels` (X-01, conventions X-02), `Arc` and `Config`
 masks and the residual quality control ported from NonGravForces (X-05),
 alignment (X-06), bootstrap, cross-validation, observability and noise
 models (X-07), gaps (X-08) and driver correlation (X-09). The defect
-catalogue D-9 is tested on its real days. Changes: `CHANGELOG.md`.
+catalogue D-9 is tested on its real days. Since 0.2.0: `run`, the stages
+on one arc as each one's input is given, and every `Config` section (X-10
+PR-1). Changes: `CHANGELOG.md`.
 
 ```matlab
 setupTimeSeriesPreparation();              % toolbox and demos on the path; reports gracefoReading
@@ -28,6 +30,7 @@ k = timeSeriesPreparation.crnKernel("ACC");             % ATBD App. B, as printe
 acc = timeSeriesPreparation.crnApply(arc10Hz, k, OutputEpochs = t1Hz);  % only at output epochs
 mod = timeSeriesPreparation.align(acc, model);          % model onto the epochs, units checked
 rep = timeSeriesPreparation.checkAlignment(acc, model); % lag over +/-60 s, reported, never shifted
+res = timeSeriesPreparation.run(arc, Reference = model, QualFlags = aux);  % every stage whose input is given
 spec = timeSeriesPreparation.spectral.powerSpectrum(1, arc.obs(:, 1));  % sigtools, 1 Hz
 timeSeriesPreparation.spectral.plotPowerSpectrum(spec);
 sigtoolsDemo                               % the sigtools demos

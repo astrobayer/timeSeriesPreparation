@@ -11,6 +11,17 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
   test tags spelled `vectorisation`; `internal.fail` removed. Numbers
   unchanged: `TestQcEquivalence` holds every output to the frozen X-05
   port, which `TestQcPort` holds to NonGravForces 0.12.0.
+- `.github/` follow-up of X-05b (PR #56): `+qc` audited under the public
+  template and documented; the catalogue lists 157 identifiers.
+- **X-10** `run`: the instrument stages on one arc. Each stage runs when
+  its input is given (a reference, mask sources, a noise order, a design,
+  a statistic, drivers) and is otherwise listed with its reason in
+  `diagnostics.skipped`; the result has exactly the fields `arc`,
+  `reference`, `diagnostics`, `correlation`, `flags`, `config`,
+  `provenance`. Each stage's result equals its direct call.
+- **X-10** `Config`: every section has its fields; `qc` (qc.screen's
+  options), `noise` (order, no default; method, maxLag, lags,
+  welchAverages) and `run` (filterReference, not stated by default; seed).
 
 ## 0.2.0 — 2026-09-24
 

@@ -32,6 +32,7 @@
         <tocitem target="timeSeriesPreparation.qc.residuals.html">timeSeriesPreparation.qc.residuals</tocitem>
         <tocitem target="timeSeriesPreparation.qc.screen.html">timeSeriesPreparation.qc.screen</tocitem>
         <tocitem target="timeSeriesPreparation.regressDrivers.html">timeSeriesPreparation.regressDrivers</tocitem>
+        <tocitem target="timeSeriesPreparation.run.html">timeSeriesPreparation.run</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.allanVariance.html">timeSeriesPreparation.spectral.allanVariance</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.arma2acv.html">timeSeriesPreparation.spectral.arma2acv</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.arma2psd.html">timeSeriesPreparation.spectral.arma2psd</tocitem>
