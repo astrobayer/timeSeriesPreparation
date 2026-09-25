@@ -1,13 +1,26 @@
 classdef tNgfQcScreen < NgfTestCase
-%TNGFQCSCREEN Tests of the LP-5 quality-control units: residuals, detectImpulses, detectJumps, screen.
+%TNGFQCSCREEN  Tests of qc.residuals, detectImpulses, detectJumps and screen, ported with NonGravForces.qc 0.12.0.
 %
-%   Oracles (none built here): the exhaustive optimal segmentation in
-%   tools/pyxcheck/pelt_check.py (dynamic programming over every admissible
-%   change point, no pruning) for detectJumps, planted pulses and steps at known
-%   epochs with known amplitudes for the detectors, the real 2020-01-01 GRACE-C
-%   THR1B day as impulse priors, and closed-form properties of the residual
-%   definition. Every bound carries the number measured on 2026-09-07.
-% Created 2026-09-07 by Claude Fable 5.1 (Anthropic).
+%   DESCRIPTION
+%     NonGravForces' tests of the four units at 3cc0123, run as the gate of
+%     the port (X-05). Oracles, none built here: the exhaustive optimal
+%     segmentation of tests/tools/pyxcheck/pelt_check.py (dynamic
+%     programming over every admissible change point, no pruning) for
+%     detectJumps; planted pulses and steps at known epochs with known
+%     amplitudes for the detectors; the real 2020-01-01 GRACE-C THR1B day
+%     as impulse priors; closed-form properties of the residual
+%     definition. Every bound carries the number measured on 2026-09-07.
+%     X-05 rebuilt the two NonGravForces readers on gracefoReading.readL1b
+%     (readThrPriors, readAct1b); X-05b changed only this help and the tag
+%     spelling (vectorisation).
+%
+%   COVERAGE
+%     contract, reference, precision, vectorisation, robustness,
+%     metamorphic, speed - four tests each, one per unit.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
     properties
         root
         series      % pelt_series.csv
@@ -239,8 +252,8 @@ classdef tNgfQcScreen < NgfTestCase
         end
     end
 
-    % ===================================================================== vectorization
-    methods (Test, TestTags = {'vectorization'})
+    % ===================================================================== vectorisation
+    methods (Test, TestTags = {'vectorisation'})
         function residualsVectorization(tc)
             y = randn(200, 3); m = randn(200, 3);
             r = timeSeriesPreparation.qc.residuals(y, m, 'Bias', [1 2 3], 'Scale', [1.1 0.9 1], 'Whitening', "highpass", 'Window', 21);

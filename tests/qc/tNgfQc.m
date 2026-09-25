@@ -1,6 +1,27 @@
 classdef tNgfQc < NgfTestCase
-%TNGFQC Tests of qc.hampel and qc.eventTable: all seven categories.
-% Created 2026-08-27 by Claude Fable 5 (Anthropic).
+%TNGFQC  Tests of qc.hampel and qc.eventTable, ported with NonGravForces.qc 0.12.0.
+%
+%   DESCRIPTION
+%     NonGravForces' tests of the two units at 3cc0123, run as the gate of
+%     the port (X-05). hampel is held to an independent Python oracle
+%     (tests/tools/pyxcheck/hampel_check.py, standard library only) and to
+%     the Gaussian consistency of the scaled MAD; eventTable to its schema.
+%     X-05b changed only this help and the tag spelling (vectorisation).
+%
+%   COVERAGE
+%     contract       - hampel's and eventTable's shapes and refusals.
+%     reference      - hampel's flags equal the Python oracle's.
+%     precision      - the robust sigma of white noise is 1 to 2 %.
+%     vectorisation  - M channels at once equal each channel alone.
+%     robustness     - NaN gaps, constant and empty series; eventTable's
+%                      non-finite refusals.
+%     metamorphic    - affine and time-reversal invariance of hampel; split
+%                      and merge of eventTable.
+%     speed          - hampel on a day of 3 channels against movmedian.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
     methods (Static)
         function [x, flagged] = oracle()
             here = fileparts(mfilename('fullpath'));
@@ -55,7 +76,7 @@ classdef tNgfQc < NgfTestCase
             tc.verifyBoundAndRecord("hampel robust sigma bias", abs(mean(info.sigma) - 1), 0.02, "-", "mean over 1e4 windows");
         end
     end
-    methods (Test, TestTags = {'vectorization'})
+    methods (Test, TestTags = {'vectorisation'})
         function hampelVectorization(tc)
             % M channels at once must equal each channel alone, bit for bit.
             rng(2); x = randn(300, 3); x(100, 2) = 20;

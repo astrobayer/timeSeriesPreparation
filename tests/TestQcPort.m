@@ -1,49 +1,49 @@
 classdef TestQcPort < matlab.unittest.TestCase
-%TESTQCPORT  The qc port equals NonGravForces.qc 0.12.0 but for the namespace.
+%TESTQCPORT  The frozen qc port equals NonGravForces.qc 0.12.0 but for the namespace.
 %
 %   DESCRIPTION
-%     X-05 moves NonGravForces.qc (3cc0123, 0.12.0) in unchanged (CONCEPT
-%     10.1, 12.9). The only edits a namespace forces are four text
-%     substitutions, undone here in reverse order:
-%       timeSeriesPreparation:                     <- NonGravForces:
-%       timeSeriesPreparation.internal.provenance( <- NonGravForces.provenance(
-%       timeSeriesPreparation.internal.fail(       <- NonGravForces.fail(
-%       timeSeriesPreparation.qc.                  <- NonGravForces.qc.
-%     None of the replacements occurs in the originals, so the map is
-%     invertible. After it is undone, each ported file must have the
-%     SHA-256 of its original, taken from the NonGravForces repository at
-%     3cc0123 on 2026-09-24. tests/qc/tNgfQcScreen.m has one more edit:
-%     NonGravForces.io.readTHR1B and readACC1B do not exist here, so two
-%     static readers on gracefoReading.readL1b replace them (owner decision
-%     2026-09-24); the test removes that block and restores the two
-%     original lines before hashing. The oracles in tests/tools/pyxcheck
-%     and the ACT1B sample in tests/data/samples are byte copies. The
-%     THR1B priors come from gracefoReading's tests/realdata, which must be
-%     byte-identical to NonGravForces' copy. Carriage returns are dropped
-%     before hashing, because a Windows checkout may add them; the originals
-%     have none. A changed byte is fault-injected: it must break the
-%     equality.
+%     X-05 moved NonGravForces.qc (3cc0123, 0.12.0) in unchanged (CONCEPT
+%     10.1, 12.9). X-05b then brought +qc to this repository's conventions
+%     and gated its numbers by TestQcEquivalence against a frozen copy of
+%     that port: tests/qc/frozen/*.m.txt, loaded as the package qcPort.
+%     This test holds the copy to the originals. The namespace edits are
+%     undone, the specific ones first,
+%       qcPort.fail(            -> NonGravForces.fail(
+%       qcPort.provenance(      -> NonGravForces.provenance(
+%       qcPort.                 -> NonGravForces.qc.
+%       timeSeriesPreparation:  -> NonGravForces:
+%     none of which occurs in the originals, and each frozen unit must then
+%     have the SHA-256 of its original, taken from the NonGravForces
+%     repository at 3cc0123 on 2026-09-24. The chain is: +qc equals the
+%     frozen port in every output (TestQcEquivalence), and the frozen port
+%     equals NonGravForces 0.12.0 in every byte (here). The ported test
+%     classes in tests/qc changed only in their readers (X-05) and in their
+%     help and tag spelling (X-05b); git history keeps both states. The
+%     oracles in tests/tools/pyxcheck and the ACT1B sample in
+%     tests/data/samples are byte copies. The THR1B priors come from
+%     gracefoReading's tests/realdata, which must be byte-identical to
+%     NonGravForces' copy. Carriage returns are dropped before hashing,
+%     because a Windows checkout may add them; the originals have none. A
+%     changed byte is fault-injected: it must break the equality.
 %
 %   COVERAGE
-%     reference   - every ported file, oracle and sample equals its
+%     reference   - every frozen unit, oracle and sample equals its
 %                   original; gracefoReading's THR1B equals NonGravForces'.
-%     robustness  - one changed character in a ported file breaks the
+%     robustness  - one changed character in a frozen unit breaks the
 %                   equality.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-24 16:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
-        % Ported file (relative to the repository), SHA-256 of the original.
+        % Frozen unit (relative to the repository), SHA-256 of the original.
         Ported = [ ...
-            "+timeSeriesPreparation/+qc/residuals.m",      "594d3825233a259ccebbb16cac0c5eddefedd45c3a5141204b54c40a680d8f93"
-            "+timeSeriesPreparation/+qc/hampel.m",         "8c37659e068dbec45f15758264077b0f649d6437c6a3c48a3df842e8ad457587"
-            "+timeSeriesPreparation/+qc/detectImpulses.m", "cc1151bd3c6e0657fc4daa37114a863c04810315fe13d7d77444eb1c9e87218f"
-            "+timeSeriesPreparation/+qc/detectJumps.m",    "4e199f78cdd3ecf124e07775f723284f45eabb7182084bba11b0a5389b8b2980"
-            "+timeSeriesPreparation/+qc/eventTable.m",     "567f1b5e339001cbe7832c06908e7a6bb38cfe37fb9870dd559daa982771ede1"
-            "+timeSeriesPreparation/+qc/screen.m",         "1ef3bb0a184d19c2f1bd2caf62c810b35d1308fb7050a2129a31d68a9b5cf32d"
-            "tests/qc/NgfTestCase.m",                      "83dd67faa50671cd2bd8182eb3ec5e7a0fe427b5183e83ebe972fbb91df6ed03"
-            "tests/qc/tNgfQc.m",                           "944c98699e4ec095603949ba6e6b30d61a4b28d838d35aedafe9ca33e912be9c"]
+            "tests/qc/frozen/residuals.m.txt",      "594d3825233a259ccebbb16cac0c5eddefedd45c3a5141204b54c40a680d8f93"
+            "tests/qc/frozen/hampel.m.txt",         "8c37659e068dbec45f15758264077b0f649d6437c6a3c48a3df842e8ad457587"
+            "tests/qc/frozen/detectImpulses.m.txt", "cc1151bd3c6e0657fc4daa37114a863c04810315fe13d7d77444eb1c9e87218f"
+            "tests/qc/frozen/detectJumps.m.txt",    "4e199f78cdd3ecf124e07775f723284f45eabb7182084bba11b0a5389b8b2980"
+            "tests/qc/frozen/eventTable.m.txt",     "567f1b5e339001cbe7832c06908e7a6bb38cfe37fb9870dd559daa982771ede1"
+            "tests/qc/frozen/screen.m.txt",         "1ef3bb0a184d19c2f1bd2caf62c810b35d1308fb7050a2129a31d68a9b5cf32d"]
         % Byte copies, SHA-256 of the original.
         Copied = [ ...
             "tests/tools/pyxcheck/hampel_check.py",          "7700585412dbe91857de9e5633af7fe765de83f4b9d61128d421d2f17ea89216"
@@ -52,8 +52,6 @@ classdef TestQcPort < matlab.unittest.TestCase
             "tests/tools/pyxcheck/pelt_oracle.csv",          "b04c258c997cb862675917671102e2a8440d70b05f959a7b837dd8289cd18bdd"
             "tests/tools/pyxcheck/pelt_series.csv",          "f27451edb32433cfef9f6995f0c493f0ee7994feba4563126b435c038a18c4b5"
             "tests/data/samples/ACT1B_2020-01-01_C_04.txt",  "5584c0df127f2f4e4adc113c34e773e9d4bfdf6e5fcb056ea07d38e2f5e18ea9"]
-        ScreenTest = "tests/qc/tNgfQcScreen.m"
-        ScreenSha = "2ea74d72528d1df20109222db7a1df6f2afb729bb9f6bd1cbacf47815ca738f7"
         % NonGravForces data/samples/THR1B_2020-01-01_C_04.txt at 3cc0123.
         ThrSha = "634445b9b36fabcb1b9c6baee4a5ac0a971e3824d15a80b1cf17793dbbee0da9"
     end
@@ -69,18 +67,14 @@ classdef TestQcPort < matlab.unittest.TestCase
     end
 
     methods (Test, TestTags = {'reference'})
-        function portedFilesEqualOriginals(testCase)
+        function frozenUnitsEqualOriginals(testCase)
             for k = 1:size(testCase.Ported, 1)
                 f = testCase.Ported(k, 1);
                 testCase.verifyEqual(sha256(unport(readText(fullfile(testCase.Root, f)))), ...
                     testCase.Ported(k, 2), f + " differs from NonGravForces 3cc0123 beyond the namespace.");
             end
-        end
-
-        function screenTestDiffersOnlyInTheReaders(testCase)
-            text = readText(fullfile(testCase.Root, testCase.ScreenTest));
-            testCase.verifyEqual(sha256(unport(unreader(text))), testCase.ScreenSha, ...
-                "tNgfQcScreen differs from NonGravForces 3cc0123 beyond the namespace and the two readers.");
+            n = numel(dir(fullfile(testCase.Root, "tests", "qc", "frozen", "*.m.txt")));
+            testCase.verifyEqual(n, 8, "The frozen port is the six units plus fail and provenance.");
         end
 
         function copiesEqualOriginals(testCase)
@@ -132,33 +126,16 @@ function bytes = readBytes(file)
 end
 
 function text = unport(text)
-% Undo the four namespace substitutions, the last one first.
-    map = ["NonGravForces.qc.",          "timeSeriesPreparation.qc."
-           "NonGravForces.fail(",        "timeSeriesPreparation.internal.fail("
-           "NonGravForces.provenance(",  "timeSeriesPreparation.internal.provenance("
+% Undo the four namespace substitutions of the frozen port, the specific
+% qcPort.fail( and qcPort.provenance( before the general qcPort.
+    map = ["NonGravForces.fail(",        "qcPort.fail("
+           "NonGravForces.provenance(",  "qcPort.provenance("
+           "NonGravForces.qc.",          "qcPort."
            "NonGravForces:",             "timeSeriesPreparation:"];
     text = string(text);
-    for k = size(map, 1):-1:1
+    for k = 1:size(map, 1)
         text = replace(text, map(k, 2), map(k, 1));
     end
-    text = char(text);
-end
-
-function text = unreader(text)
-% Remove the X-05 reader block of tNgfQcScreen and restore the two lines.
-    text = string(text);
-    first = "    methods (Static)" + newline + "        % X-05 port:";
-    last = "    methods" + newline + "        function t = epochs(~, K)";
-    i = strfind(text, first);
-    j = strfind(text, last);
-    assert(isscalar(i) && isscalar(j) && j > i, "The X-05 reader block is not where the port put it.");
-    text = extractBefore(text, i) + extractAfter(text, j - 1);
-    text = replace(text, ...
-        "            thr = tNgfQcScreen.readThrPriors(tc);   % X-05: was NonGravForces.io.readTHR1B(<its data/samples copy>)", ...
-        "            thr = NonGravForces.io.readTHR1B(fullfile(tc.root, 'data', 'samples', 'THR1B_2020-01-01_C_04.txt'));");
-    text = replace(text, ...
-        "            [ep, a] = tNgfQcScreen.readAct1b(tc, fullfile(tc.root, 'data', 'samples', 'ACT1B_2020-01-01_C_04.txt'));   % X-05: was NonGravForces.io.readACC1B", ...
-        "            [ep, a] = NonGravForces.io.readACC1B(fullfile(tc.root, 'data', 'samples', 'ACT1B_2020-01-01_C_04.txt'));");
     text = char(text);
 end
 

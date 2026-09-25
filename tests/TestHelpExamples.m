@@ -25,12 +25,6 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.internal.dlyap did not run cleanly.");
         end
 
-        function timeSeriesPreparation_internal_fail_example1(testCase)
-            % EXAMPLE 1 of timeSeriesPreparation.internal.fail: Build the exception without throwing it.
-            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_fail_1(), ...
-                "EXAMPLE 1 of timeSeriesPreparation.internal.fail did not run cleanly.");
-        end
-
         function timeSeriesPreparation_internal_provenance_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.internal.provenance: The record of a hampel call with its window.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_provenance_1(), ...
@@ -354,12 +348,6 @@ end
 function example_timeSeriesPreparation_internal_dlyap_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.internal.dlyap, verbatim from its help block.
     P = timeSeriesPreparation.internal.dlyap(0.9, 1, 1e-14, 60);
-end
-
-function example_timeSeriesPreparation_internal_fail_1()  %#ok<DEFNU>
-% EXAMPLE 1 of timeSeriesPreparation.internal.fail, verbatim from its help block.
-    ME = timeSeriesPreparation.internal.fail("hampel", "inputShape", ...
-        "x must be KxM -> transpose the input");
 end
 
 function example_timeSeriesPreparation_internal_provenance_1()  %#ok<DEFNU>

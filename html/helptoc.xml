@@ -15,7 +15,6 @@
         <tocitem target="timeSeriesPreparation.fill.html">timeSeriesPreparation.fill</tocitem>
         <tocitem target="timeSeriesPreparation.internal.blockLength.html">timeSeriesPreparation.internal.blockLength</tocitem>
         <tocitem target="timeSeriesPreparation.internal.dlyap.html">timeSeriesPreparation.internal.dlyap</tocitem>
-        <tocitem target="timeSeriesPreparation.internal.fail.html">timeSeriesPreparation.internal.fail</tocitem>
         <tocitem target="timeSeriesPreparation.internal.provenance.html">timeSeriesPreparation.internal.provenance</tocitem>
         <tocitem target="timeSeriesPreparation.internal.requirePackage.html">timeSeriesPreparation.internal.requirePackage</tocitem>
         <tocitem target="timeSeriesPreparation.internal.resampleOnto.html">timeSeriesPreparation.internal.resampleOnto</tocitem>

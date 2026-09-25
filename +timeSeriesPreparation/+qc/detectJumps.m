@@ -1,84 +1,98 @@
 function [events, info] = detectJumps(r, options)
-%DETECTJUMPS Change points in level or slope of whitened residuals by PELT with a BIC penalty; eclipse and mass priors are assigned.
+%DETECTJUMPS  Change points in level or slope of whitened residuals by PELT with a BIC penalty; priors are assigned.
 %
-%   [events, info] = timeSeriesPreparation.qc.detectJumps(r, 'Epoch', t)
-%   [events, info] = timeSeriesPreparation.qc.detectJumps(r, 'Epoch', t, 'Model', "slope", 'Priors', ecl, 'Penalty', beta)
+%   SYNTAX
+%     [events, info] = timeSeriesPreparation.qc.detectJumps(r, Epoch = t)
+%     [events, info] = timeSeriesPreparation.qc.detectJumps(r, Epoch = t, Model = "slope", Priors = ecl, Penalty = beta, MinSegment = 30)
 %
-%   Minimises, per channel, sum over segments of the least-squares cost plus a
-%   penalty beta per change point (Killick, Fearnhead & Eckley 2012, Pruned
-%   Exact Linear Time). The cost of a segment is its residual sum of squares
-%   about a constant ("level") or a straight line ("slope"). The default
-%   penalty is the BIC value (p + 1) sigma^2 log K with p = 1 (level) or 2
-%   (slope) parameters per segment plus one for the location of the change
-%   point (Killick et al. 2012 and the changepoint package convention; with
-%   p alone, measured 2026-09-07, 1000 white samples with one 4-sigma step
-%   gave four change points, three of them two-sample noise excursions) and
-%   sigma the robust scale of the first differences (1.4826 MAD / sqrt(2)); an
-%   explicit 'Penalty' replaces it (in squared residual units). PELT is exact: its segmentation equals the exhaustive
-%   optimum, which the test suite checks against tools/pyxcheck/pelt_check.py.
+%   DESCRIPTION
+%     Minimises, per channel, the sum over segments of the least-squares
+%     cost plus a penalty beta per change point, by Pruned Exact Linear
+%     Time (Killick, Fearnhead and Eckley 2012), which equals the
+%     exhaustive optimum. The segment cost is the residual sum of squares
+%     about a constant ("level") or a straight line ("slope"). The
+%     default penalty is the BIC value (p + 1) sigma^2 log K, p = 1
+%     (level) or 2 (slope) parameters per segment plus one for the change
+%     point's location, sigma the robust scale of the first differences
+%     (1.4826 MAD / sqrt(2)); Penalty replaces it (squared residual
+%     units). Each change point is a "jump" row: tStart = tEnd = first
+%     sample of the new segment, amplitude = new minus old level at the
+%     boundary (fitted lines for "slope"), sigma = sigma sqrt(1/n1 +
+%     1/n2). A jump within PriorWindow_s of a prior row (eclipse, MAS1B
+%     tank event) takes its source and confidence 1; the others are
+%     "unassigned" with confidence erf(|amplitude|/sigma/sqrt(2)). Jumps
+%     are never cut from the data. NaN samples are removed before the
+%     segmentation and the indices mapped back. Ported from
+%     NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b).
 %
-%   Each change point becomes a "jump" row: tStart = tEnd = first sample of the
-%   new segment, amplitude = level of the new segment minus level of the old
-%   one at the boundary (for "slope" the fitted lines evaluated there),
-%   sigma = sigma sqrt(1/n1 + 1/n2). A jump within PriorWindow_s of a prior
-%   row (eclipse entry/exit, MAS1B tank event) takes that source and
-%   confidence 1; the others are "unassigned" with confidence
-%   erf(|amplitude|/sigma/sqrt(2)). Jumps are never cut from the data: they
-%   become Heaviside columns in the calibration (theory §10).
+%   INPUTS
+%     r  (K,M) double   -   Whitened residuals, M = 1 (axis "all") or 3.
 %
-% INPUT ARGUMENTS
-%   Name      Size  Type    Units  Description
-%   ----      ----  ----    -----  -----------
-%   r         KxM   double  units  Whitened residuals, M = 1 (axis "all") or 3 (x, y, z); NaN samples are
-%                                  removed before segmentation and the indices mapped back
+%   OPTIONS
+%     Epoch          (K,1) datetime   []         Sample epochs, UTC;
+%                                                required.
+%     Model          (1,1) string     ["level"]  "level" or "slope".
+%     Penalty        (1,1) double     []         Per change point; [] =
+%                                                BIC.
+%     MinSegment     (1,1) double     []         Shortest segment in
+%                                                samples; [] = 2 (level)
+%                                                or 3 (slope).
+%     Priors         (N,8) table      []         qc.eventTable rows to
+%                                                assign.
+%     PriorWindow_s  (1,1) double     [60]       Assignment window, s.
 %
-% NAME-VALUE ARGUMENTS
-%   Name           Size   Type      Units    Description
-%   ----           ----   ----      -----    -----------
-%   Epoch          Kx1    datetime  UTC      Sample epochs (required)
-%   Model          1x1    string    -        "level" (default) | "slope"
-%   Penalty        1x1    double    units^2  Penalty per change point, default BIC (see above)
-%   MinSegment     1x1    double    samples  Shortest segment, default 2 (level) or 3 (slope)
-%   Priors         Nx8    table     -        qc.eventTable rows to assign, default none
-%   PriorWindow_s  1x1    double    s        Assignment window, default 60
+%   OUTPUTS
+%     events  (N,8) table    -   qc.eventTable rows of class "jump",
+%                                sorted by tStart.
+%     info    (1,1) struct   -   Fields: changePoints (1,M cell, first
+%                                sample of each new segment); penalty,
+%                                sigma, cost (1,M); segments (1,M cell of
+%                                [first last level|intercept slope]);
+%                                model; provenance.
 %
-% OUTPUT ARGUMENTS
-%   Name      Size  Type    Units  Description
-%   ----      ----  ----    -----  -----------
-%   events    Nx8   table   -      qc.eventTable rows, class "jump", sorted by tStart
-%   info      1x1   struct  -      .changePoints (1xM cell of sample indices: first sample of each new
-%                                  segment), .penalty (1xM), .sigma (1xM), .cost (1xM, optimal objective),
-%                                  .segments (1xM cell of [first last level|intercept slope]), .provenance
+%   ACCURACY
+%     Exact optimisation for the stated cost and penalty; the ported
+%     tests hold it to the exhaustive optimum of an independent Python
+%     oracle, bitwise in the indices. A step h in white noise sigma is
+%     found when h^2 n1 n2/(n1 + n2) > beta. Coloured noise without
+%     whitening gives spurious level changes: whiten first.
 %
-% ACCURACY
-%   Exact optimisation for the stated cost and penalty (PELT); the statistical
-%   claims are those of the BIC: a step of height h in white noise of scale
-%   sigma is found when h^2 n1 n2/(n1+n2) > beta = 2 sigma^2 log K, i.e. above
-%   ~1.7 sigma for a segment pair of 5 samples at K = 1000 (measured: planted steps of 4 sigma
-%   recovered to +-1 sample, amplitude within 3 sigma). Coloured 1/f noise
-%   without highpass whitening produces spurious level changes: whiten first
-%   (qc.residuals "highpass" or "difference").
+%   ERRORS
+%     Input:
+%       timeSeriesPreparation:detectJumps:inputShape - r is not Kx1 or
+%           Kx3, or Epoch is not Kx1.
+%       timeSeriesPreparation:detectJumps:inputEpoch - Epoch is missing,
+%           not a datetime, or not UTC.
+%       timeSeriesPreparation:detectJumps:inputRange - Penalty is not
+%           positive, MinSegment is below 2 (3 for slope) or not an
+%           integer, or PriorWindow_s is not positive.
+%       timeSeriesPreparation:detectJumps:inputPriors - Priors is not a
+%           qc.eventTable.
+%     Data:
+%       timeSeriesPreparation:detectJumps:dataEmpty - a channel has fewer
+%           than 2 MinSegment finite samples.
 %
-% ERRORS
-%   timeSeriesPreparation:detectJumps:inputShape     r not KxM with M = 1 or 3, or Epoch not Kx1
-%   timeSeriesPreparation:detectJumps:inputEpoch     Epoch missing or not UTC
-%   timeSeriesPreparation:detectJumps:inputRange     Penalty <= 0, MinSegment < 2 (or < 3 for slope), PriorWindow_s <= 0
-%   timeSeriesPreparation:detectJumps:inputPriors    Priors not an eventTable-shaped table
-%   timeSeriesPreparation:detectJumps:dataEmpty      fewer than 2 MinSegment finite samples in a channel
+%   EXAMPLE
+%     % A 4-sigma step in 1000 white samples.
+%     x = randn(RandStream("twister", "Seed", 5), 1000, 1); x(601:end) = x(601:end) + 4;
+%     t = datetime(2020, 1, 1, "TimeZone", "UTC") + seconds((0:999)');
+%     [events, info] = timeSeriesPreparation.qc.detectJumps(x, Epoch = t);
 %
-% REFERENCES
-%   Killick R., Fearnhead P., Eckley I.A. (2012) Optimal detection of changepoints
-%   with a linear computational cost, JASA 107:1590-1598; Schwarz G. (1978) Ann.
-%   Stat. 6:461 (BIC); theory §10.
+%   LIMITATIONS
+%     Quadratic in the worst case when pruning keeps many candidates; X-16
+%     vectorises the bookkeeping.
 %
-% EXAMPLE
-%   r = timeSeriesPreparation.qc.residuals(a, aModel, 'Whitening', "highpass", 'Window', 601);
-%   [ev, info] = timeSeriesPreparation.qc.detectJumps(r, 'Epoch', t, 'Priors', eclipseEvents);
+%   REFERENCES
+%     Killick, R., Fearnhead, P., Eckley, I. A. (2012). Optimal detection
+%     of changepoints with a linear computational cost. J. Am. Stat.
+%     Assoc. 107, 1590-1598. Schwarz, G. (1978). Estimating the dimension
+%     of a model. Ann. Stat. 6, 461-464.
 %
-% See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.qc.screen.
+%   See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.qc.screen.
 %
-% KEYWORDS jump change point PELT BIC quality control
-% Created 2026-09-07 by Claude Fable 5.1 (Anthropic).
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
 arguments
     r double
     options.Epoch = []
@@ -88,39 +102,38 @@ arguments
     options.Priors = []
     options.PriorWindow_s (1,1) double = 60
 end
-unit = "detectJumps";
 [K, M] = size(r);
 if ~ismatrix(r) || ~(M == 1 || M == 3)
-    timeSeriesPreparation.internal.fail(unit, "inputShape", "r must be Kx1 or Kx3 -> got %s (samples down the columns)", mat2str(size(r)));
+    error("timeSeriesPreparation:detectJumps:inputShape", "r must be Kx1 or Kx3 -> got %s (samples down the columns)", mat2str(size(r)));
 end
 t = options.Epoch;
 if isempty(t) || ~isdatetime(t)
-    timeSeriesPreparation.internal.fail(unit, "inputEpoch", "'Epoch' (Kx1 datetime, UTC) is required -> pass the sample epochs of r");
+    error("timeSeriesPreparation:detectJumps:inputEpoch", "'Epoch' (Kx1 datetime, UTC) is required -> pass the sample epochs of r");
 end
 if ~isequal(size(t), [K 1])
-    timeSeriesPreparation.internal.fail(unit, "inputShape", "Epoch must be Kx1 = %dx1 -> got %s", K, mat2str(size(t)));
+    error("timeSeriesPreparation:detectJumps:inputShape", "Epoch must be Kx1 = %dx1 -> got %s", K, mat2str(size(t)));
 end
 if isempty(t.TimeZone) || ~strcmp(t.TimeZone, 'UTC')
-    timeSeriesPreparation.internal.fail(unit, "inputEpoch", "Epoch must carry TimeZone UTC -> set t.TimeZone = 'UTC'");
+    error("timeSeriesPreparation:detectJumps:inputEpoch", "Epoch must carry TimeZone UTC -> set t.TimeZone = 'UTC'");
 end
 slope = options.Model == "slope";
 p = 1 + slope;
 minSeg = options.MinSegment;
 if isempty(minSeg), minSeg = 2 + slope; end
 if ~isscalar(minSeg) || minSeg < 2 + slope || minSeg ~= fix(minSeg)
-    timeSeriesPreparation.internal.fail(unit, "inputRange", "MinSegment must be an integer >= %d for %s -> got %s", 2 + slope, options.Model, mat2str(minSeg));
+    error("timeSeriesPreparation:detectJumps:inputRange", "MinSegment must be an integer >= %d for %s -> got %s", 2 + slope, options.Model, mat2str(minSeg));
 end
 if ~isempty(options.Penalty) && ~(isscalar(options.Penalty) && options.Penalty > 0)
-    timeSeriesPreparation.internal.fail(unit, "inputRange", "Penalty must be a positive scalar -> got %s", mat2str(options.Penalty));
+    error("timeSeriesPreparation:detectJumps:inputRange", "Penalty must be a positive scalar -> got %s", mat2str(options.Penalty));
 end
 if options.PriorWindow_s <= 0
-    timeSeriesPreparation.internal.fail(unit, "inputRange", "PriorWindow_s must be > 0 -> got %g", options.PriorWindow_s);
+    error("timeSeriesPreparation:detectJumps:inputRange", "PriorWindow_s must be > 0 -> got %g", options.PriorWindow_s);
 end
 priors = options.Priors;
 if isempty(priors), priors = timeSeriesPreparation.qc.eventTable(); end
 schema = timeSeriesPreparation.qc.eventTable().Properties.VariableNames;
 if ~istable(priors) || ~isequal(priors.Properties.VariableNames, schema)
-    timeSeriesPreparation.internal.fail(unit, "inputPriors", "Priors must be a qc.eventTable -> use qc.eventTable(...)");
+    error("timeSeriesPreparation:detectJumps:inputPriors", "Priors must be a qc.eventTable -> use qc.eventTable(...)");
 end
 axes = "all"; if M == 3, axes = ["x","y","z"]; end
 cps = cell(1, M); segs = cell(1, M); pen = nan(1, M); sig = nan(1, M); cost = nan(1, M);
@@ -129,7 +142,7 @@ for m = 1:M
     idx = find(~isnan(r(:, m)));
     x = r(idx, m); n = numel(x);
     if n < 2 * minSeg
-        timeSeriesPreparation.internal.fail(unit, "dataEmpty", "channel %d has %d finite samples, fewer than 2 MinSegment = %d -> pass a longer series", m, n, 2 * minSeg);
+        error("timeSeriesPreparation:detectJumps:dataEmpty", "channel %d has %d finite samples, fewer than 2 MinSegment = %d -> pass a longer series", m, n, 2 * minSeg);
     end
     d = diff(x); s = 1.4826 * median(abs(d - median(d))) / sqrt(2);
     sig(m) = s;

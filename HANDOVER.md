@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.25 · 2026-09-24 · O-6 (`matlab` job timeout 30 → 60 min, `.github/` only) in review; X-05 merged (PR #53, `f448f78`), release v0.2.0**
+**Revision 0.26 · 2026-09-24 · X-05b (`qc` conventions, numbers unchanged) in review; O-6 merged (PR #54, `7c7fb7b`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,85 @@ restates:
 
 ---
 
-## O-6 — `matlab` job timeout 30 → 60 min (`.github/` only); 2026-09-24
+## X-05b — `qc` conventions, numbers unchanged (owner decision 2026-09-24); scope frozen 2026-09-24
+
+Tier B. The ported `+qc` is brought to this repository's conventions
+before release 1.0 (CONCEPT 12.9: conventions change in a separate WP,
+gated by equality to the port). Two PRs: this code PR, then a `.github/`
+PR that removes the audit profile `qc-ported` and the docs exclusion,
+with the regenerated catalogue and help examples (as PR #41 after X-02).
+
+**Owner decisions 2026-09-24 (X-10 interview):**
+- **X-05b before X-10**, so 1.0 has one convention throughout.
+- **X-10 in two PRs**:
+  - PR-1: `run` for a single arc, the full Config presets, and a contract
+    test pinning the result fields.
+  - PR-2: the integration tests and release 1.0.0.
+- **`run` is input-driven.** Every stage whose inputs exist runs, in
+  CONCEPT 6.1 order. A stage without its input is skipped and listed in
+  `diagnostics.skipped`; nothing is assumed.
+- **Integration day: ACT1B C 2020-01-02 against ITSG
+  nonConservativeForces**, the day V-4 measured. The thresholds come from
+  V-4: correlation ≥ 0.95 / 0.95 / 0.93 (measured 0.984 / 0.973 / 0.955),
+  the lag below 1 s, and the scales within the V-4 range. A synthetic arc
+  with planted truth is added.
+
+True after the merge (code PR):
+- The six `+qc` units have the template help (SYNTAX … REFERENCES, footer)
+  and self-contained EXAMPLEs. Their errors are raised with literal
+  identifiers, `error("timeSeriesPreparation:<unit>:<mnemonic>", …)`, so
+  the audit can catalogue them.
+- `internal.fail` is removed, since nothing calls it any more.
+  `internal.provenance` stays.
+- The frozen port is `tests/qc/frozen/*.m.txt`, the PR-B files with
+  `qcPort.` names.
+  - `TestQcPort` holds the six units to NonGravForces `3cc0123` by
+    SHA-256.
+  - **`TestQcEquivalence`** loads the frozen port as package `qcPort` and
+    requires every output of 15 cases to be isequaln, with the provenance
+    records removed (they carry a creation time). The refusals must raise
+    the same identifiers.
+  - Fault injection: a one-ulp change must fire.
+- In `tests/qc` only the help headers changed (DESCRIPTION, COVERAGE,
+  footer) and the tag spelling `vectorization` → `vectorisation`.
+  `TestTagPolicy` exempts no folder any more.
+
+**Measured before the push (2026-09-24, ci-actions `v1.3.2`):**
+- The code lines of the six units differ from the frozen port only in the
+  34 error calls and the dropped `unit =` lines (diff, 0 unexplained).
+- Under the current configuration: audit clean (125 files), docs in sync
+  (60).
+- Under the `.github` configuration the follow-up PR will carry (on a
+  copy): audit clean, **20** `qc` identifiers catalogued (157 in total),
+  docs in sync (66), and 6 new help examples.
+
+**Prediction** (before any run): **637 + 0 + 0 = 637**. That is 622 (after
+O-6) with these changes:
+- TestQcEquivalence +17 (reference 15, contract 1, robustness 1).
+- TestQcPort 5 → 4: the screen-test hash is gone (reference −1).
+- TestHelpExamples 55 → 54: `internal.fail` is gone (contract −1).
+- The five `vectorization` tests move to `vectorisation`.
+
+Per tag: contract 187, reference 234, precision 23, robustness 120,
+metamorphic 44, vectorisation 21, speed 8.
+
+**Risk:** the equivalence cases run for the first time. A red case is a
+test bug or a conversion slip, fixed in this PR; the numbers are never
+touched.
+
+**Verdict, CI run 36055437030 on `160f0ea` (2026-09-24), MATLAB R2026a:**
+- `audit` green.
+- `matlab` green on the first run: **637 + 0 + 0 = 637**, every tag as
+  predicted (contract 187, reference 234, precision 23, robustness 120,
+  metamorphic 44, vectorisation 21, speed 8; no `vectorization` any
+  more).
+- TestQcEquivalence 17/17: the converted `qc` equals the frozen port in
+  all 15 cases. TestQcPort 4/4.
+- Gate time 1199 s.
+
+---
+
+## O-6 — `matlab` job timeout 30 → 60 min (`.github/` only) — merged 2026-09-24 (PR #54, `7c7fb7b`)
 
 A `.github/` change, so it stands alone: `.github/workflows/ci.yml` and this
 file. The gate grew from 953 s (X-01) to 1541 s (X-05 PR-C, 622 tests, the
@@ -1433,7 +1511,8 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**O-6 in review (`.github/` only).**
+**X-05b in review.**
+O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
 X-05 PR-C merged (PR #53, `f448f78`; CI 622 + 0 + 0); **release v0.2.0** tagged on the merge by the release workflow; issue #8 closed.
 X-05 PR-B merged (PR #52, `b5633c0`; CI 598 + 0 + 0).
 X-05 PR-A merged (PR #51, `dcc185a`; CI 553 + 0 + 0).
@@ -1536,7 +1615,7 @@ This explains the ITSG gap. It is the first real entry for the defect catalogue
 | O-1 | X-00b: skeleton, CI, audit (C-01), documentation pipeline, test tags, layering test, references register | **closed 2026-09-22** (PR #36 merged, `2ecf543`) | — | — |
 | O-2 | add the required checks `audit` and `matlab` to `Main Protection`; both contexts exist since run 35771631191 (2026-09-22) | open | owner | now |
 | O-4 | GUIDE A3 steps 6 and 7: gracefoReading #15 merged (`de87fbf`, merge commit, see F), NonGravForces #57 merged (`10c8504`) | **closed 2026-09-18** | owner | — |
-| O-6 | raise the `matlab` job's `timeout-minutes` (30) before the gate outgrows it: 27 min 7 s at X-05 PR-C (run 36033100696). A `.github/` change, its own PR | **in review**: 30 → 60 min | Session, owner merges | before the next WP that adds real-data tests |
+| O-6 | raise the `matlab` job's `timeout-minutes` (30) before the gate outgrows it: 27 min 7 s at X-05 PR-C (run 36033100696). A `.github/` change, its own PR | **closed 2026-09-24**: 30 → 60 min (PR #54) | Session, owner merges | before the next WP that adds real-data tests |
 | O-5 | Regression month (CONCEPT ORC-10): keep 2020-01 and mask GRACE-D's safe mode 2020-01-18 05:05 … 2020-01-22 12:05 from the baseline (proposal; it then also tests event masking), or choose another month | open | owner | before N-10 |
 
 ---

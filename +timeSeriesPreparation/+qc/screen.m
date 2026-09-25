@@ -1,93 +1,99 @@
 function [mask, events, info] = screen(y_meas, y_model, epoch, options)
-%SCREEN Quality-control orchestrator: residuals -> outliers -> impulses -> jumps -> mask and event table.
+%SCREEN  Quality-control orchestrator: residuals, outliers, impulses, jumps, then the mask and the event table.
 %
-%   [mask, events, info] = timeSeriesPreparation.qc.screen(y_meas, y_model, t)
-%   [mask, events, info] = timeSeriesPreparation.qc.screen(y_meas, y_model, t, 'Bias', b, 'Scale', S, 'Response', crn, 'Thrusters', thr, 'Priors', ecl)
+%   SYNTAX
+%     [mask, events, info] = timeSeriesPreparation.qc.screen(y_meas, y_model, epoch)
+%     [mask, events, info] = timeSeriesPreparation.qc.screen(y_meas, y_model, epoch, Response = crn, Thrusters = thr, Priors = ecl)
 %
-%   1. r = qc.residuals(y_meas, y_model, 'Bias', 'Scale', 'Whitening', 'Window')
-%   2. outliers: qc.hampel(r, 'Window', HampelWindow, 'Threshold', HampelThreshold)
-%   3. impulses (skipped, and said so in info, when no 'Response' is given: no
-%      pulse shape is assumed): qc.detectImpulses runs on the residual with
-%      only the ISOLATED outliers (runs of at most 2 flagged samples) replaced
-%      by the local median. Hampel flags the peaks of a strong pulse as well,
-%      in runs of several samples; replacing those destroys the pulse
-%      (measured 2026-09-07: a 6-sigma pulse turned into four level jumps),
-%      while a spike of one or two samples must not reach the matched filter
-%      (it scores up to 0.26 x its height in sigma). Detected pulses claim
-%      their samples (the outlier flags inside them are withdrawn) and are
-%      blanked before the jump search; flagged runs that no pulse claims stay
-%      outliers.
-%   4. jumps: qc.detectJumps with 'JumpModel', 'JumpPenalty', 'JumpMinSegment'
-%      and the 'Priors' (eclipse, MAS1B) on the residual with outliers
-%      replaced by the local median and pulses blanked
-%   mask marks outliers and the samples spanned by impulses; jumps are
-%   reported, never masked (they become calibration columns). events is the
-%   concatenated qc.eventTable of the three detectors, sorted by tStart.
+%   DESCRIPTION
+%     1. r = qc.residuals(y_meas, y_model, Bias, Scale, Whitening, Window).
+%     2. Outliers: qc.hampel(r, HampelWindow, HampelThreshold).
+%     3. Impulses, skipped (and said so in info) without a Response, since
+%        no pulse shape is assumed: qc.detectImpulses on the residual with
+%        only the isolated outliers (runs of at most 2 samples) replaced by
+%        the local median. Hampel also flags the peaks of a strong pulse,
+%        in runs of several samples; replacing those would destroy the
+%        pulse, while a one- or two-sample spike must not reach the matched
+%        filter. Detected pulses claim their samples (their outlier flags
+%        are withdrawn) and are blanked before the jump search.
+%     4. Jumps: qc.detectJumps with JumpModel, JumpPenalty, JumpMinSegment
+%        and Priors, on the residual with outliers replaced and pulses
+%        blanked.
+%     mask marks outliers and the samples spanned by impulses; jumps are
+%     reported, never masked. events is the three detectors' event table,
+%     sorted by tStart. Ported from NonGravForces.qc 0.12.0 (X-05); numbers
+%     unchanged (X-05b).
 %
-% INPUT ARGUMENTS
-%   Name      Size  Type      Units  Description
-%   ----      ----  ----      -----  -----------
-%   y_meas    KxM   double    units  Measured observable, M = 1 or 3 channels (columns)
-%   y_model   KxM   double    units  Modelled observable
-%   epoch     Kx1   datetime  UTC    Sample epochs
+%   INPUTS
+%     y_meas   (K,M) double     -   Measured observable, M = 1 or 3.
+%     y_model  (K,M) double     -   Modelled observable.
+%     epoch    (K,1) datetime   -   Sample epochs, UTC.
 %
-% NAME-VALUE ARGUMENTS
-%   Name              Size     Type    Units    Description
-%   ----              ----     ----    -----    -----------
-%   Bias              1xM|KxM  double  units    Preliminary bias, default zeros (as qc.residuals)
-%   Scale             1xM|MxM  double  -        Preliminary scale, diagonal as 1xM or full MxM,
-%                                               default identity (as qc.residuals)
-%   Whitening         1x1      string  -        "none" (default) | "difference" | "highpass"
-%   Window            1x1      double  samples  Odd length >= 3, required by "highpass"
-%   HampelWindow      1x1      double  samples  default 61
-%   HampelThreshold   1x1      double  sigma    default 4
-%   Response          Lx1      double  any      Pulse template for detectImpulses; default [] = impulse step skipped
-%   Thrusters         Nx8      table   -        Impulse priors (io.readTHR1B), default none
-%   ImpulseThreshold  1x1      double  sigma    default 5
-%   Priors            Nx8      table   -        Jump priors (eclipse, MAS1B events), default none
-%   JumpModel         1x1      string  -        "level" (default) | "slope"
-%   JumpPenalty       1x1      double  units^2  default BIC (detectJumps)
-%   JumpMinSegment    1x1      double  samples  default 30 (the CRN width: shorter level changes are
-%                                              pulses or outliers, not jumps; the BIC alone admits
-%                                              3-sigma noise segments of a few samples)
+%   OPTIONS
+%     Bias              (1,M) double   [zeros]    As qc.residuals.
+%     Scale             (M,M) double   [eye]      As qc.residuals.
+%     Whitening         (1,1) string   ["none"]   As qc.residuals.
+%     Window            (1,1) double   []         As qc.residuals.
+%     HampelWindow      (1,1) double   [61]       Samples.
+%     HampelThreshold   (1,1) double   [4]        Sigma.
+%     Response          (L,1) double   []         Pulse template; [] skips
+%                                                 the impulse step.
+%     Thrusters         (N,8) table    []         Impulse priors
+%                                                 (qc.eventTable).
+%     ImpulseThreshold  (1,1) double   [5]        Sigma.
+%     Priors            (N,8) table    []         Jump priors (eclipse,
+%                                                 MAS1B).
+%     JumpModel         (1,1) string   ["level"]  "level" or "slope".
+%     JumpPenalty       (1,1) double   []         Default BIC.
+%     JumpMinSegment    (1,1) double   [30]       Samples: the CRN width;
+%                                                 shorter level changes are
+%                                                 pulses or outliers.
 %
-% OUTPUT ARGUMENTS
-%   Name      Size  Type     Units  Description
-%   ----      ----  ----     -----  -----------
-%   mask      KxM   logical  -      true = do not use the sample (outlier or inside an impulse)
-%   events    Nx8   table    -      qc.eventTable of all detections
-%   info      1x1   struct   -      .residual (KxM, whitened, untouched), .residualClean (outliers replaced,
-%                                   pulses NaN), .outliers (KxM logical, after pulses claimed theirs),
-%                                   .impulses .jumps (detector infos, or "skipped"), .isolatedOutliers
-%                                   (KxM logical, the runs of <= 2 samples replaced before the matched filter),
-%                                   .counts (struct outlier/impulse/jump), .provenance
+%   OUTPUTS
+%     mask    (K,M) logical   -   True = do not use the sample.
+%     events  (N,8) table     -   qc.eventTable of all detections.
+%     info    (1,1) struct    -   Fields: residual (whitened, untouched);
+%                                 residualClean (outliers replaced, pulses
+%                                 NaN); residualInfo; outliers (after the
+%                                 pulses claimed theirs); isolatedOutliers;
+%                                 impulses, jumps (detector infos, or
+%                                 "skipped: ..."); counts (outlier,
+%                                 impulse, jump); provenance.
 %
-% ACCURACY
-%   Composition of the four units; see their ACCURACY blocks. The order is
-%   fixed and the reason for each step is stated above. A level step may
-%   register once as an impulse candidate at its edge (the zero-mean template
-%   responds to the edge); the jump is then located at the end of that window,
-%   up to L samples late. Measured on the synthetic day (2 pulses, 1 step,
-%   1 spike in 3000 white samples): spike masked, both pulses masked over
-%   their width, the step reported once (6 samples late behind the edge
-%   candidate), no other jump.
+%   ACCURACY
+%     The composition of the four units; see theirs. A level step may
+%     register once as an impulse candidate at its edge; the jump is then
+%     located at the end of that window, up to L samples late. On the
+%     ported tests' synthetic day (2 pulses, 1 step, 1 spike in 3000 white
+%     samples) the spike and both pulses are masked and the step is
+%     reported once.
 %
-% ERRORS
-%   timeSeriesPreparation:screen:inputShape     y_meas/y_model not KxM with M = 1 or 3, or epoch not Kx1 datetime
-%   timeSeriesPreparation:screen:inputEpoch     epoch not UTC
-%   timeSeriesPreparation:residuals:*, timeSeriesPreparation:hampel:*, timeSeriesPreparation:detectImpulses:*, timeSeriesPreparation:detectJumps:*  propagated
+%   ERRORS
+%     Input:
+%       timeSeriesPreparation:screen:inputShape - y_meas and y_model are
+%           not Kx1 or Kx3 of one size, or epoch is not a Kx1 datetime.
+%       timeSeriesPreparation:screen:inputEpoch - epoch is not UTC.
+%     The identifiers of qc.residuals, qc.hampel, qc.detectImpulses and
+%     qc.detectJumps propagate.
 %
-% REFERENCES
-%   Theory §10; HANDOVER D.3 workflow and Part J item 9.
+%   EXAMPLE
+%     % A spike and a step in white noise, no pulse template.
+%     x = 1e-9 * randn(RandStream("twister", "Seed", 4), 3000, 1);
+%     x(700) = 3e-8; x(2500:end) = x(2500:end) + 5e-9;
+%     t = datetime(2020, 1, 1, "TimeZone", "UTC") + seconds((0:2999)');
+%     [mask, events] = timeSeriesPreparation.qc.screen(x, zeros(3000, 1), t);
 %
-% EXAMPLE
-%   [ep, a] = NonGravForces.io.readACC1B(file); t = ...;   % Kx1 datetime UTC
-%   [mask, ev] = timeSeriesPreparation.qc.screen(a', aModel', t, 'Whitening', "highpass", 'Window', 601, 'Response', crn, 'Thrusters', thr);
+%   LIMITATIONS
+%     One arc at a time; the order of the steps is fixed.
 %
-% See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.hampel, timeSeriesPreparation.qc.detectImpulses, timeSeriesPreparation.qc.detectJumps, timeSeriesPreparation.qc.eventTable.
+%   REFERENCES
+%     NonGravForces.qc 0.12.0 (3cc0123); docs/CONCEPT.md 6.1, row 2.
 %
-% KEYWORDS screen quality control mask events orchestrator
-% Created 2026-09-07 by Claude Fable 5.1 (Anthropic).
+%   See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.hampel, timeSeriesPreparation.qc.detectImpulses, timeSeriesPreparation.qc.detectJumps, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.mask.
+%
+%   ---------------------------------------------------------------------
+%   timeSeriesPreparation v0.2.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
 arguments
     y_meas double
     y_model double
@@ -106,16 +112,15 @@ arguments
     options.JumpPenalty double = []
     options.JumpMinSegment (1,1) double = 30
 end
-unit = "screen";
 [K, M] = size(y_meas);
 if ~ismatrix(y_meas) || ~isequal(size(y_meas), size(y_model)) || ~(M == 1 || M == 3)
-    timeSeriesPreparation.internal.fail(unit, "inputShape", "y_meas and y_model must be Kx1 or Kx3 of the same size -> got %s and %s", mat2str(size(y_meas)), mat2str(size(y_model)));
+    error("timeSeriesPreparation:screen:inputShape", "y_meas and y_model must be Kx1 or Kx3 of the same size -> got %s and %s", mat2str(size(y_meas)), mat2str(size(y_model)));
 end
 if ~isdatetime(epoch) || ~isequal(size(epoch), [K 1])
-    timeSeriesPreparation.internal.fail(unit, "inputShape", "epoch must be a Kx1 datetime -> got %s", class(epoch));
+    error("timeSeriesPreparation:screen:inputShape", "epoch must be a Kx1 datetime -> got %s", class(epoch));
 end
 if isempty(epoch.TimeZone) || ~strcmp(epoch.TimeZone, 'UTC')
-    timeSeriesPreparation.internal.fail(unit, "inputEpoch", "epoch must carry TimeZone UTC -> set epoch.TimeZone = 'UTC'");
+    error("timeSeriesPreparation:screen:inputEpoch", "epoch must carry TimeZone UTC -> set epoch.TimeZone = 'UTC'");
 end
 [r, rinfo] = timeSeriesPreparation.qc.residuals(y_meas, y_model, 'Bias', options.Bias, 'Scale', options.Scale, 'Whitening', options.Whitening, 'Window', options.Window);
 [outl, hinfo] = timeSeriesPreparation.qc.hampel(r, 'Window', options.HampelWindow, 'Threshold', options.HampelThreshold);
