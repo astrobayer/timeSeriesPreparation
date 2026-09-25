@@ -65,7 +65,7 @@ classdef TestIntegration < matlab.unittest.TestCase
             [ti, gi, auxi] = gracefoReading.readItsgProduct(files(1), TimeFormat = "gpsns");
             ref = timeSeriesPreparation.Arc(ti, gi, itsgAux(auxi, names, files(1)));
 
-            timingDiagnostic(arc.t, arc.obs, ti, gi, auxi);   % TEMPORARY (ITSG timing), removed before merge
+            timingDiagnostic(arc.t, arc.obs, ti, gi, auxi, arc, ref);   % TEMPORARY (ITSG timing), removed before merge
             res = timeSeriesPreparation.run(arc, Reference = ref, QualFlags = aux);
             testCase.verifyEqual(res.diagnostics.stages(1:3), ["mask" "align" "qc"]);
             testCase.verifyLessThan(abs(res.diagnostics.alignment.lag), [1 1 1]);
@@ -161,40 +161,62 @@ function arc = actArc(t, obs, fileName, product)
     arc = timeSeriesPreparation.Arc(t, obs, aux);
 end
 
-function timingDiagnostic(t, a, ti, gi, auxi)
-% TEMPORARY diagnostic for the ACT1B-ITSG time offset (owner 2026-09-25):
-% which sampling convention of ITSG's 10 s values gives zero lag. Prints
-% only; removed before the merge.
-    fprintf("DIAG itsg first/last %d %d, n %d; act first/last %d %d, n %d\n", ...
-        ti(1), ti(end), numel(ti), t(1), t(end), numel(t));
-    fprintf("DIAG itsg header: %s\n", strjoin(string(auxi.comments), " | "));
-    sa = double(t - t(1)) / 1e9;                  % ACT seconds of day (1 Hz)
-    si = double(ti - t(1)) / 1e9;                 % ITSG seconds of day
-    in = si >= 30 & si <= sa(end) - 30;
+function timingDiagnostic(t, a, ti, gi, auxi, arc, ref)
+% TEMPORARY diagnostic for the ACT1B-ITSG time offset (owner 2026-09-25),
+% second round: the lag per frequency band, for ITSG taken as
+% instantaneous and as the 10 s mean ending at its epoch; and
+% checkAlignment with the ITSG epochs moved 5 s earlier (to the centre
+% of such an interval). A pure time offset gives one lag in every band.
+% Prints only; removed before the merge.
+    sa = double(t - t(1)) / 1e9;
+    si = double(ti - t(1)) / 1e9;
+    in = si >= 60 & si <= sa(end) - 60;
     si = si(in); g = gi(in, :);
-    hyp = ["inst" "centred10" "trailing10" "leading10" "centred5"];
-    win = [0 0; -5 5; -10 0; 0 10; -2.5 2.5];
-    lags = (-20:20)';
+    bands = ["full" "hp610s" "hp120s" "bp610-2820s"];
+    hyp = ["inst" "trailing10"];
+    win = [0 0; -10 0];
+    lags = (-30:30)';
     for h = 1:numel(hyp)
         S = smoothAct(sa, a, win(h, 1), win(h, 2));
-        for m = 1:3
-            r = NaN(numel(lags), 1);
-            for q = 1:numel(lags)
-                x = interp1(sa, S(:, m), si + lags(q), "linear");
-                y = g(:, m);
-                ok = isfinite(x) & isfinite(y);
-                xh = x(ok) - movmean(x(ok), 61); yh = y(ok) - movmean(y(ok), 61);
-                c = corrcoef(xh, yh); r(q) = c(1, 2);
+        for b = 1:numel(bands)
+            out = strings(1, 3);
+            for m = 1:3
+                r = NaN(numel(lags), 1);
+                for q = 1:numel(lags)
+                    x = interp1(sa, S(:, m), si + lags(q), "linear");
+                    y = g(:, m);
+                    ok = isfinite(x) & isfinite(y);
+                    c = corrcoef(band(x(ok), b), band(y(ok), b));
+                    r(q) = c(1, 2);
+                end
+                [rb, k] = max(r);
+                d = 0;
+                if k > 1 && k < numel(lags)
+                    den = r(k-1) - 2 * r(k) + r(k+1);
+                    if den < 0, d = 0.5 * (r(k-1) - r(k+1)) / den; end
+                end
+                out(m) = sprintf("%+6.2f s (r %.4f)", lags(k) + d, rb);
             end
-            [rb, k] = max(r);
-            d = 0;
-            if k > 1 && k < numel(lags)
-                den = r(k-1) - 2 * r(k) + r(k+1);
-                if den < 0, d = 0.5 * (r(k-1) - r(k+1)) / den; end
-            end
-            fprintf("DIAG %-10s axis %d: best lag %+6.2f s (ITSG(t) ~ ACT(t+lag)), r %.5f, r(0) %.5f\n", ...
-                hyp(h), m, lags(k) + d, rb, r(lags == 0));
+            fprintf("DIAG2 %-10s %-12s x %s | y %s | z %s\n", hyp(h), bands(b), out(1), out(2), out(3));
         end
+    end
+    shifted = timeSeriesPreparation.Arc(ref.t - int64(5e9), ref.obs, itsgAux(auxi, ref.names, "shifted"));
+    rep = timeSeriesPreparation.checkAlignment(arc, shifted);
+    fprintf("DIAG2 checkAlignment, ITSG epochs - 5 s: lag %s; verdict %s\n", ...
+        mat2str(rep.lag, 4), strjoin(rep.verdict, " "));
+    rep = timeSeriesPreparation.checkAlignment(arc, ref);
+    fprintf("DIAG2 checkAlignment, ITSG as read:      lag %s; verdict %s\n", ...
+        mat2str(rep.lag, 4), strjoin(rep.verdict, " "));
+end
+
+function v = band(v, b)
+% The bands of DIAG2 on the 10 s grid: mean removed; minus a 61-sample
+% (610 s) or 13-sample (130 s) moving mean; 61- minus 283-sample means.
+    switch b
+        case 1, v = v - mean(v);
+        case 2, v = v - movmean(v, 61);
+        case 3, v = v - movmean(v, 13);
+        case 4, v = movmean(v, 61) - movmean(v, 283);
     end
 end
 
