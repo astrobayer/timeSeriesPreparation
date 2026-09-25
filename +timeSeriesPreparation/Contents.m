@@ -3,6 +3,10 @@
 %
 %   Design: docs/CONCEPT.md. Order of work: docs/GUIDE.md.
 %
+%   Single point of access (L3)
+%     run        - The instrument stages on one arc, each run when its input
+%                  is given.
+%
 %   Containers (L1)
 %     Arc        - One instrument time series on int64 GPS-ns epochs, with
 %                  weights, layers and provenance.

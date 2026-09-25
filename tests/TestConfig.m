@@ -2,17 +2,19 @@ classdef TestConfig < matlab.unittest.TestCase
 %TESTCONFIG  timeSeriesPreparation.Config: sections, strict fields, product, crn preset.
 %
 %   DESCRIPTION
-%     The nine sections of CONCEPT 5 exist; crn holds preset (X-04), align
-%     its four options (X-06), fill its three (X-08), unc its five (X-07),
-%     drivers its four (X-09), mask its five (X-05), the rest are empty.
+%     The nine sections of CONCEPT 5 exist and each has fields: crn holds
+%     preset (X-04), align its four options (X-06), fill its three (X-08),
+%     unc its five (X-07), drivers its four (X-09), mask its five (X-05),
+%     qc its eight, noise its five and run its two (X-10).
 %     Config(arc) records mission and product and takes the crn preset and
 %     the minimum-data gate from the product. set refuses an unknown section or field;
 %     fault injection of the refusal is the refusal itself: a misspelt
 %     section and a field no schema lists must both fire.
 %
 %   COVERAGE
-%     contract       - the nine sections, empty but mask, crn, align, fill,
-%                      unc and drivers; mask's defaults and its presets
+%     contract       - the nine sections, each with fields; qc's, noise's
+%                      and run's defaults (qc.screen's and noise's own; order
+%                      and filterReference [], seed 0) and setting them; mask's defaults and its presets
 %                      (ACT1B bits 5-7; KBR1B, LRI1B bits 0, 6, 7 and
 %                      snrFraction 0.5; others none); drivers' defaults ("pchip", [], [], 10); align's defaults (pchip, [], 60 s, 1 s) and
 %                      setting them; fill's defaults ("none", [], []) and
@@ -22,20 +24,20 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      (ACC1B/ACT1B ACC, KBR1B KBR, others ""); crn.preset
 %                      settable; toStruct carries all of them.
 %     robustness     - unknown section and unknown field are refused, also
-%                      a misspelt align field.
+%                      a misspelt align field and a misspelt qc field.
 %     precision, reference, speed, vectorisation, metamorphic - exempt: Config
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v0.2.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
-        function nineSectionsSomeEmpty(testCase)
+        function nineSectionsAllDefined(testCase)
             cfg = timeSeriesPreparation.Config();
             testCase.verifyEqual(cfg.Sections, ...
                 ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]);
-            for sec = setdiff(cfg.Sections, ["mask" "crn" "align" "fill" "unc" "drivers"], "stable")
-                testCase.verifyEqual(cfg.(sec), struct(), sec);
+            for sec = cfg.Sections
+                testCase.verifyNotEmpty(fieldnames(cfg.(sec)), sec);
             end
             testCase.verifyEqual(cfg.crn, struct("preset", ""));
             testCase.verifyEqual([cfg.mission cfg.product], ["" ""]);
@@ -129,6 +131,20 @@ classdef TestConfig < matlab.unittest.TestCase
             end
             cfg = set(cfg, "mask", "thrMargin", 10);
             testCase.verifyEqual(cfg.mask.thrMargin, 10);
+        end
+
+        function qcNoiseRunDefaultsAndSet(testCase)
+            cfg = timeSeriesPreparation.Config();
+            testCase.verifyEqual(cfg.qc, struct("whitening", "none", "window", [], ...
+                "hampelWindow", 61, "hampelThreshold", 4, "impulseThreshold", 5, ...
+                "jumpModel", "level", "jumpPenalty", [], "jumpMinSegment", 30));
+            testCase.verifyEqual(cfg.noise, struct("order", [], "method", "exact", ...
+                "maxLag", 100, "lags", 20, "welchAverages", 32));
+            testCase.verifyEqual(cfg.run, struct("filterReference", [], "seed", 0));
+            cfg = set(set(set(cfg, "qc", "hampelWindow", 31), "noise", "order", [2 0]), ...
+                "run", "filterReference", true);
+            testCase.verifyEqual([cfg.qc.hampelWindow cfg.noise.order], [31 2 0]);
+            testCase.verifyTrue(cfg.run.filterReference);
         end
 
         function crnPresetCanBeSet(testCase)

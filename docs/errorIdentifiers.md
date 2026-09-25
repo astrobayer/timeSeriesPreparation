@@ -118,6 +118,7 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:regressDrivers:tooFewRows` | `+timeSeriesPreparation/regressDrivers.m` | Input | fewer than K + 2 complete rows for a parameter. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
 | `timeSeriesPreparation:residuals:inputShape` | `+timeSeriesPreparation/+qc/residuals.m` | Input | y_meas and y_model are not KxM of one size, or Bias or Scale has the wrong size. |
 | `timeSeriesPreparation:residuals:inputWindow` | `+timeSeriesPreparation/+qc/residuals.m` | Input | "highpass" without an odd Window >= 3. |
+| `timeSeriesPreparation:run:campaignDeferred` | `+timeSeriesPreparation/run.m` | Input | arc is an array of arcs; campaign mode (CONCEPT 6.6) is a later work package. The identifiers of the stages propagate; a stage that refuses stops the run. |
 | `timeSeriesPreparation:screen:inputEpoch` | `+timeSeriesPreparation/+qc/screen.m` | Input | epoch is not UTC. The identifiers of qc.residuals, qc.hampel, qc.detectImpulses and qc.detectJumps propagate. |
 | `timeSeriesPreparation:screen:inputShape` | `+timeSeriesPreparation/+qc/screen.m` | Input | y_meas and y_model are not Kx1 or Kx3 of one size, or epoch is not a Kx1 datetime. |
 | `timeSeriesPreparation:setupTimeSeriesPreparation:noGracefoReading` | `setupTimeSeriesPreparation.m` | Input domain | GracefoReading names a folder that does not hold +gracefoReading. |
@@ -164,4 +165,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-157 identifier(s).
+158 identifier(s).

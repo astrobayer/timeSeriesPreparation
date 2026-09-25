@@ -372,6 +372,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_regressDrivers_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.regressDrivers did not run cleanly.");
         end
+
+        function timeSeriesPreparation_run_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.run: A 1 Hz ACT1B-like arc against its signal: mask, align, QC, gaps.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_run_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.run did not run cleanly.");
+        end
     end
 end
 
@@ -785,4 +791,16 @@ function example_timeSeriesPreparation_regressDrivers_1()  %#ok<DEFNU>
     Z = [randn(rs, 300, 1), rand(rs, 300, 1)];
     P = 2 + Z * [0.3; -0.5] + 0.1 * randn(rs, 300, 1);
     res = timeSeriesPreparation.regressDrivers(P, Z, DriverNames = ["betaPrime" "eclipse"], NBoot = 200);
+end
+
+function example_timeSeriesPreparation_run_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.run, verbatim from its help block.
+    t = int64(0:599)' * int64(1e9);
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-02_C_04.txt", "product", "ACT1B");
+    s = 1e-7 * sin(2 * pi * (0:599)' / 300);
+    x = s + 1e-9 * randn(RandStream("twister", "Seed", 1), 600, 1);
+    arc = timeSeriesPreparation.Arc(t, x, aux);
+    ref = timeSeriesPreparation.Arc(t, s, aux);
+    res = timeSeriesPreparation.run(arc, Reference = ref);
+    res.diagnostics.stages
 end
