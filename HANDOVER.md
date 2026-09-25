@@ -38,7 +38,8 @@ releases 1.0.0.
 - **Execution order.** crn → align → qc run in data order: the CRN
   filter needs the reference on its raw grid, and QC needs it on the
   observation epochs. The other stages keep their 6.1 order. This is
-  recorded in CONCEPT 0.23, 6.1.
+  recorded in CONCEPT 0.23, 6.1. **Owner confirmed the order on
+  2026-09-25.**
 - **Result fields** exactly `arc`, `reference`, `diagnostics`,
   `correlation`, `flags`, `config`, `provenance` (CONCEPT 4), pinned by
   `TestRun`. The pin is fault-injected: a result with a field added or
