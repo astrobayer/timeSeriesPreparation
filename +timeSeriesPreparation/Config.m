@@ -115,7 +115,7 @@ classdef Config
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.run, timeSeriesPreparation.mask, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]

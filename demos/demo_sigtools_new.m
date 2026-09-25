@@ -4,7 +4,7 @@
 %  (tsCheckResiduals). Run setupTimeSeriesPreparation first.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 clear; clc; rng(1);
 
 %% 1) Spectral <-> time-series round trip (all base MATLAB)

@@ -1,12 +1,60 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.28 · 2026-09-25 · X-10 PR-1 (`run`, full `Config`) in review; X-05b `.github/` follow-up merged (PR #56, `675b242`)**
+**Revision 0.29 · 2026-09-25 · X-10 PR-2 (integration tests, release 1.0.0) in review; X-10 PR-1 merged (PR #57, `0e2cc02`)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
 restates:
 - `docs/CONCEPT.md` — the design, with the design decisions in its section 11;
 - `docs/GUIDE.md` — the order of work and every procedure.
+
+---
+
+## X-10 PR-2 — integration tests and release 1.0.0; scope frozen 2026-09-25
+
+Tier B. The second of X-10's two PRs. It adds no code, only the
+integration tests (owner decisions 2026-09-24; scale tolerance
+2026-09-25) and the version bump to 1.0.0 (GUIDE section 7).
+
+**Scope (frozen):**
+- `TestIntegration/realDayAgainstItsg`:
+  - Inputs: ACT1B C 2020-01-02 (DATAPOOL, RL04) and its qualflg, against
+    ITSG `GRACEFO-1_nonConservativeForces_2020-01-02` (DATAPOOL
+    `GRACEFO-1`, read with gracefoReading `readItsgProduct`, 8 640
+    epochs), through `run` with the ACT1B preset.
+  - At the ITSG epochs, each axis is fitted as obs = b + s * ref.
+  - Required: |lag| < 1 s; correlation >= 0.95 / 0.95 / 0.93; each scale
+    within 5 % of 1.066 / 0.915 / 0.864.
+- **Scale direction.** V-4 did not record which way it fitted. Checked
+  on the 2020-01-01 C sample (600 s against the ITSG fixture): the z axis
+  correlates at 0.994, and ACT = b + s * ITSG gives s = 0.919, the reverse
+  1.075. V-4's z is 0.864, so V-4 fitted obs = b + s * ref, which is also
+  qc.residuals' convention. The x and y axes of 600 s carry too little
+  signal to say (r 0.62 and 0.31). If CI shows the scales near the
+  reciprocals, this reading is wrong; the fix is the direction, never
+  the tolerance.
+- `TestIntegration/syntheticTruthRecovered`:
+  - Arc: six hours at 1 Hz, planted b and s, white noise 1e-10, three
+    5e-9 spikes, a 30 s gap.
+  - Required: the spikes are masked; the gap is reported on each axis;
+    no lag; the noise sigma2 is within 5 %; the fit recovers s to 5e-4
+    and b to 5e-12.
+- Version 1.0.0: `Contents.m` and every footer, CHANGELOG 1.0.0, README
+  status. The release workflow tags `v1.0.0` on the merge.
+
+**Measured before the push (2026-09-25):** audit clean (128 files); docs
+in sync (67).
+
+**Prediction** (before any run): **659 + 0 + 0 = 659**. That is PR-1's
+657 plus TestIntegration's 2 (reference). Per tag: contract 200,
+reference 241, precision 23, robustness 122, metamorphic 44,
+vectorisation 21, speed 8.
+
+**Risks, stated:**
+- First read of the ITSG day in CI. If the file is missing below
+  `GRACEFO-1`, the assertion names the folder.
+- `qc.screen` on a full day (86 400 x 3) runs for the first time in this
+  repository; the gate time will show its cost.
 
 ---
 

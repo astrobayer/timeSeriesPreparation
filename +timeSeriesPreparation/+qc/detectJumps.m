@@ -91,7 +91,7 @@ function [events, info] = detectJumps(r, options)
 %   See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.qc.screen.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 arguments
     r double

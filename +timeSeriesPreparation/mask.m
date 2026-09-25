@@ -130,7 +130,7 @@ function [arc, info] = mask(arc, options)
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.Config, timeSeriesPreparation.qc.screen, gracefoReading.decodeQualFlags, gracefoReading.readEventList.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc (1,1) timeSeriesPreparation.Arc

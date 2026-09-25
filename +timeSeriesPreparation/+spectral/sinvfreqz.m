@@ -72,7 +72,7 @@ function [b, a] = sinvfreqz(Hd, w, nb, na, maxIter)
 %   See also timeSeriesPreparation.spectral.sfreqz, timeSeriesPreparation.spectral.sstmcb, timeSeriesPreparation.spectral.psd2arma, timeSeriesPreparation.spectral.arma2psd.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         Hd {mustBeNumeric}

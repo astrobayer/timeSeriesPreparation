@@ -3,8 +3,17 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
-## Unreleased
+## 1.0.0 — 2026-09-25
 
+First stable release (GUIDE section 7: X-10 → v1.0.0). The instrument level
+is complete: every stage of CONCEPT 6.1 and the single point of access
+`run`. NonGravForces N-02 and rangingPreparation L-03 can build on it.
+
+- **X-10** integration tests (`TestIntegration`): ACT1B GRACE-C of
+  2020-01-02 through `run` against ITSG nonConservativeForces, held to the
+  V-4 thresholds (lag < 1 s; correlation >= 0.95 / 0.95 / 0.93; scales
+  within 5 % of 1.066 / 0.915 / 0.864); and a synthetic arc whose planted
+  spikes, gap, noise level, bias and scale `run` recovers.
 - CI: the `matlab` job's timeout is 60 min (O-6, PR #54).
 - **X-05b** `qc`: help in this repository's template, errors raised with
   literal identifiers (catalogued once the `.github` follow-up lands),

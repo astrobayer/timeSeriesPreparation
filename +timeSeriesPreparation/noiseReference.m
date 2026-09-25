@@ -114,7 +114,7 @@ function [asd, info] = noiseReference(model, f, options)
 %   See also timeSeriesPreparation.noise, timeSeriesPreparation.spectral.spec2acv, timeSeriesPreparation.crnKernel.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-23 22:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-23 22:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         model (1,1) string

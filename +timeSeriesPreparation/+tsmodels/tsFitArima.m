@@ -135,7 +135,7 @@ function model = tsFitArima(x, p, d, q, options)
 %   See also timeSeriesPreparation.tsmodels.tsFitAR, timeSeriesPreparation.tsmodels.tsFitMA, timeSeriesPreparation.tsmodels.tsFitARMA, timeSeriesPreparation.tsmodels.tsAutoArima, timeSeriesPreparation.tsmodels.tsFitSarima, timeSeriesPreparation.tsmodels.tsForecast, timeSeriesPreparation.tsmodels.tsCheckResiduals.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v0.2.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         x
