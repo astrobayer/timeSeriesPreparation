@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.26 · 2026-09-24 · X-05b (`qc` conventions, numbers unchanged) in review; O-6 merged (PR #54, `7c7fb7b`)**
+**Revision 0.27 · 2026-09-25 · X-05b merged (PR #55, `5489ccb`); its `.github/` follow-up in review**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
