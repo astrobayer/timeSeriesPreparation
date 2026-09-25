@@ -20,8 +20,9 @@ integration tests (owner decisions 2026-09-24; scale tolerance
 - `TestIntegration/realDayAgainstItsg`:
   - Inputs: ACT1B C 2020-01-02 (DATAPOOL, RL04) and its qualflg, against
     ITSG `GRACEFO-1_nonConservativeForces_2020-01-02` (DATAPOOL
-    `GRACEFO-1`, read with gracefoReading `readItsgProduct`, 8 640
-    epochs), through `run` with the ACT1B preset.
+    `GRACEFO-1`, read with gracefoReading `readItsgProduct`), through
+    `run` with the ACT1B preset. The file holds 8 641 epochs (both
+    midnights); 8 640 lie on the ACT1B day.
   - At the ITSG epochs, each axis is fitted as obs = b + s * ref.
   - Required: |lag| < 1 s; correlation >= 0.95 / 0.95 / 0.93; each scale
     within 5 % of 1.066 / 0.915 / 0.864.
@@ -49,6 +50,14 @@ in sync (67).
 657 plus TestIntegration's 2 (reference). Per tag: contract 200,
 reference 241, precision 23, robustness 122, metamorphic 44,
 vectorisation 21, speed 8.
+
+**First CI run (run 36124312901 on `b830265`): 658 + 1 + 1.** The only
+red was the test's own premise: it asserted 8 640 ITSG epochs, and the
+file holds 8 641, both midnights (00:00 and 24:00). V-4's 8 640 are the
+epochs on the ACT1B day. The assertion now counts those. The thresholds
+did not run and are unchanged. Everything else was as predicted
+(synthetic test green; contract 200, reference 240 + 1 + 1, the rest
+equal).
 
 **Risks, stated:**
 - First read of the ITSG day in CI. If the file is missing below

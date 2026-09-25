@@ -8,7 +8,8 @@ classdef TestIntegration < matlab.unittest.TestCase
 %     Real day: ACT1B GRACE-C of 2020-01-02 (DATAPOOL, RL04) with its
 %     qualflg against ITSG nonConservativeForces of the same day
 %     (GRACEFO-1, 10 s, SRF, calibrated accelerometer data; V-4), through
-%     run with the ACT1B preset. At the 8 640 ITSG epochs, where align takes
+%     run with the ACT1B preset. The ITSG file holds 8 641 epochs, both
+%     midnights; at the 8 640 of them on the ACT1B day, where align takes
 %     the reference bit for bit, the kept samples of each axis are fitted
 %     as obs = b + s * ref by least squares, the convention of qc.residuals
 %     and of V-4 (on 2020-01-01 C the z axis gives s = 0.919 this way and
@@ -63,13 +64,13 @@ classdef TestIntegration < matlab.unittest.TestCase
                 fullfile(pool, "GRACEFO-1"));
             [ti, gi, auxi] = gracefoReading.readItsgProduct(files(1), TimeFormat = "gpsns");
             ref = timeSeriesPreparation.Arc(ti, gi, itsgAux(auxi, names, files(1)));
-            testCase.assertEqual(numel(ti), 8640);
 
             res = timeSeriesPreparation.run(arc, Reference = ref, QualFlags = aux);
             testCase.verifyEqual(res.diagnostics.stages(1:3), ["mask" "align" "qc"]);
             testCase.verifyLessThan(abs(res.diagnostics.alignment.lag), [1 1 1]);
 
             [on, k] = ismember(ref.t, res.arc.t);
+            testCase.assertEqual(nnz(on), 8640, "ITSG epochs on the ACT1B day (V-4: 8 640).");
             k = k(on);
             y = res.arc.obs(k, :);
             x = res.reference.obs(k, :);
