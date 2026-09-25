@@ -95,6 +95,18 @@ equal).
 
 Prediction unchanged: **659 + 0 + 0**.
 
+**Verdict, CI run 36176429460 on `e1e4d5b` (2026-09-25), MATLAB R2026a:**
+- `audit` green.
+- `matlab` green: **659 + 0 + 0 = 659**, every tag as predicted
+  (contract 200, reference 241, precision 23, robustness 122, metamorphic
+  44, vectorisation 21, speed 8). Gate time 1229 s.
+- Real day, after the V-17 shift:
+  - band delay +0.45 / +1.37 / +0.63 s; x and z are asserted, y is
+    logged;
+  - run's full-band lags −11.97 / +6.02 / +6.05 s, logged, as corrected;
+  - correlation and scales (V-4's direction) passed.
+- Synthetic arc: green.
+
 **Risks, stated:**
 - The band delay after the shift is predicted from the diagnostic (x
   3.07 − 3, z 2.99 − 3 s on C 01-02, from 3 bins). The test fits every
