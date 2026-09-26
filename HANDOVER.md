@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.30 · 2026-09-25 · X-14 (stage cache) in review; X-10 done — PR-2 merged (PR #58, `3bc1f4c`), release v1.0.0 published, #13 closed**
+**Revision 0.31 · 2026-09-26 · X-16 (QC speed) scope frozen; X-14 done — merged (PR #59, `a264793`), #17 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,57 @@ restates:
 
 ---
 
-## X-14 — stage cache; scope frozen 2026-09-25
+## X-16 — QC speed, gated by equality to the X-05 port; scope frozen 2026-09-26
+
+Tier B. CONCEPT row X-16 with the owner's decisions of 2026-09-26:
+- **Pure MATLAB.** No C layer, no MEX: one code path on every platform.
+- **Scope: the whole of `qc.screen`** (widened from the two named units):
+  - `hampel`: the per-sample loop becomes W x n window blocks (NaN-padded
+    edges, non-finite samples as NaN), `median(..., 1, "omitnan")` for the
+    median and the exact window MAD; blocks of at most 2^22 elements.
+  - `detectJumps`: PELT's candidate list lives in a preallocated buffer
+    instead of being rebuilt by concatenation every step; same candidates,
+    same order, same arithmetic.
+  - `detectImpulses`: the greedy suppression collects the peak indices and
+    builds the event columns once, instead of appending datetimes.
+  - `screen`: each impulse's first sample is found by one `ismember` over
+    all events, instead of a full `epoch ==` scan per event.
+  - `residuals` and `eventTable` stay as they are (no hot spot). The
+    matched filter of `detectImpulses` keeps its loop: `conv` or `filter`
+    would sum in another order and change the last bits.
+- **Equality gate:** `isequaln` with the frozen port (TestQcEquivalence)
+  over all outputs, bit for bit. No tolerance.
+- **Speed, as a ratio against the port** (owner decision), timed in the
+  same test on one day, 86400 x 3 at 1 Hz, best of three runs each:
+  - `hampel` at least 10 times faster (owner decision);
+  - `detectJumps` not slower (owner decision);
+  - `screen` at least 2 times faster (my proposal: hampel dominates the
+    port's screen; the owner may raise it).
+
+**Tests.**
+- TestQcEquivalence +4 cases (reference):
+  - hampelInfShortNaN: Inf and -Inf samples, a series shorter than the
+    window, a column with fewer than three finite samples;
+  - hampelBlocks: 70000 samples, so the 2^22-element blocks split, with a
+    NaN run across a block boundary;
+  - detectJumpsLong: 20000 samples, eight jumps, so the candidate buffer
+    grows and prunes;
+  - screenManyImpulses: forty pulses on three axes, so the event lookup
+    runs for many events.
+- TestQcEquivalence +3 speed tests (speed): hampelTenfold,
+  detectJumpsNotSlower, screenTwofold.
+- Fault injection:
+  - speed: each speed test first applies its ratio check to the port
+    timed against itself, with the bar of the hampel test (10), and
+    requires the check to fail; only then does it check the new unit;
+  - equality: the existing oneUlpIsDetected.
+
+**Prediction** (before any run): **676 + 0 + 0 = 676**. That is 669 plus
+TestQcEquivalence +4 (reference) and +3 (speed).
+Per tag: contract 204, reference 248, precision 23, robustness 125,
+metamorphic 44, vectorisation 21, speed 11.
+
+## X-14 — stage cache — merged 2026-09-26 (PR #59, `a264793`; issue #17 closed); scope was frozen 2026-09-25
 
 Tier B. CONCEPT 6.6 with the owner's decisions of 2026-09-25:
 - **Cached stages:** the expensive ones, crn, qc, noise and correlation.
@@ -1797,7 +1847,9 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-05b in review.**
+**X-16 in progress** (scope above). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+
+**Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
 X-05 PR-C merged (PR #53, `f448f78`; CI 622 + 0 + 0); **release v0.2.0** tagged on the merge by the release workflow; issue #8 closed.
 X-05 PR-B merged (PR #52, `b5633c0`; CI 598 + 0 + 0).
