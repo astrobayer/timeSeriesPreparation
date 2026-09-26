@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.31 · 2026-09-26 · X-16 (QC speed) scope frozen; X-14 done — merged (PR #59, `a264793`), #17 closed**
+**Revision 0.32 · 2026-09-26 · X-15 (campaign mode, release 1.1.0) scope frozen; X-16 done — merged (PR #60, `ca5230f`), #19 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,75 @@ restates:
 
 ---
 
-## X-16 — QC speed, gated by equality to the X-05 port; scope frozen 2026-09-26
+## X-15 — campaign mode of `run`, per-day storage, manifest → release 1.1.0; scope frozen 2026-09-26
+
+Tier B. CONCEPT 6.6 and 5.2 with the owner's decisions of 2026-09-26.
+Needs X-14 (merged), X-16 (merged) and G-03 (gracefoReading #18, closed
+2026-09-22 by gracefoReading PR #26, release 1.1.0).
+- **Entry point:** `run(arcs, ...)` with an Arc array of two or more arcs
+  is a campaign; one arc is the single run, unchanged. An empty array
+  refuses (`run:inputCount`).
+- **Per-arc inputs:** Reference and Thrusters may be an Arc array with one
+  arc per campaign arc; QualFlags, Eclipse, User and Design may be a cell
+  with one entry per arc. Any other value is shared by every arc. A wrong
+  count refuses the campaign before any arc runs (`run:inputCount`), as
+  does an Arc array for Reference in a single run.
+- **Seeds:** arc k runs with cfg.run.seed + k - 1, so it equals
+  `run(arcs(k), ..., Config = set(cfg, "run", "seed", seed + k - 1))`.
+  Without a Config, arc k takes Config(arcs(k)).
+- **Errors:** a stage that refuses on one arc stops that arc only; its
+  MException is kept and the campaign continues (CONCEPT 6.6).
+- **Release rule (5.2):** the arcs must share one L1B release
+  (`Arc.requireOneRelease`, `Arc:mixedRelease`) unless
+  cfg.run.mixedRelease is true.
+- **Parallel (owner):** serial by default; cfg.run.parallel = true uses
+  `parfor` over the arcs when `canUseParallelPool` is true, else it runs
+  serially. The per-arc seeds make both equal. res.parallel says which
+  ran.
+- **Per-day storage (owner):** only when cfg.run.outDir is set ("" = in
+  memory, R5). One MAT v7.3 file per arc,
+  `outDir/<mission>/<satellite>/<yyyy>/<yyyy-mm-dd>.mat` (GPS date of the
+  first epoch), holding `result` and `schemaVersion` ("1"). An existing
+  day file is not overwritten unless cfg.run.overwrite is true: that arc's
+  status is "unsaved" with `run:fileExists`.
+- **Manifest (owner):** `outDir/manifest.json` (jsonencode): schemaVersion,
+  title, software name and version, created (UTC), first and last day,
+  config hash (internal.contentHash of toStruct(cfg)), seed, parallel; per
+  arc: index, day, mission, satellite, product, release, source files,
+  content hash, file (relative), SHA-256 of the file, status, identifier,
+  message. An existing manifest refuses the campaign before any arc runs
+  (`run:fileExists`) unless cfg.run.overwrite is true.
+- **New L0 helper:** `internal.fileSha256`, the plain SHA-256 of a file's
+  bytes, pinned to FIPS 180-4 (abc, empty).
+- **Result of a campaign:** struct with results (N x 1 cell of single-run
+  results, [] where an arc failed), summary (table: index, day, mission,
+  satellite, status ok/error/unsaved, identifier, message, file, sha256),
+  errors (N x 1 cell of MException or []), manifest (struct or []),
+  parallel (logical).
+- **Config.run** gains parallel (false), outDir (""), overwrite (false),
+  mixedRelease (false).
+- **Release 1.1.0** in this PR (GUIDE section 7): Contents.m, every
+  footer, CHANGELOG.
+
+**Tests.**
+- TestCampaign (new, 10):
+  - contract 3: campaignResultFields, inMemoryByDefault,
+    pairedInputsCounted;
+  - reference 3: eachArcEqualsSingleRun, filesAndManifest,
+    fileSha256Pinned;
+  - robustness 4: failingArcIsCaptured, existingFilesNotOverwritten,
+    mixedReleaseRefuses, parallelEqualsSerial.
+- TestHelpExamples +1 (internal.fileSha256; contract).
+- TestRun's refusal test and TestConfig's run pin change, count unchanged.
+- Fault injection: a changed byte changes fileSha256; a failing arc, an
+  existing file and a mixed release each fire.
+
+**Prediction** (before any run): **687 + 0 + 0 = 687**. That is 676 plus
+TestCampaign 10 and TestHelpExamples 1.
+Per tag: contract 208, reference 251, precision 23, robustness 129,
+metamorphic 44, vectorisation 21, speed 11.
+
+## X-16 — QC speed — merged 2026-09-26 (PR #60, `ca5230f`; issue #19 closed); scope was frozen 2026-09-26
 
 Tier B. CONCEPT row X-16 with the owner's decisions of 2026-09-26:
 - **Pure MATLAB.** No C layer, no MEX: one code path on every platform.
@@ -1890,7 +1958,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-16 in progress** (scope above). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**X-15 in progress** (scope above). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).

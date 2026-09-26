@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.26 (DRAFT) · 2026-09-26 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.27 (DRAFT) · 2026-09-26 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.27 | X-15: campaign mode of `run` runs serially, `parfor` only when cfg.run.parallel is set, with per-arc seeds; per-day MAT v7.3 files only when cfg.run.outDir is set; the campaign manifest is JSON (6.6, 5.2; owner decisions 2026-09-26) |
 | 0.26 | X-16: pure MATLAB, no C layer; the scope is the whole of `qc.screen` (hampel, detectJumps, detectImpulses, screen), gated by equality to the X-05 port; speed pinned as a ratio against the port: hampel at least 5 times (measured 7.57; the first bar of 10 was not reachable bit-exact in MATLAB), detectJumps not slower, screen at least 2 times (10.1; owner decisions 2026-09-26) |
 | 0.25 | X-14: the stage cache covers crn, qc, noise and correlation; stages with a function-handle input (bootstrap, crossval) are never cached; hits are reported in `diagnostics.cache` and provenance, one MAT file per key, no eviction (6.6; owner decisions 2026-09-25) |
 | 0.24 | X-10 PR-2: V-17 measured and closed — ITSG `nonConservativeForces` is about 3 s late against ACT1B and band-limited to about 10 mHz; callers comparing the two move the ITSG epochs (9.3; owner decisions 2026-09-25) |
@@ -399,7 +400,11 @@ are estimated by `lsqvce.fit`.
   arc. It runs the same stages on each, captures errors per arc (the
   `MException` is stored and the campaign continues), and parallelises over
   arcs deterministically and only when asked. It returns one result per arc
-  plus a campaign summary.
+  plus a campaign summary. X-15 (owner decisions 2026-09-26): serial by
+  default, `parfor` only with cfg.run.parallel; arc k takes seed
+  cfg.run.seed + k - 1, so parallel equals serial; per-day MAT v7.3 files
+  `outDir/<mission>/<satellite>/<yyyy>/<yyyy-mm-dd>.mat` only when
+  cfg.run.outDir is set; one `manifest.json` per campaign.
 - `NonGravForces.app.calibrate` accepts an `Arc` array: a multi-arc
   calibration. Per-arc biases are lsqvce local parameters, pre-eliminated;
   the scale is common or per arc as configured. Multi-day solutions with
