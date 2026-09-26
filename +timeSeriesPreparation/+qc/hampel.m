@@ -14,7 +14,7 @@ function [mask, info] = hampel(x, options)
 %     NaN samples are never flagged and never enter the window
 %     statistics; a window with fewer than three finite samples flags
 %     nothing. A row vector is one channel. Ported from NonGravForces.qc
-%     0.12.0 (X-05); numbers unchanged (X-05b).
+%     0.12.0 (X-05); numbers unchanged (X-05b, X-16).
 %
 %   INPUTS
 %     x  (K,M) double   -   K samples of M channels.
@@ -56,18 +56,22 @@ function [mask, info] = hampel(x, options)
 %     mask = timeSeriesPreparation.qc.hampel(x);
 %
 %   LIMITATIONS
-%     An interpreted loop, O(K W) per channel; X-16 moves it onto
-%     movmedian with an exact window MAD.
+%     O(K W) per channel, vectorised (X-16). A full, finite window has an
+%     odd count, so its median is its middle element: movmedian gives it
+%     without arithmetic. The MAD is one median over the windows, gathered
+%     in cache-sized blocks of at most 2^16 elements. Edge windows and
+%     windows with NaN take median with "omitnan". The outputs equal the
+%     X-05 port's per-sample loop bit for bit (TestQcEquivalence).
 %
 %   REFERENCES
 %     Hampel, F. R. (1974). The influence curve and its role in robust
 %     estimation. J. Am. Stat. Assoc. 69, 383-393. Pearson (2002), cited
 %     as the port cites it ("EURASIP JASP"), not re-read.
 %
-%   See also timeSeriesPreparation.qc.screen, timeSeriesPreparation.qc.detectImpulses, movmedian.
+%   See also timeSeriesPreparation.qc.screen, timeSeriesPreparation.qc.detectImpulses, movmedian, movsum.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-26 09:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 arguments
     x double
@@ -86,15 +90,33 @@ if isrow(x), x = x(:); end
 [K, M] = size(x);
 h = (W - 1) / 2;
 med = nan(K, M); sig = nan(K, M);
+xn = x; xn(~isfinite(xn)) = NaN;                 % Inf never enters a window
+xp = [nan(h, M); xn; nan(h, M)];                 % truncated edges = NaN padding
+n = max(1, floor(2^16 / W));                     % windows per block: at most 2^16 elements (512 KiB, cache-sized)
+idx = (0:W - 1)' + (0:n - 1);                    % W x n; + i0 gives the windows of samples i0..i0+n-1
 for j = 1:M
-    xj = x(:, j);
-    for i = 1:K
-        lo = max(1, i - h); hi = min(K, i + h);
-        w = xj(lo:hi); w = w(isfinite(w));
-        if numel(w) < 3, continue; end
-        m = median(w);
-        med(i, j) = m;
-        sig(i, j) = 1.4826 * median(abs(w - m));
+    cnt = movsum(double(~isnan(xn(:, j))), W);   % finite samples per (truncated) window, exact
+    mj = movmedian(xn(:, j), W);                 % full windows: the middle element, as median's
+    xj = xp(:, j);
+    for i0 = 1:n:K
+        i = i0:min(K, i0 + n - 1);
+        if numel(i) == n
+            w = xj(idx + i0);                    % column c is the window of sample i(c)
+        else
+            w = xj(idx(:, 1:numel(i)) + i0);
+        end
+        b = find(cnt(i) < W);                    % edges and windows with NaN: the exact omitnan path
+        if ~isempty(b), wb = w(:, b); end
+        m = mj(i).';
+        s = 1.4826 * median(abs(w - m), 1);
+        if ~isempty(b)
+            mb = median(wb, 1, "omitnan");
+            sb = 1.4826 * median(abs(wb - mb), 1, "omitnan");
+            few = cnt(i(b)) < 3;
+            mb(few) = NaN; sb(few) = NaN;
+            m(b) = mb; s(b) = sb;
+        end
+        med(i, j) = m; sig(i, j) = s;
     end
 end
 sig = max(sig, options.MinSigma);

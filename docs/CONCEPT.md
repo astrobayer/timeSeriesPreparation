@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.25 (DRAFT) · 2026-09-25 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.26 (DRAFT) · 2026-09-26 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.26 | X-16: pure MATLAB, no C layer; the scope is the whole of `qc.screen` (hampel, detectJumps, detectImpulses, screen), gated by equality to the X-05 port; speed pinned as a ratio against the port: hampel at least 5 times (measured 7.57; the first bar of 10 was not reachable bit-exact in MATLAB), detectJumps not slower, screen at least 2 times (10.1; owner decisions 2026-09-26) |
 | 0.25 | X-14: the stage cache covers crn, qc, noise and correlation; stages with a function-handle input (bootstrap, crossval) are never cached; hits are reported in `diagnostics.cache` and provenance, one MAT file per key, no eviction (6.6; owner decisions 2026-09-25) |
 | 0.24 | X-10 PR-2: V-17 measured and closed — ITSG `nonConservativeForces` is about 3 s late against ACT1B and band-limited to about 10 mHz; callers comparing the two move the ITSG epochs (9.3; owner decisions 2026-09-25) |
 | 0.23 | X-10: `run` executes the reference stages in data order, crn → align → qc (the CRN filter needs the reference on its raw grid, QC the reference on the observation epochs); every other stage keeps its 6.1 position. A stage without its input is skipped and listed with its reason (6.1; owner decision 2026-09-24: input-driven; order confirmed 2026-09-25) |
@@ -691,7 +692,7 @@ repository has one open PR at a time.
 | timeSeriesPreparation | X-11 | `report` | WP-20 part | X-10 |
 | timeSeriesPreparation | X-12 | V-1 CRN verification | WP-24 | handbook |
 | timeSeriesPreparation | X-14 | stage cache (6.6) | — | X-10 |
-| timeSeriesPreparation | X-16 | QC speed (item 12): `hampel` on `movmedian` with an exact window MAD, jump detection's candidate bookkeeping vectorised (or a C layer); gated by equality to the X-05 port | — | X-05, X-14 |
+| timeSeriesPreparation | X-16 | QC speed (item 12), pure MATLAB, the whole of `qc.screen`: `hampel` on vectorised windows with an exact window MAD, jump detection's candidate bookkeeping in a buffer, impulse and screen event bookkeeping; gated by equality to the X-05 port; speed as a ratio against the port | — | X-05, X-14 |
 | timeSeriesPreparation | X-17 | QC template bank (twang, heater, magnetic torquer, thruster), one mask layer per type, tested on the defect catalogue | — | X-16, V-12 |
 | timeSeriesPreparation | X-18 | CF/ACDD NetCDF export with PROV-O provenance and DataCite fields; Arc schema version and migration | — | X-15 |
 | timeSeriesPreparation | X-15 | campaign mode of `run` (6.6), per-day storage and the per-campaign manifest (5.2) → **release 1.1** | WP-19 part (`runBatch`) | X-14, X-16, G-03 |

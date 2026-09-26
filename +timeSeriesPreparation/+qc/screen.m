@@ -22,7 +22,7 @@ function [mask, events, info] = screen(y_meas, y_model, epoch, options)
 %     mask marks outliers and the samples spanned by impulses; jumps are
 %     reported, never masked. events is the three detectors' event table,
 %     sorted by tStart. Ported from NonGravForces.qc 0.12.0 (X-05); numbers
-%     unchanged (X-05b).
+%     unchanged (X-05b, X-16).
 %
 %   INPUTS
 %     y_meas   (K,M) double     -   Measured observable, M = 1 or 3.
@@ -92,7 +92,7 @@ function [mask, events, info] = screen(y_meas, y_model, epoch, options)
 %   See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.hampel, timeSeriesPreparation.qc.detectImpulses, timeSeriesPreparation.qc.detectJumps, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.mask.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-26 07:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 arguments
     y_meas double
@@ -143,8 +143,9 @@ else
     L = numel(options.Response);
     [evI, iinfo] = timeSeriesPreparation.qc.detectImpulses(ri, 'Epoch', epoch, 'Response', options.Response, 'Priors', options.Thrusters, 'Threshold', options.ImpulseThreshold);
     info.impulses = iinfo;
+    [~, first] = ismember(evI.tStart, epoch);       % the first sample of each pulse (lowest index, as find(.., 1))
     for e = 1:height(evI)
-        q = find(epoch == evI.tStart(e), 1);
+        q = first(e);
         cols = 1:M; if M == 3, cols = find(axes == evI.axis(e)); end
         span = q:min(K, q + L - 1);
         pulseMask(span, cols) = true;

@@ -5,6 +5,14 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
 
 ## Unreleased
 
+- **X-16** QC speed, pure MATLAB, numbers unchanged: `qc.hampel` computes
+  the moving median and the exact window MAD vectorised (`movmedian`,
+  window blocks) instead of a per-sample loop; `qc.detectJumps` caches
+  each PELT candidate's cumulative sums and F(tau) beside it (no gathers
+  per step); `qc.detectImpulses` and
+  `qc.screen` build their event bookkeeping once. Every output equals the
+  X-05 port bit for bit (TestQcEquivalence); speed tests pin the ratio
+  against the port.
 - **X-14** stage cache of `run`: with `Config.run.cacheDir` set, crn, qc,
   noise and correlation keep their outputs under
   `<cacheDir>/<stage>/<key>.mat`. The key is the SHA-256 of the stage, the

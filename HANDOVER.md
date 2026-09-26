@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.30 · 2026-09-25 · X-14 (stage cache) in review; X-10 done — PR-2 merged (PR #58, `3bc1f4c`), release v1.0.0 published, #13 closed**
+**Revision 0.31 · 2026-09-26 · X-16 (QC speed) scope frozen; X-14 done — merged (PR #59, `a264793`), #17 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,100 @@ restates:
 
 ---
 
-## X-14 — stage cache; scope frozen 2026-09-25
+## X-16 — QC speed, gated by equality to the X-05 port; scope frozen 2026-09-26
+
+Tier B. CONCEPT row X-16 with the owner's decisions of 2026-09-26:
+- **Pure MATLAB.** No C layer, no MEX: one code path on every platform.
+- **Scope: the whole of `qc.screen`** (widened from the two named units):
+  - `hampel`: the per-sample loop becomes vectorised windows. A full,
+    finite window (odd count) takes its median from `movmedian` (the middle
+    element, no arithmetic) and its MAD from one `median` over W x n window
+    blocks of at most 2^16 elements (cache-sized; 2^22 in round 1). Edge
+    windows and windows with NaN take
+    `median(..., "omitnan")`; `movsum` counts the finite samples.
+  - `detectJumps`: PELT's admissible candidates carry their cumulative
+    sums and F(tau) in arrays beside them, and the too-recent ones wait in
+    a queue (round 2; round 1 had a preallocated buffer only). No gathers
+    per step; same candidates, same order, same arithmetic.
+  - `detectImpulses`: the greedy suppression collects the peak indices and
+    builds the event columns once, instead of appending datetimes.
+  - `screen`: each impulse's first sample is found by one `ismember` over
+    all events, instead of a full `epoch ==` scan per event.
+  - `residuals` and `eventTable` stay as they are (no hot spot). The
+    matched filter of `detectImpulses` keeps its loop: `conv` or `filter`
+    would sum in another order and change the last bits.
+- **Equality gate:** `isequaln` with the frozen port (TestQcEquivalence)
+  over all outputs, bit for bit. No tolerance.
+- **Speed, as a ratio against the port** (owner decision), timed in the
+  same test on one day, 86400 x 3 at 1 Hz, best of three runs each (a
+  separate warm-up call was dropped in round 2 to fit the 60-min job):
+  - `hampel` at least 5 times faster (owner decision 2026-09-26, after
+    CI measured 6.42 and 7.57 against the first bar of 10);
+  - `detectJumps` not slower (owner decision);
+  - `screen` at least 2 times faster (my proposal: hampel dominates the
+    port's screen; the owner may raise it).
+  - My estimate before any run (2026-09-26): hampel reaches about 3–4
+    times, not 10. The owner kept 10 (decision 2026-09-26). If CI measures
+    less, I keep optimising in MATLAB; if that fails, the bar or a MEX
+    layer goes back to the owner. The bar is not lowered by me.
+
+**Tests.**
+- TestQcEquivalence +4 cases (reference):
+  - hampelInfShortNaN: Inf and -Inf samples, a series shorter than the
+    window, a column with fewer than three finite samples;
+  - hampelBlocks: 5000 samples, so the 2^16-element blocks (1074 windows)
+    split, with a NaN run across a block boundary and a partial last block;
+  - detectJumpsLong: 20000 samples, eight jumps, so the candidate buffer
+    grows and prunes;
+  - screenManyImpulses: forty pulses on three axes, so the event lookup
+    runs for many events.
+- TestQcEquivalence +3 speed tests (speed): hampelFivefold (hampelTenfold
+  until round 3),
+  detectJumpsNotSlower, screenTwofold.
+- Fault injection:
+  - speed: each speed test first applies its ratio check to the port
+    against itself (its slowest run over its fastest), with the bar 10,
+    and requires the check to fail; only then does it
+    check the new unit;
+  - equality: the existing oneUlpIsDetected.
+
+**Prediction** (before any run): **676 + 0 + 0 = 676**. That is 669 plus
+TestQcEquivalence +4 (reference) and +3 (speed).
+Per tag: contract 204, reference 248, precision 23, robustness 125,
+metamorphic 44, vectorisation 21, speed 11.
+
+**CI round 1 (4aed563): cancelled at the 60-min job limit**, in
+tsmodelsTest, after TestQcEquivalence (41.5 min). Every equivalence case
+passed (no other verification failed); two speed tests missed:
+- hampel: port 1.129 s, unit 0.176 s, ratio 6.42 < 10;
+- screen: port 191.105 s, unit 159.622 s, ratio 1.20 < 2;
+- detectJumps: passed (not slower).
+
+Finding: screen on one day is dominated by PELT, not hampel. With two
+jumps in 86400 samples PELT prunes little, so its candidate list grows
+and the cost is quadratic (about 60 s per axis with the port). Round 2
+(bars unchanged): PELT without gathers per step (above), hampel in
+cache-sized blocks, the speed tests without the extra warm-up and
+fault-injection runs. Prediction unchanged: 676 + 0 + 0.
+
+**CI round 2 (34d18e8): 675 + 1 + 0**, whole suite in 33 min
+(TestQcEquivalence 12 min 50 s). Per tag as predicted except speed
+10 + 1. The one failure: hampel: port 1.122 s, unit 0.148 s, ratio
+7.57 < 10. screen and detectJumps passed (their ratios print only on
+failure). Every equivalence case passed.
+
+**Owner decision 2026-09-26:** after two pure-MATLAB rounds (6.42, 7.57),
+the hampel bar is 5, about 2/3 of the measured 7.57, instead of a MEX
+layer. Round 3 changes only the bar and the test's name (hampelFivefold).
+Prediction: 676 + 0 + 0, per tag as above.
+
+**CI verdict (70d9a91, run 36227961222): 676 + 0 + 0 = 676, green.** Per
+tag as predicted: contract 204, reference 248, precision 23, robustness
+125, metamorphic 44, vectorisation 21, speed 11. Whole suite 34 min
+(TestQcEquivalence 13 min). audit green. The speed tests print their
+ratios only on failure; the last measured are round 2's (hampel 7.57).
+
+## X-14 — stage cache — merged 2026-09-26 (PR #59, `a264793`; issue #17 closed); scope was frozen 2026-09-25
 
 Tier B. CONCEPT 6.6 with the owner's decisions of 2026-09-25:
 - **Cached stages:** the expensive ones, crn, qc, noise and correlation.
@@ -1797,7 +1890,9 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-05b in review.**
+**X-16 in progress** (scope above). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+
+**Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
 X-05 PR-C merged (PR #53, `f448f78`; CI 622 + 0 + 0); **release v0.2.0** tagged on the merge by the release workflow; issue #8 closed.
 X-05 PR-B merged (PR #52, `b5633c0`; CI 598 + 0 + 0).

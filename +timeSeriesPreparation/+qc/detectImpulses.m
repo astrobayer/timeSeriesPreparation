@@ -19,7 +19,7 @@ function [events, info] = detectImpulses(r, options)
 %     THR1B firings) takes the prior's source and confidence 1; the others
 %     are "unassigned" with confidence erf(|score|/sqrt(2)). NaN samples
 %     count as zero in the correlation and are reported. Ported from
-%     NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b).
+%     NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b, X-16).
 %
 %   INPUTS
 %     r  (K,M) double   -   Whitened residuals (qc.residuals), M = 1 (axis
@@ -83,7 +83,7 @@ function [events, info] = detectImpulses(r, options)
 %   See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.qc.screen, timeSeriesPreparation.crnKernel.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-26 07:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 arguments
     r double
@@ -145,13 +145,17 @@ for m = 1:M
     cand = find(a >= options.Threshold);
     [~, order] = sort(a(cand), 'descend'); cand = cand(order);
     taken = false(K, 1);
-    for q = cand'
+    peak = false(numel(cand), 1);
+    for k = 1:numel(cand)
+        q = cand(k);
         if taken(q), continue; end
-        lo = max(1, q - L + 1); hi = min(K, q + L - 1);
-        taken(lo:hi) = true;
-        tS(end + 1, 1) = t(q); tE(end + 1, 1) = t(min(K, q + L - 1)); %#ok<AGROW>
-        ax(end + 1, 1) = axes(m); am(end + 1, 1) = amp(q, m); sg(end + 1, 1) = s / hnorm; sc(end + 1, 1) = a(q); %#ok<AGROW>
+        taken(max(1, q - L + 1):min(K, q + L - 1)) = true;
+        peak(k) = true;
     end
+    q = cand(peak);                                 % the peaks, in the order found (X-16: one append per channel)
+    tS = [tS; t(q)]; tE = [tE; t(min(K, q + L - 1))]; %#ok<AGROW>
+    ax = [ax; repmat(axes(m), numel(q), 1)]; am = [am; amp(q, m)]; %#ok<AGROW>
+    sg = [sg; repmat(s / hnorm, numel(q), 1)]; sc = [sc; a(q)]; %#ok<AGROW>
 end
 n = numel(tS);
 source = repmat("unassigned", n, 1);

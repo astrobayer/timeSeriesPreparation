@@ -23,7 +23,7 @@ function [events, info] = detectJumps(r, options)
 %     "unassigned" with confidence erf(|amplitude|/sigma/sqrt(2)). Jumps
 %     are never cut from the data. NaN samples are removed before the
 %     segmentation and the indices mapped back. Ported from
-%     NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b).
+%     NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b, X-16).
 %
 %   INPUTS
 %     r  (K,M) double   -   Whitened residuals, M = 1 (axis "all") or 3.
@@ -79,8 +79,10 @@ function [events, info] = detectJumps(r, options)
 %     [events, info] = timeSeriesPreparation.qc.detectJumps(x, Epoch = t);
 %
 %   LIMITATIONS
-%     Quadratic in the worst case when pruning keeps many candidates; X-16
-%     vectorises the bookkeeping.
+%     Quadratic when pruning keeps many candidates, which happens on a
+%     long series with few jumps (about 3 min for one day of three axes
+%     at 1 Hz with the port). Each step is vectorised over the candidates,
+%     whose cumulative sums and F(tau) are cached beside them (X-16).
 %
 %   REFERENCES
 %     Killick, R., Fearnhead, P., Eckley, I. A. (2012). Optimal detection
@@ -91,7 +93,7 @@ function [events, info] = detectJumps(r, options)
 %   See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.qc.screen.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-26 09:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 arguments
     r double
@@ -200,15 +202,26 @@ if slope
 end
 F = [-beta; inf(n, 1)];                              % F(tau) stored at index tau+1
 prev = zeros(n + 1, 1);
-R = 0;                                               % candidate last change points tau (0-based), row
+% Candidate last change points tau (0-based), ascending. The admissible ones
+% (the new segment tau+1..t has at least minSeg samples) sit in R with their
+% cumulative sums and F(tau) cached beside them (X-16: no gathers per step);
+% the too-recent ones wait in the queue Q(qh:qt), each moving to R once.
+R = zeros(0, 1); A1 = R; A2 = R; FA = R;
+if slope, At = R; Att = R; Axt = R; end
+Q = zeros(n + 1, 1); qh = 1; qt = 1;                 % tau = 0 waits first
 for t = minSeg:n
-    adm = t - R >= minSeg;                           % admissible: the new segment tau+1..t has at least minSeg samples
-    cand = reshape(R(adm), [], 1);                   % admissible candidates as a column
-    if isempty(cand), continue; end
-    a = cand + 1; nn = t - cand;                     % segment starts (1-based) and lengths, columns
-    sx = S1(t + 1) - S1(a); sxx = S2(t + 1) - S2(a);
+    while qh <= qt && t - Q(qh) >= minSeg
+        tau = Q(qh); qh = qh + 1;
+        R(end + 1, 1) = tau; A1(end + 1, 1) = S1(tau + 1); A2(end + 1, 1) = S2(tau + 1); FA(end + 1, 1) = F(tau + 1); %#ok<AGROW>
+        if slope
+            At(end + 1, 1) = St(tau + 1); Att(end + 1, 1) = Stt(tau + 1); Axt(end + 1, 1) = Sxt(tau + 1); %#ok<AGROW>
+        end
+    end
+    if isempty(R), continue; end
+    nn = t - R;                                      % segment lengths, column
+    sx = S1(t + 1) - A1; sxx = S2(t + 1) - A2;
     if slope
-        st = St(t + 1) - St(a); stt = Stt(t + 1) - Stt(a); sxt = Sxt(t + 1) - Sxt(a);
+        st = St(t + 1) - At; stt = Stt(t + 1) - Att; sxt = Sxt(t + 1) - Axt;
         det = nn .* stt - st.^2;
         bb = (nn .* sxt - st .* sx) ./ det;          % slope
         aa = (sx - bb .* st) ./ nn;                  % intercept
@@ -217,11 +230,16 @@ for t = minSeg:n
         c = sxx - sx.^2 ./ nn;
     end
     c = max(c, 0);
-    vals = F(a) + c + beta;                          % F(tau) = F(a), one value per candidate (column)
+    vals = FA + c + beta;                            % F(tau) + C(tau+1..t) + beta, one value per candidate
     [Fmin, k] = min(vals);
     F(t + 1) = Fmin;
-    prev(t + 1) = cand(k);
-    R = [reshape(cand(vals - beta <= Fmin), 1, []), R(~adm), t];   % prune admissible tau with F(tau) + C > F(t); keep the too-recent ones
+    prev(t + 1) = R(k);
+    keep = vals - beta <= Fmin;                      % prune admissible tau with F(tau) + C > F(t)
+    if ~all(keep)
+        R = R(keep); A1 = A1(keep); A2 = A2(keep); FA = FA(keep);
+        if slope, At = At(keep); Att = Att(keep); Axt = Axt(keep); end
+    end
+    qt = qt + 1; Q(qt) = t;
 end
 % backtrack
 bounds = n; tau = prev(n + 1);

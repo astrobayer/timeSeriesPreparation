@@ -26,7 +26,7 @@ th { background: #f0f0f0; }
 <pre><code>mask = timeSeriesPreparation.qc.hampel(x)
 [mask, info] = timeSeriesPreparation.qc.hampel(x, Window = 61, Threshold = 4, MinSigma = 0)</code></pre>
 <h2>Description</h2>
-<p>Flags sample i of column j when |x(i,j) - med(i,j)| &gt; t * 1.4826 * MAD(i,j), with med and MAD over a centred window of W samples, truncated at the edges. Median and MAD tolerate up to about half the window contaminated, which is why this, not a moving mean and std, is the first pass on residuals with thruster spikes and twangs. NaN samples are never flagged and never enter the window statistics; a window with fewer than three finite samples flags nothing. A row vector is one channel. Ported from NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b).</p>
+<p>Flags sample i of column j when |x(i,j) - med(i,j)| &gt; t * 1.4826 * MAD(i,j), with med and MAD over a centred window of W samples, truncated at the edges. Median and MAD tolerate up to about half the window contaminated, which is why this, not a moving mean and std, is the first pass on residuals with thruster spikes and twangs. NaN samples are never flagged and never enter the window statistics; a window with fewer than three finite samples flags nothing. A row vector is one channel. Ported from NonGravForces.qc 0.12.0 (X-05); numbers unchanged (X-05b, X-16).</p>
 <h2>Inputs</h2>
 <table>
 <tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
@@ -58,11 +58,11 @@ th { background: #f0f0f0; }
 <pre><code>x = randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 2), 1000, 1); x(500) = 12;
 mask = timeSeriesPreparation.qc.hampel(x);</code></pre>
 <h2>Limitations</h2>
-<p>An interpreted loop, O(K W) per channel; X-16 moves it onto movmedian with an exact window MAD.</p>
+<p>O(K W) per channel, vectorised (X-16). A full, finite window has an odd count, so its median is its middle element: movmedian gives it without arithmetic. The MAD is one median over the windows, gathered in cache-sized blocks of at most 2^16 elements. Edge windows and windows with NaN take median with &quot;omitnan&quot;. The outputs equal the X-05 port&#x27;s per-sample loop bit for bit (TestQcEquivalence).</p>
 <h2>References</h2>
 <p>Hampel, F. R. (1974). The influence curve and its role in robust estimation. J. Am. Stat. Assoc. 69, 383-393. Pearson (2002), cited as the port cites it (&quot;EURASIP JASP&quot;), not re-read.</p>
 <h2>See also</h2>
-<p><code>timeSeriesPreparation.qc.screen</code>, <code>timeSeriesPreparation.qc.detectImpulses</code>, <code>movmedian</code></p>
+<p><code>timeSeriesPreparation.qc.screen</code>, <code>timeSeriesPreparation.qc.detectImpulses</code>, <code>movmedian</code>, <code>movsum</code></p>
 <p class="footer">timeSeriesPreparation v1.0.0 - generated from the help block of +timeSeriesPreparation/+qc/hampel.m by ci-actions/matlab-docs. Do not edit.</p>
 </body>
 </html>

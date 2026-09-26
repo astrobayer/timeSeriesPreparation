@@ -13,6 +13,15 @@ classdef TestQcEquivalence < matlab.unittest.TestCase
 %     carry a creation time). A refusal must raise the same identifier in
 %     both. A planted difference of one ulp must fire the comparison
 %     (fault injection).
+%     X-16 made +qc faster under the same gate (owner decisions
+%     2026-09-26: pure MATLAB, the whole of screen, speed as a ratio
+%     against the port). Its cases cover the new code paths: Inf and short
+%     series in hampel, hampel's block boundary, a long PELT run, many
+%     impulses in screen. The speed tests time the port and the unit on
+%     one day, 86400 x 3 at 1 Hz, best of three runs each. Before checking
+%     the unit, each applies its ratio check to the port against itself
+%     (slowest run over fastest) with the bar 10, which must fail (fault
+%     injection).
 %
 %   COVERAGE
 %     reference   - each unit's default call and its option branches:
@@ -24,9 +33,12 @@ classdef TestQcEquivalence < matlab.unittest.TestCase
 %                   priors); the refusals.
 %     contract    - every unit of +qc is covered by a case.
 %     robustness  - a one-ulp change of an output is detected.
+%     speed       - hampel at least 5 times faster than the port (owner,
+%                   2026-09-26, after 6.42 and 7.57 measured against 10),
+%                   detectJumps not slower, screen at least 2 times faster.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-26 09:55 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (TestParameter)
         Case
@@ -88,6 +100,26 @@ classdef TestQcEquivalence < matlab.unittest.TestCase
             testCase.verifyFalse(isequaln(new, old), "A one-ulp difference went unnoticed.");
         end
     end
+
+    methods (Test, TestTags = {'speed'})
+        function hampelFivefold(testCase)
+            x = oneDay();
+            verifyFaster(testCase, "hampel", 5, @() qcPort.hampel(x), ...
+                @() timeSeriesPreparation.qc.hampel(x));
+        end
+
+        function detectJumpsNotSlower(testCase)
+            [x, t] = oneDay();
+            verifyFaster(testCase, "detectJumps", 1, @() qcPort.detectJumps(x, 'Epoch', t), ...
+                @() timeSeriesPreparation.qc.detectJumps(x, 'Epoch', t));
+        end
+
+        function screenTwofold(testCase)
+            [x, t, h] = oneDay();
+            verifyFaster(testCase, "screen", 2, @() qcPort.screen(x, zeros(size(x)), t, 'Response', h), ...
+                @() timeSeriesPreparation.qc.screen(x, zeros(size(x)), t, 'Response', h));
+        end
+    end
 end
 
 % ------------------------------------------------------------------------
@@ -98,7 +130,8 @@ function names = caseNames()
         'detectImpulsesPriors', 'detectImpulsesThreeAxes', ...
         'detectJumpsLevel', 'detectJumpsSlope', 'detectJumpsThreeAxesNaN', ...
         'eventTableEmpty', 'eventTableRows', ...
-        'screenDefault', 'screenFull', 'refusals'};
+        'screenDefault', 'screenFull', 'refusals', ...
+        'hampelInfShortNaN', 'hampelBlocks', 'detectJumpsLong', 'screenManyImpulses'};
 end
 
 function run = caseFunction(name)
@@ -176,7 +209,72 @@ function run = caseFunction(name)
                 'Response', h, 'Thrusters', thr, 'HampelWindow', 41, 'JumpMinSegment', 20);
         case "refusals"
             run = @(ns) refusals(ns);
+        case "hampelInfShortNaN"
+            x = randn(rs(24), 300, 3);
+            x(40:41, 1) = [Inf; -Inf];
+            x(:, 3) = NaN;
+            x([10 200], 3) = [1; 2];                    % fewer than three finite samples in every window
+            r = randn(rs(25), 1, 20);                   % a row, shorter than the window
+            run = @(ns) [outs(2, f(ns, "hampel"), x), outs(2, f(ns, "hampel"), r, 'Window', 61)];
+        case "hampelBlocks"
+            x = randn(rs(26), 5000, 1);                 % blocks of floor(2^16/61) = 1074 windows; a partial last block
+            x(2140:2160) = NaN;                         % across the boundary at sample 2149
+            x([2148 2150 4999]) = [10; -9; 8];
+            run = @(ns) outs(2, f(ns, "hampel"), x);
+        case "detectJumpsLong"
+            x = randn(rs(27), 20000, 1);
+            for k = 1:8
+                x(2000 * k + 1:end) = x(2000 * k + 1:end) + 2 * (-1)^k;
+            end
+            run = @(ns) outs(2, f(ns, "detectJumps"), x, 'Epoch', epochs(20000), 'MinSegment', 30);
+        case "screenManyImpulses"
+            h = sin(pi * (0:29)' / 30).^2;
+            X = 1e-9 * randn(rs(28), 6000, 3);
+            for k = 0:39
+                q = 100 + 140 * k;
+                X(q:q + 29, mod(k, 3) + 1) = X(q:q + 29, mod(k, 3) + 1) + 8e-9 * h;
+            end
+            run = @(ns) outs(3, f(ns, "screen"), X, zeros(6000, 3), epochs(6000), 'Response', h);
     end
+end
+
+function verifyFaster(testCase, name, bar, old, new)
+% The port's best time over the unit's must reach bar. The check is first
+% applied to the port against itself (its slowest run over its fastest)
+% with the bar 10 and must fail.
+    met = @(tOld, tNew, b) tOld / tNew >= b;
+    tPort = runs(old);
+    testCase.assertFalse(met(max(tPort), min(tPort), 10), ...
+        name + ": the ratio check passed the port against itself (fault injection).");
+    tOld = min(tPort);
+    tNew = min(runs(new));
+    testCase.verifyTrue(met(tOld, tNew, bar), sprintf( ...
+        "%s: port %.3f s, unit %.3f s, ratio %.2f < %g.", name, tOld, tNew, tOld / tNew, bar));
+end
+
+function t = runs(fn)
+% Three timed runs; the best of them discounts the first call's warm-up.
+    t = zeros(1, 3);
+    for k = 1:3
+        t0 = tic;
+        fn();
+        t(k) = toc(t0);
+    end
+end
+
+function [x, t, h] = oneDay()
+% One day at 1 Hz on three axes: white noise of 1e-9, ten pulses per axis
+% and two level jumps; UTC epochs; the pulse template.
+    K = 86400;
+    h = sin(pi * (0:29)' / 30).^2;
+    x = 1e-9 * randn(RandStream("twister", "Seed", 29), K, 3);
+    for k = 1:10
+        q = 8000 * k;
+        x(q:q + 29, :) = x(q:q + 29, :) + 8e-9 * h;
+    end
+    x(30001:end, 1) = x(30001:end, 1) + 5e-9;
+    x(60001:end, 3) = x(60001:end, 3) - 4e-9;
+    t = epochs(K);
 end
 
 function c = outs(n, fn, varargin)
