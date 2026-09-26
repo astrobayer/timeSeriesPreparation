@@ -39,6 +39,7 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:checkAlignment:grossOffset` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column lags by more than MaxLag/2, or its peak lies on the search edge. |
 | `timeSeriesPreparation:checkAlignment:offset` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column lags by more than Threshold. |
 | `timeSeriesPreparation:checkAlignment:undetermined` | `+timeSeriesPreparation/checkAlignment.m` | Verdict | a column has no positive peak or too few valid pairs. |
+| `timeSeriesPreparation:contentHash:unsupported` | `+timeSeriesPreparation/+internal/contentHash.m` | Input | a value of another class, e.g. a function handle or an object (an Arc included). |
 | `timeSeriesPreparation:correlate:badBootLag` | `+timeSeriesPreparation/correlate.m` | Input | a BootLags entry exceeds maxLag. |
 | `timeSeriesPreparation:correlate:epochMismatch` | `+timeSeriesPreparation/correlate.m` | Input | drv is not drivers' output on arc.t. |
 | `timeSeriesPreparation:correlate:irregularGrid` | `+timeSeriesPreparation/correlate.m` | Input | the epochs are not uniformly spaced. |
@@ -165,4 +166,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-158 identifier(s).
+159 identifier(s).

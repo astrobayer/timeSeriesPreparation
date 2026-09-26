@@ -1,12 +1,73 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.29 · 2026-09-25 · X-10 PR-2 (integration tests, release 1.0.0) in review; X-10 PR-1 merged (PR #57, `0e2cc02`)**
+**Revision 0.30 · 2026-09-25 · X-14 (stage cache) in review; X-10 done — PR-2 merged (PR #58, `3bc1f4c`), release v1.0.0 published, #13 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
 restates:
 - `docs/CONCEPT.md` — the design, with the design decisions in its section 11;
 - `docs/GUIDE.md` — the order of work and every procedure.
+
+---
+
+## X-14 — stage cache; scope frozen 2026-09-25
+
+Tier B. CONCEPT 6.6 with the owner's decisions of 2026-09-25:
+- **Cached stages:** the expensive ones, crn, qc, noise and correlation.
+  mask, align, gate and fill always compute; hashing them would cost
+  more than it saves.
+- **Stages with a function handle** (bootstrap, crossval) are never
+  cached. What a handle computes cannot be hashed.
+- **Reporting:**
+  - diagnostics.cache is a table of stage, key, status and reason. The
+    status is off, hit, miss, rewritten, unsaved or not cached.
+  - The run entry of provenance carries that table.
+  - No warnings.
+- **Files and eviction:** one MAT file per key,
+  `cacheDir/<stage>/<key>.mat`. There is no eviction. An unreadable file
+  is recomputed and overwritten (status "rewritten").
+
+**Scope (frozen):**
+- `Config.run.cacheDir`, default "" = off (R5).
+- `internal.contentHash`: the SHA-256 of a canonical byte stream.
+  - Supported types: numeric, logical, char, string, struct, cell,
+    table, datetime.
+  - A function handle or an object (Arc included) refuses: contentHash
+    is L0 (CONCEPT 3.2). `run` hashes an Arc as a struct of its content,
+    without provenance.
+  - Pinned against a Python rebuild of the stream.
+- `internal.stageCache`: load, or compute and store; it returns a status.
+- `run`: the four stages go through the cache. The key is contentHash(
+  stage, toolbox version, the stage's inputs, the stage's settings).
+  diagnostics gains the field `cache`, and TestRun's pin is extended by
+  it.
+
+**Measured before the push (2026-09-25):** audit clean (131 files, 159
+identifiers); docs in sync (69).
+
+**Prediction** (before any run): **669 + 0 + 0 = 669**. That is 659 plus:
+- TestStageCache +8: contract 2, reference 3, robustness 3;
+- TestHelpExamples +2 (contentHash, stageCache; contract).
+
+Per tag: contract 204, reference 244, precision 23, robustness 125,
+metamorphic 44, vectorisation 21, speed 8.
+
+**CI round 1 (2fbc37b): 668 + 1 + 0.** TestLayering/repositoryPackageIsLayered
+found "+internal/contentHash.m: upward call from L0 'internal' to L1 'Arc'".
+Fix: the Arc branch moves from contentHash to `run` (arcContent); the
+provenance check moves from contentHashPinned (now: contentHash refuses an
+Arc) to changedInputOrSettingMisses (an arc with added provenance hits).
+Prediction unchanged: 669 + 0 + 0.
+
+**CI verdict (ae56ee0, run 36195219643): 669 + 0 + 0 = 669, green.**
+Per tag as predicted: contract 204, reference 244, precision 23,
+robustness 125, metamorphic 44, vectorisation 21, speed 8. audit green.
+
+**Risks, stated:**
+- MAT round trips of Arc objects and tables are used for the first time.
+  A hit must be isequaln to the computation, and the test checks this.
+- `mkdir` on a path that is a file may warn instead of erroring. Either
+  way, save fails and the status is "unsaved".
 
 ---
 

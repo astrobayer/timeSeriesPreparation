@@ -74,7 +74,9 @@ classdef Config
 %
 %     run (X-10): filterReference ([] = not stated; true filters the
 %     reference with the crn preset before align, false leaves it; see
-%     run) and seed (0), the caller's seed of the random stages.
+%     run) and seed (0), the caller's seed of the random stages; cacheDir
+%     ("" = the stage cache is off, R5; X-14), the folder of run's stage
+%     cache.
 %
 %   INPUTS
 %     arc      (1,1) Arc      -   The arc whose product selects the preset.
@@ -137,7 +139,7 @@ classdef Config
         unc = struct("minWeightFraction", [], "blockLength", [], "nBoot", 1000, ...
             "level", 0.6827, "folds", 5)
         drivers = struct("method", "pchip", "maxGap", [], "maxLag", [], "maxVif", 10)
-        run = struct("filterReference", [], "seed", 0)
+        run = struct("filterReference", [], "seed", 0, "cacheDir", "")
     end
 
     methods
@@ -224,7 +226,7 @@ function known = schema(section)
         case "noise"
             known = ["order" "method" "maxLag" "lags" "welchAverages"];
         case "run"
-            known = ["filterReference" "seed"];
+            known = ["filterReference" "seed" "cacheDir"];
         otherwise
             known = strings(1, 0);
     end

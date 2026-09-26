@@ -55,6 +55,8 @@
 %   Internal
 %     internal.blockLength     - Automatic block length for block resampling
 %                                (Politis-White, Patton correction).
+%     internal.contentHash     - SHA-256 of the content of values, the key of
+%                                the stage cache.
 %     internal.dlyap           - Stationary covariance P = T P T' + Q, the one
 %                                Lyapunov solver of the toolbox.
 %     internal.provenance      - Metadata record of the qc units.
@@ -62,6 +64,8 @@
 %                                dependency is not on the path.
 %     internal.resampleOnto    - Interpolate a series onto new epochs, never
 %                                across a hole.
+%     internal.stageCache      - A stage's outputs from the cache, or computed
+%                                and stored.
 %     internal.stageSeed       - RNG seed of a stage: its name hashed, plus the
 %                                caller's seed.
 %     internal.toolboxVersion  - The version stated in this file.

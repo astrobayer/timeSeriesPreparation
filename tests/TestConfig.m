@@ -5,7 +5,7 @@ classdef TestConfig < matlab.unittest.TestCase
 %     The nine sections of CONCEPT 5 exist and each has fields: crn holds
 %     preset (X-04), align its four options (X-06), fill its three (X-08),
 %     unc its five (X-07), drivers its four (X-09), mask its five (X-05),
-%     qc its eight, noise its five and run its two (X-10).
+%     qc its eight, noise its five and run its three (X-10, X-14).
 %     Config(arc) records mission and product and takes the crn preset and
 %     the minimum-data gate from the product. set refuses an unknown section or field;
 %     fault injection of the refusal is the refusal itself: a misspelt
@@ -14,7 +14,7 @@ classdef TestConfig < matlab.unittest.TestCase
 %   COVERAGE
 %     contract       - the nine sections, each with fields; qc's, noise's
 %                      and run's defaults (qc.screen's and noise's own; order
-%                      and filterReference [], seed 0) and setting them; mask's defaults and its presets
+%                      and filterReference [], seed 0, cacheDir "") and setting them; mask's defaults and its presets
 %                      (ACT1B bits 5-7; KBR1B, LRI1B bits 0, 6, 7 and
 %                      snrFraction 0.5; others none); drivers' defaults ("pchip", [], [], 10); align's defaults (pchip, [], 60 s, 1 s) and
 %                      setting them; fill's defaults ("none", [], []) and
@@ -140,7 +140,7 @@ classdef TestConfig < matlab.unittest.TestCase
                 "jumpModel", "level", "jumpPenalty", [], "jumpMinSegment", 30));
             testCase.verifyEqual(cfg.noise, struct("order", [], "method", "exact", ...
                 "maxLag", 100, "lags", 20, "welchAverages", 32));
-            testCase.verifyEqual(cfg.run, struct("filterReference", [], "seed", 0));
+            testCase.verifyEqual(cfg.run, struct("filterReference", [], "seed", 0, "cacheDir", ""));
             cfg = set(set(set(cfg, "qc", "hampelWindow", 31), "noise", "order", [2 0]), ...
                 "run", "filterReference", true);
             testCase.verifyEqual([cfg.qc.hampelWindow cfg.noise.order], [31 2 0]);

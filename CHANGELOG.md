@@ -3,6 +3,16 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
+## Unreleased
+
+- **X-14** stage cache of `run`: with `Config.run.cacheDir` set, crn, qc,
+  noise and correlation keep their outputs under
+  `<cacheDir>/<stage>/<key>.mat`. The key is the SHA-256 of the stage, the
+  toolbox version, the inputs by content and the settings
+  (`internal.contentHash`). `diagnostics.cache` and provenance report every
+  hit, miss, rewrite or unsaved result. Stages with a function handle
+  (bootstrap, crossval) are never cached. Off by default.
+
 ## 1.0.0 — 2026-09-25
 
 First stable release (GUIDE section 7: X-10 → v1.0.0). The instrument level

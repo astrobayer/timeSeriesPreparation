@@ -44,7 +44,7 @@ classdef TestRun < matlab.unittest.TestCase
             res = timeSeriesPreparation.run(pair(120));
             testCase.verifyEqual(string(fieldnames(res))', testCase.Fields);
             testCase.verifyEqual(string(fieldnames(res.diagnostics))', ["stages" "skipped" ...
-                "mask" "alignment" "qc" "residual" "noise" "gate" "bootstrap" "crossval" "fill"]);
+                "mask" "alignment" "qc" "residual" "noise" "gate" "bootstrap" "crossval" "fill" "cache"]);
             testCase.verifyEqual(string(fieldnames(res.flags))', ...
                 ["events" "alignment" "weightFraction" "nFilled"]);
             testCase.verifyClass(res.arc, "timeSeriesPreparation.Arc");
