@@ -85,6 +85,13 @@ campaign and false in the serial one. Fix: the test sets that one field
 equal before comparing and names the first differing field on failure.
 Prediction unchanged: 687 + 0 + 0.
 
+**CI verdict (1f0f45a, matlab job 108392406734): 687 + 0 + 0
+= 687, green.** Per tag as predicted: contract 208, reference 251,
+precision 23, robustness 129, metamorphic 44, vectorisation 21, speed 11.
+parallelEqualsSerial ran on a real pool ('Processes', 8 workers): the
+parallel results equal the serial ones bit for bit. Whole suite 34 min.
+audit green. Release 1.1.0 is tagged by the release workflow on merge.
+
 ## X-16 — QC speed — merged 2026-09-26 (PR #60, `ca5230f`; issue #19 closed); scope was frozen 2026-09-26
 
 Tier B. CONCEPT row X-16 with the owner's decisions of 2026-09-26:
