@@ -5,6 +5,15 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
 
 ## Unreleased
 
+- **X-11** `report` draws four figures from a run result: series with
+  layers, gaps and fills; the QC events; the residual PSD against the
+  noise model and noiseReference; alignment and correlation. A panel
+  whose stage did not run says why. With ExportTo it writes PNGs (200 dpi)
+  and one self-contained HTML page (summary, skipped stages, events,
+  provenance, embedded images). For a campaign result it writes one page
+  per day and index.html. It is tested for its contract and for speed
+  (under 10 s per figure); no pixel reference is kept.
+
 ## 1.2.0 — 2026-09-26
 
 Exchange release (GUIDE section 7: X-17 → X-18 → v1.2.0).

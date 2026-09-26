@@ -134,6 +134,8 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:regressDrivers:collinear` | `+timeSeriesPreparation/regressDrivers.m` | Numerical | a driver's VIF exceeds MaxVif, or the drivers are linearly dependent. |
 | `timeSeriesPreparation:regressDrivers:sizeMismatch` | `+timeSeriesPreparation/regressDrivers.m` | Input | P and Z have different rows, or Names or DriverNames the wrong length. |
 | `timeSeriesPreparation:regressDrivers:tooFewRows` | `+timeSeriesPreparation/regressDrivers.m` | Input | fewer than K + 2 complete rows for a parameter. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
+| `timeSeriesPreparation:report:exportToRequired` | `+timeSeriesPreparation/report.m` | Input | a campaign result without ExportTo. |
+| `timeSeriesPreparation:report:inputResult` | `+timeSeriesPreparation/report.m` | Input | res is neither a run result nor a campaign result. |
 | `timeSeriesPreparation:residuals:inputShape` | `+timeSeriesPreparation/+qc/residuals.m` | Input | y_meas and y_model are not KxM of one size, or Bias or Scale has the wrong size. |
 | `timeSeriesPreparation:residuals:inputWindow` | `+timeSeriesPreparation/+qc/residuals.m` | Input | "highpass" without an odd Window >= 3. |
 | `timeSeriesPreparation:run:exportMetadata` | `+timeSeriesPreparation/run.m` | Input | a campaign would write NetCDF and cfg.export.creator is empty. |
@@ -186,4 +188,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-179 identifier(s).
+181 identifier(s).

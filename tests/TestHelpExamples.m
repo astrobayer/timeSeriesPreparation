@@ -421,6 +421,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.regressDrivers did not run cleanly.");
         end
 
+        function timeSeriesPreparation_report_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.report: Report a ten-minute three-axis run without showing the figures.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_report_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.report did not run cleanly.");
+        end
+
         function timeSeriesPreparation_run_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.run: A 1 Hz ACT1B-like arc against its signal: mask, align, QC, gaps.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_run_1(), ...
@@ -900,6 +906,18 @@ function example_timeSeriesPreparation_regressDrivers_1()  %#ok<DEFNU>
     Z = [randn(rs, 300, 1), rand(rs, 300, 1)];
     P = 2 + Z * [0.3; -0.5] + 0.1 * randn(rs, 300, 1);
     res = timeSeriesPreparation.regressDrivers(P, Z, DriverNames = ["betaPrime" "eclipse"], NBoot = 200);
+end
+
+function example_timeSeriesPreparation_report_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.report, verbatim from its help block.
+    t = int64(7306 * 86400 - 43200 + 18) * int64(1e9) + int64(0:599)' * int64(1e9);
+    names = {'lin_accl_x', 'lin_accl_y', 'lin_accl_z'};
+    aux = struct("obsNames", {names}, "variableNames", {names}, "variableFieldNames", {names}, "variableUnits", struct('lin_accl_x', 'm/s2', 'lin_accl_y', 'm/s2', 'lin_accl_z', 'm/s2'), "fileName", "ACT1B_2020-01-02_C_04.txt", "product", "ACT1B");
+    s = 1e-7 * sin(2 * pi * (0:599)' / 300) * [1 1 1];
+    arc = timeSeriesPreparation.Arc(t, s + 1e-9 * randn(RandStream("twister", "Seed", 1), 600, 3), aux);
+    res = timeSeriesPreparation.run(arc, Reference = timeSeriesPreparation.Arc(t, s, aux));
+    out = timeSeriesPreparation.report(res, Visible = "off");
+    close([out.figures.series out.figures.events out.figures.noise out.figures.alignment]);
 end
 
 function example_timeSeriesPreparation_run_1()  %#ok<DEFNU>

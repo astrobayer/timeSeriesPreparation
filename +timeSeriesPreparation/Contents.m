@@ -51,6 +51,8 @@
 %     exportNetcdf    - One arc, its residual and QC events as a CF-1.12/
 %                       ACDD-1.3 NetCDF-4 file with PROV-O provenance.
 %     readNetcdf      - A file of exportNetcdf back as a struct.
+%     report          - Figures and a self-contained HTML page of a run
+%                       result; for a campaign, one page per day and an index.
 %
 %   Spectra and time-series models (L0, sigtools v1.3.1; conventions of X-02)
 %     spectral   - help timeSeriesPreparation.spectral
