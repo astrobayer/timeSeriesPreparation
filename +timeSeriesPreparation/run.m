@@ -103,13 +103,21 @@ function res = run(arc, options)
 %       storage     with cfg.run.outDir set, each arc's result goes to the
 %                   MAT v7.3 file outDir/<mission>/<satellite>/<yyyy>/
 %                   <yyyy-mm-dd>.mat (GPS date of its first epoch) as
-%                   result, with schemaVersion "1"; an existing file is
-%                   kept unless cfg.run.overwrite is true (status
-%                   "unsaved"), and a file this campaign wrote is never
-%                   overwritten. outDir/manifest.json records the campaign
-%                   (software, dates, config hash and seed, and per arc its
-%                   source files, content hash, file, SHA-256, status).
-%                   "" (the default) keeps everything in memory (R5).
+%                   result, with schemaVersion "2" (Arc.SchemaVersion);
+%                   an existing file is kept unless cfg.run.overwrite is
+%                   true (status "unsaved"), and a file this campaign
+%                   wrote is never overwritten. outDir/manifest.json
+%                   records the campaign (software, dates, config hash and
+%                   seed, a DataCite 4.7 block from cfg.export, and per
+%                   arc its source files, content hash, files, SHA-256,
+%                   status). "" (the default) keeps everything in memory
+%                   (R5).
+%       format      cfg.run.format (X-18): "mat" (default) writes the MAT
+%                   day file, "netcdf" the CF/ACDD file <yyyy-mm-dd>.nc of
+%                   exportNetcdf (arc, residual, events) with its PROV-O
+%                   sidecar <yyyy-mm-dd>.prov.jsonld, "both" all three.
+%                   NetCDF needs cfg.export.creator; without one the
+%                   campaign refuses before any arc runs.
 %
 %   INPUTS
 %     arc  (1,:) Arc   -   The observation, or two or more arcs for a
@@ -180,10 +188,11 @@ function res = run(arc, options)
 %                             A campaign returns instead:
 %       results      (N,1) cell     Each arc's result as above; [] where
 %                                   the arc refused.
-%       summary      (N,9) table    index, day, mission, satellite, status
+%       summary      (N,11) table   index, day, mission, satellite, status
 %                                   ("ok", "error", "unsaved"),
-%                                   identifier, message, file (relative
-%                                   to outDir), sha256.
+%                                   identifier, message, file (the MAT
+%                                   file, relative to outDir), sha256,
+%                                   netcdf (the .nc file), netcdfSha256.
 %       errors       (N,1) cell     The MException of each refused arc, or
 %                                   [].
 %       manifest     struct or []   What manifest.json holds ([] without
@@ -201,6 +210,10 @@ function res = run(arc, options)
 %       timeSeriesPreparation:run:inputCount - arc is empty; a per-arc
 %           option has another count than the campaign's arcs; one arc
 %           gets more than one Reference.
+%       timeSeriesPreparation:run:inputFormat - cfg.run.format is not
+%           "mat", "netcdf" or "both".
+%       timeSeriesPreparation:run:exportMetadata - a campaign would write
+%           NetCDF and cfg.export.creator is empty.
 %     State:
 %       timeSeriesPreparation:run:fileExists - outDir holds a manifest and
 %           cfg.run.overwrite is false (the campaign refuses before any
@@ -233,7 +246,7 @@ function res = run(arc, options)
 %   See also timeSeriesPreparation.Config, timeSeriesPreparation.internal.stageCache, timeSeriesPreparation.internal.fileSha256, timeSeriesPreparation.mask, timeSeriesPreparation.align, timeSeriesPreparation.qc.screen, timeSeriesPreparation.noise, timeSeriesPreparation.fill, timeSeriesPreparation.correlate.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc timeSeriesPreparation.Arc
@@ -509,6 +522,17 @@ function res = campaign(arcs, options)
         error("timeSeriesPreparation:run:fileExists", ...
             "%s already holds a campaign manifest; set cfg.run.overwrite or choose another outDir.", outDir);
     end
+    fmt = string(r.format);
+    if ~isscalar(fmt) || ~any(fmt == ["mat" "netcdf" "both"])
+        error("timeSeriesPreparation:run:inputFormat", ...
+            "cfg.run.format must be ""mat"", ""netcdf"" or ""both"".");
+    end
+    writeMat = fmt ~= "netcdf";
+    writeNc = fmt ~= "mat";
+    if outDir ~= "" && writeNc && string(cfg.export.creator) == ""
+        error("timeSeriesPreparation:run:exportMetadata", ...
+            "NetCDF export needs a creator; set cfg.export.creator (none is invented).");
+    end
 
     results = cell(n, 1);
     errs = cell(n, 1);
@@ -525,6 +549,7 @@ function res = campaign(arcs, options)
 
     day = strings(n, 1); mission = day; satellite = day; status = day;
     identifier = day; message = day; file = day; sha = day;
+    ncFile = day; ncSha = day; provFile = day; provSha = day;
     written = strings(0, 1);
     for k = 1:n
         a = arcs(k);
@@ -542,25 +567,39 @@ function res = campaign(arcs, options)
         if outDir == ""
             continue
         end
-        rel = strjoin([mission(k), satellite(k), extractBefore(day(k), 5), day(k) + ".mat"], "/");
-        target = fullfile(outDir, rel);
-        if ismember(target, written) || (isfile(target) && ~overwrite)
+        stem = strjoin([mission(k), satellite(k), extractBefore(day(k), 5), day(k)], "/");
+        rels = strings(1, 0);
+        if writeMat, rels(end+1) = stem + ".mat"; end %#ok<AGROW>
+        if writeNc, rels = [rels, stem + ".nc", stem + ".prov.jsonld"]; end %#ok<AGROW>
+        targets = fullfile(outDir, rels);
+        clash = ismember(targets, written) | (isfile(targets) & ~overwrite);
+        if any(clash)
             status(k) = "unsaved";
             identifier(k) = "timeSeriesPreparation:run:fileExists";
-            message(k) = "the day file " + rel + " exists; set cfg.run.overwrite (a file this campaign wrote is never overwritten)";
+            message(k) = "the day file " + rels(find(clash, 1)) + " exists; set cfg.run.overwrite (a file this campaign wrote is never overwritten)";
             continue
         end
         try
-            folder = fileparts(target);
+            folder = fileparts(targets(1));
             if ~isfolder(folder)
                 mkdir(folder);
             end
-            result = results{k}; %#ok<NASGU> saved by name
-            schemaVersion = "1"; %#ok<NASGU>
-            save(target, "result", "schemaVersion", "-v7.3");
-            written(end+1, 1) = target; %#ok<AGROW>
-            file(k) = rel;
-            sha(k) = timeSeriesPreparation.internal.fileSha256(target);
+            if writeMat
+                result = results{k}; %#ok<NASGU> saved by name
+                schemaVersion = timeSeriesPreparation.Arc.SchemaVersion; %#ok<NASGU>
+                save(targets(1), "result", "schemaVersion", "-v7.3");
+                written(end+1, 1) = targets(1); %#ok<AGROW>
+                file(k) = rels(1);
+                sha(k) = timeSeriesPreparation.internal.fileSha256(targets(1));
+            end
+            if writeNc
+                nc = timeSeriesPreparation.exportNetcdf(targets(end - 1), results{k}.arc, ...
+                    Residual = results{k}.diagnostics.residual, Events = results{k}.flags.events, ...
+                    Metadata = cfg.export, Overwrite = overwrite);
+                written = [written; targets(end - 1); targets(end)]; %#ok<AGROW>
+                ncFile(k) = rels(end - 1); ncSha(k) = nc.sha256;
+                provFile(k) = rels(end); provSha(k) = nc.provSha256;
+            end
         catch err
             status(k) = "unsaved";
             identifier(k) = string(err.identifier);
@@ -568,11 +607,12 @@ function res = campaign(arcs, options)
         end
     end
     summary = table((1:n)', day, mission, satellite, status, identifier, message, file, sha, ...
-        'VariableNames', ["index" "day" "mission" "satellite" "status" "identifier" "message" "file" "sha256"]);
+        ncFile, ncSha, 'VariableNames', ["index" "day" "mission" "satellite" "status" ...
+        "identifier" "message" "file" "sha256" "netcdf" "netcdfSha256"]);
 
     manifest = [];
     if outDir ~= ""
-        manifest = campaignManifest(arcs, summary, cfg, useParallel);
+        manifest = campaignManifest(arcs, summary, cfg, useParallel, provFile, provSha);
         if ~isfolder(outDir)
             mkdir(outDir);
         end
@@ -636,9 +676,9 @@ function v = orUnknown(v)
     end
 end
 
-function m = campaignManifest(arcs, summary, cfg, useParallel)
-% The per-campaign data-management record (CONCEPT 5.2): DataCite-style
-% identification, PROV-style inputs, one entry per arc.
+function m = campaignManifest(arcs, summary, cfg, useParallel, provFile, provSha)
+% The per-campaign data-management record (CONCEPT 5.2): DataCite 4.7
+% identification (X-18), PROV-style inputs, one entry per arc.
     n = numel(arcs);
     dated = summary.day(summary.day ~= "undated");
     first = ""; last = "";
@@ -653,18 +693,51 @@ function m = campaignManifest(arcs, summary, cfg, useParallel)
             "satellite", summary.satellite(k), "product", string(a.product), ...
             "release", string(a.release), "files", {cellstr(a.files(:)')}, ...
             "contentHash", timeSeriesPreparation.internal.contentHash(arcContent(a)), ...
-            "file", summary.file(k), "sha256", summary.sha256(k), "status", summary.status(k), ...
+            "file", summary.file(k), "sha256", summary.sha256(k), ...
+            "netcdf", summary.netcdf(k), "netcdfSha256", summary.netcdfSha256(k), ...
+            "prov", provFile(k), "provSha256", provSha(k), "status", summary.status(k), ...
             "identifier", summary.identifier(k), "message", summary.message(k));
     end
-    m = struct("schemaVersion", "1", ...
-        "title", "timeSeriesPreparation campaign, " + first + " to " + last, ...
+    title = "timeSeriesPreparation campaign, " + first + " to " + last;
+    m = struct("schemaVersion", "2", ...
+        "title", title, ...
         "software", struct("name", "timeSeriesPreparation", ...
             "version", timeSeriesPreparation.internal.toolboxVersion()), ...
         "created", string(datetime("now", "TimeZone", "UTC", "Format", "yyyy-MM-dd'T'HH:mm:ss'Z'")), ...
         "firstDay", first, "lastDay", last, ...
         "config", struct("hash", timeSeriesPreparation.internal.contentHash(toStruct(cfg)), ...
             "seed", cfg.run.seed, "parallel", useParallel), ...
+        "datacite", datacite(cfg.export, title, first, last), ...
         "arcs", vertcat(rows{:}));
+end
+
+function d = datacite(e, title, first, last)
+% The DataCite Metadata Schema 4.7 properties of the campaign (mandatory:
+% identifier left to the publisher, creators, titles, publisher,
+% publicationYear, resourceType; plus version, rights, formats, dates).
+% Arrays are cells, so one element still encodes as a JSON array.
+    creator = struct("name", string(e.creator), "nameType", "Personal");
+    if string(e.creatorOrcid) ~= ""
+        orcid = string(e.creatorOrcid);
+        if ~startsWith(orcid, "https://"), orcid = "https://orcid.org/" + orcid; end
+        creator.nameIdentifiers = {struct("nameIdentifier", orcid, ...
+            "nameIdentifierScheme", "ORCID", "schemeUri", "https://orcid.org")};
+    end
+    if string(e.institution) ~= ""
+        creator.affiliation = {struct("name", string(e.institution))};
+    end
+    if string(e.title) ~= "", title = string(e.title); end
+    d = struct("creators", {{creator}}, ...
+        "titles", {{struct("title", title)}}, ...
+        "publisher", struct("name", string(e.publisher)), ...
+        "publicationYear", string(year(datetime("now", "TimeZone", "UTC"))), ...
+        "types", struct("resourceTypeGeneral", "Dataset", ...
+            "resourceType", "Prepared GRACE-FO instrument time series"), ...
+        "version", timeSeriesPreparation.internal.toolboxVersion(), ...
+        "rightsList", {{struct("rights", string(e.license), "rightsIdentifier", string(e.license), ...
+            "rightsIdentifierScheme", "SPDX")}}, ...
+        "formats", {{'application/x-matlab-data', 'application/x-netcdf', 'application/ld+json'}}, ...
+        "dates", {{struct("date", first + "/" + last, "dateType", "Collected")}});
 end
 
 function [outs, cache] = cached(cache, stage, nOut, compute, varargin)

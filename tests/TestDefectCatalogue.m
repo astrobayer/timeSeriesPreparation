@@ -40,7 +40,7 @@ classdef TestDefectCatalogue < matlab.unittest.TestCase
 %     robustness  - the three synthetic classes.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'reference'})
         function dc1SafeMode(testCase)

@@ -28,7 +28,7 @@ classdef TestCampaign < matlab.unittest.TestCase
 %                      adds no arithmetic; each arc is the single run.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-26 13:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function campaignResultFields(testCase)
@@ -37,7 +37,8 @@ classdef TestCampaign < matlab.unittest.TestCase
             testCase.verifyEqual(string(fieldnames(res))', ...
                 ["results" "summary" "errors" "manifest" "parallel"]);
             testCase.verifyEqual(string(res.summary.Properties.VariableNames), ...
-                ["index" "day" "mission" "satellite" "status" "identifier" "message" "file" "sha256"]);
+                ["index" "day" "mission" "satellite" "status" "identifier" "message" "file" ...
+                "sha256" "netcdf" "netcdfSha256"]);
             testCase.verifySize(res.results, [3 1]);
             testCase.verifyEqual(res.summary.day', ["2020-01-02" "2020-01-03" "2020-01-04"]);
             testCase.verifyEqual(res.summary.status', ["ok" "ok" "ok"]);
@@ -100,7 +101,7 @@ classdef TestCampaign < matlab.unittest.TestCase
                 f = fullfile(folder, rel);
                 testCase.verifyTrue(isfile(f), rel + " was not written");
                 S = load(f);
-                testCase.verifyEqual(S.schemaVersion, "1");
+                testCase.verifyEqual(S.schemaVersion, "2");
                 testCase.verifyTrue(isequaln(content(S.result), content(res.results{k})));
                 testCase.verifyEqual(res.summary.sha256(k), timeSeriesPreparation.internal.fileSha256(f));
                 testCase.verifyEqual(string(m.arcs(k).sha256), res.summary.sha256(k));

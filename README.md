@@ -11,7 +11,7 @@ rangingPreparation (LRI/KBR):
 - bootstrap and cross-validation;
 - correlation analysis.
 
-**Status: release 1.1.0 (X-15).** Skeleton and CI (X-00b), sigtools v1.3.1
+**Status: release 1.2.0 (X-18).** Skeleton and CI (X-00b), sigtools v1.3.1
 as `+spectral` / `+tsmodels` (X-01, conventions X-02), `Arc` and `Config`
 (X-03), the exact ATBD CRN kernel and its output-epoch application (X-04),
 masks and the residual quality control ported from NonGravForces (X-05),
@@ -21,7 +21,10 @@ catalogue D-9 is tested on its real days. `run` chains the stages on one
 arc as each one's input is given, and a real day against ITSG meets the
 V-4 thresholds (X-10). Release 1.1.0 adds the stage cache (X-14), the
 faster QC (X-16) and campaign mode: an Arc array through `run`, with
-per-day files and a JSON manifest (X-15). Changes: `CHANGELOG.md`.
+per-day files and a JSON manifest (X-15). Release 1.2.0 adds the QC
+template bank (X-17) and the CF-1.12/ACDD-1.3 NetCDF export with PROV-O
+provenance, DataCite fields in the manifest and a versioned Arc schema
+(X-18). Changes: `CHANGELOG.md`.
 
 ```matlab
 setupTimeSeriesPreparation();              % toolbox and demos on the path; reports gracefoReading

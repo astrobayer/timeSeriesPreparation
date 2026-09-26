@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.internal.provJsonLd</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.internal.provJsonLd</h1>
+<p>W3C PROV-O graph of an arc&#x27;s provenance, as JSON-LD text.</p>
+<h2>Syntax</h2>
+<pre><code>txt = timeSeriesPreparation.internal.provJsonLd(provenance, Inputs = files, Output = name, Creator = who)
+txt = timeSeriesPreparation.internal.provJsonLd(provenance, Inputs = files, Output = name, Creator = who, CreatorOrcid = orcid, Created = when)</code></pre>
+<h2>Description</h2>
+<p>The provenance record of an exported day (X-18, CONCEPT 5.2; owner decisions 2026-09-26), written into the NetCDF file and its sidecar. The graph uses the PROV-O classes and properties only: prov:Entity         each input L1B file (Inputs), and the output file (Output), which prov:wasGeneratedBy the export activity, prov:wasDerivedFrom every input and prov:wasAttributedTo the creator; prov:Activity       each provenance entry of the arc in order (rdfs:label = its stage, prov:startedAtTime = its time), then &quot;export&quot; at Created; the first prov:used the inputs, each later one prov:wasInformedBy the one before; prov:SoftwareAgent  timeSeriesPreparation, one per toolbox version in the entries, associated with each activity by prov:wasAssociatedWith; prov:Person         the creator, identified by the ORCID URL when CreatorOrcid is given. A stage&#x27;s detail is kept as the JSON string tsp:detail when it encodes (jsonencode) to at most 4096 characters; otherwise tsp:detail states its length only. Node identifiers are URNs under &quot;urn:timeSeriesPreparation:&quot;. Objects are written by containers.Map, whose keys jsonencode sorts, so equal inputs give equal text.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>provenance</code></td><td>1,K</td><td><code>struct</code></td><td>&mdash;</td><td>- Arc.provenance: stage, version, time, detail.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Inputs</code></td><td>N,1</td><td><code>string</code></td><td>&mdash;</td><td>Input file names (Arc.files).</td></tr>
+<tr><td><code>Output</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>&quot;&quot; Name of the exported file; required.</td></tr>
+<tr><td><code>Creator</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>&quot;&quot; The dataset&#x27;s creator; required.</td></tr>
+<tr><td><code>CreatorOrcid</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>&quot;&quot; ORCID iD, 0000-0000-0000-0000 or its https://orcid.org/ URL.</td></tr>
+<tr><td><code>Created</code></td><td>1,1</td><td><code>string</code></td><td>now</td><td>Export time, ISO 8601 UTC.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>txt</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- JSON-LD: &quot;@context&quot; (prov, rdfs, xsd, tsp) and &quot;@graph&quot;.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Not applicable, because the function computes no number; the entries are copied as given.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:provJsonLd:inputMissing</code></td><td>Input</td><td>Output or Creator is empty.</td></tr>
+<tr><td><code>timeSeriesPreparation:provJsonLd:inputProvenance</code></td><td>Input</td><td>provenance lacks a field stage, version, time or detail.</td></tr>
+</table>
+<h2>Example</h2>
+<p>The graph of a two-stage provenance, decoded again.</p>
+<pre><code>p = struct(&quot;stage&quot;, {&quot;mask&quot;, &quot;fill&quot;}, &quot;version&quot;, &quot;1.2.0&quot;, &quot;time&quot;, &quot;2026-09-26T17:00:00Z&quot;, &quot;detail&quot;, struct());
+txt = timeSeriesPreparation.internal.provJsonLd(p, Inputs = &quot;ACT1B_2020-01-02_C_04.txt&quot;, Output = &quot;2020-01-02.nc&quot;, Creator = &quot;A. Author&quot;, Created = &quot;2026-09-26T18:00:00Z&quot;);
+g = jsondecode(txt);</code></pre>
+<h2>Limitations</h2>
+<p>The graph records what the arc&#x27;s provenance says; stages that write no provenance entry are not in it. No PROV-O qualified terms (prov:qualifiedUsage and the like) are written.</p>
+<h2>References</h2>
+<p>W3C (2013). PROV-O: The PROV Ontology, Recommendation 30 April 2013, https://www.w3.org/TR/prov-o/. W3C (2020). JSON-LD 1.1, Recommendation 16 July 2020. docs/CONCEPT.md 5.2; HANDOVER X-18.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.exportNetcdf</code>, <code>timeSeriesPreparation.Arc</code></p>
+<p class="footer">timeSeriesPreparation v1.2.0 - generated from the help block of +timeSeriesPreparation/+internal/provJsonLd.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

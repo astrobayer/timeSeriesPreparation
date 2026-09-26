@@ -26,7 +26,7 @@ th { background: #f0f0f0; }
 <table>
 <tr><th>function</th><th>purpose</th></tr>
 <tr><td><a href="timeSeriesPreparation.Arc.html"><code>timeSeriesPreparation.Arc</code></a></td><td>One instrument time series on int64 GPS-ns epochs, with weights, layers and provenance.</td></tr>
-<tr><td><a href="timeSeriesPreparation.Config.html"><code>timeSeriesPreparation.Config</code></a></td><td>Instrument settings in nine sections, strict about field names.</td></tr>
+<tr><td><a href="timeSeriesPreparation.Config.html"><code>timeSeriesPreparation.Config</code></a></td><td>Instrument settings in ten sections, strict about field names.</td></tr>
 <tr><td><a href="timeSeriesPreparation.align.html"><code>timeSeriesPreparation.align</code></a></td><td>Move a reference series onto the epochs of an observation, units checked.</td></tr>
 <tr><td><a href="timeSeriesPreparation.binnedMap.html"><code>timeSeriesPreparation.binnedMap</code></a></td><td>Mean, standard deviation and count of a value in bins of two coordinates.</td></tr>
 <tr><td><a href="timeSeriesPreparation.bootstrap.html"><code>timeSeriesPreparation.bootstrap</code></a></td><td>Moving-block bootstrap of a statistic, one RNG substream per replicate.</td></tr>
@@ -36,11 +36,13 @@ th { background: #f0f0f0; }
 <tr><td><a href="timeSeriesPreparation.crnKernel.html"><code>timeSeriesPreparation.crnKernel</code></a></td><td>The CRN-class digital filter of the GRACE L1B ATBD, as printed.</td></tr>
 <tr><td><a href="timeSeriesPreparation.crossval.html"><code>timeSeriesPreparation.crossval</code></a></td><td>Blocked cross-validation with a buffer, for serially correlated rows.</td></tr>
 <tr><td><a href="timeSeriesPreparation.drivers.html"><code>timeSeriesPreparation.drivers</code></a></td><td>Supplied driver series on the epochs of an arc, names and units checked.</td></tr>
+<tr><td><a href="timeSeriesPreparation.exportNetcdf.html"><code>timeSeriesPreparation.exportNetcdf</code></a></td><td>One arc, its residual and QC events as a CF-1.12/ACDD-1.3 NetCDF-4 file with PROV-O provenance.</td></tr>
 <tr><td><a href="timeSeriesPreparation.fill.html"><code>timeSeriesPreparation.fill</code></a></td><td>Report the gaps of an arc, or fill the short ones by covariance collocation.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.blockLength.html"><code>timeSeriesPreparation.internal.blockLength</code></a></td><td>Automatic block length for block resampling (Politis-White, Patton correction).</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.contentHash.html"><code>timeSeriesPreparation.internal.contentHash</code></a></td><td>SHA-256 of the content of values, as 64 lowercase hex digits.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.dlyap.html"><code>timeSeriesPreparation.internal.dlyap</code></a></td><td>Stationary covariance P = T P T&#x27; + Q, the one Lyapunov solver of the toolbox.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.fileSha256.html"><code>timeSeriesPreparation.internal.fileSha256</code></a></td><td>SHA-256 of a file&#x27;s bytes, as 64 lowercase hex digits.</td></tr>
+<tr><td><a href="timeSeriesPreparation.internal.provJsonLd.html"><code>timeSeriesPreparation.internal.provJsonLd</code></a></td><td>W3C PROV-O graph of an arc&#x27;s provenance, as JSON-LD text.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.provenance.html"><code>timeSeriesPreparation.internal.provenance</code></a></td><td>Metadata record that travels with every result of the qc units.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.requirePackage.html"><code>timeSeriesPreparation.internal.requirePackage</code></a></td><td>Refuse at the point of use when an optional dependency is missing.</td></tr>
 <tr><td><a href="timeSeriesPreparation.internal.resampleOnto.html"><code>timeSeriesPreparation.internal.resampleOnto</code></a></td><td>Interpolate a series onto new epochs, never across a hole.</td></tr>
@@ -60,6 +62,7 @@ th { background: #f0f0f0; }
 <tr><td><a href="timeSeriesPreparation.qc.residuals.html"><code>timeSeriesPreparation.qc.residuals</code></a></td><td>Residuals of measured minus modelled observations under a preliminary calibration, optionally whitened.</td></tr>
 <tr><td><a href="timeSeriesPreparation.qc.screen.html"><code>timeSeriesPreparation.qc.screen</code></a></td><td>Quality-control orchestrator: residuals, outliers, impulses, jumps, then the mask and the event table.</td></tr>
 <tr><td><a href="timeSeriesPreparation.qc.templateBank.html"><code>timeSeriesPreparation.qc.templateBank</code></a></td><td>Empirical spike templates of the ACT1B residual, per class and satellite.</td></tr>
+<tr><td><a href="timeSeriesPreparation.readNetcdf.html"><code>timeSeriesPreparation.readNetcdf</code></a></td><td>A file of exportNetcdf back as a struct: time, observations, weights, layers, residual, events, attributes.</td></tr>
 <tr><td><a href="timeSeriesPreparation.regressDrivers.html"><code>timeSeriesPreparation.regressDrivers</code></a></td><td>Regression of per-revolution parameters on drivers, with a VIF gate and block-bootstrap sigmas.</td></tr>
 <tr><td><a href="timeSeriesPreparation.run.html"><code>timeSeriesPreparation.run</code></a></td><td>The instrument stages on one arc or a campaign, each run when its input is given.</td></tr>
 <tr><td><a href="timeSeriesPreparation.spectral.allanVariance.html"><code>timeSeriesPreparation.spectral.allanVariance</code></a></td><td>Overlapping Allan variance and deviation, with confidence bounds and slopes.</td></tr>
@@ -94,6 +97,6 @@ th { background: #f0f0f0; }
 </table>
 <h2>Reference</h2>
 <p><a href="errorIdentifiers.html">Error identifiers</a></p>
-<p class="footer">timeSeriesPreparation v1.1.0 - generated by ci-actions/matlab-docs. Do not edit.</p>
+<p class="footer">timeSeriesPreparation v1.2.0 - generated by ci-actions/matlab-docs. Do not edit.</p>
 </body>
 </html>

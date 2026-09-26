@@ -1,5 +1,5 @@
 classdef Config
-%CONFIG  Instrument settings in nine sections, strict about field names.
+%CONFIG  Instrument settings in ten sections, strict about field names.
 %
 %   SYNTAX
 %     cfg = timeSeriesPreparation.Config()
@@ -9,7 +9,7 @@ classdef Config
 %
 %   DESCRIPTION
 %     The settings of every stage, in the sections of CONCEPT 5: mask, qc,
-%     crn, align, fill, noise, unc, drivers, run. Each section has a schema,
+%     crn, align, fill, noise, unc, drivers, run, export. Each section has a schema,
 %     the list of fields it knows; set refuses a section or a field outside
 %     it, so a misspelt option fails instead of being silently ignored.
 %     Config(arc) records the arc's mission and product and returns the
@@ -83,7 +83,14 @@ classdef Config
 %     memory, R5; else the root of the per-day files and the manifest),
 %     overwrite (false: existing day files and manifests are kept) and
 %     mixedRelease (false: the arcs must share one L1B release, CONCEPT
-%     5.2).
+%     5.2). format (X-18): "mat" (default), "netcdf" or "both", the
+%     day files a campaign with outDir writes.
+%
+%     export (X-18): the dataset metadata of exportNetcdf and of the
+%     campaign manifest's DataCite block - creator (required for NetCDF;
+%     "" refuses rather than inventing one), creatorOrcid, creatorEmail,
+%     institution, publisher, license ("CC-BY-4.0"), title and project;
+%     all "" but the license (R5).
 %
 %   INPUTS
 %     arc      (1,1) Arc      -   The arc whose product selects the preset.
@@ -94,7 +101,7 @@ classdef Config
 %   OUTPUTS
 %     cfg  (1,1) Config   -   Properties: mission, product, and one struct
 %                             per section.
-%     s    (1,1) struct   -   mission, product and the nine sections.
+%     s    (1,1) struct   -   mission, product and the ten sections.
 %
 %   ACCURACY
 %     Not applicable, because the class computes no number; values are
@@ -103,7 +110,7 @@ classdef Config
 %   ERRORS
 %     Settings:
 %       timeSeriesPreparation:Config:unknownSection - section is not one of
-%           the nine sections.
+%           the ten sections.
 %       timeSeriesPreparation:Config:unknownField - field is not in the
 %           section's schema.
 %
@@ -124,10 +131,10 @@ classdef Config
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.run, timeSeriesPreparation.mask, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
-        Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
+        Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run" "export"]
     end
 
     properties (SetAccess = private)
@@ -147,7 +154,11 @@ classdef Config
             "level", 0.6827, "folds", 5)
         drivers = struct("method", "pchip", "maxGap", [], "maxLag", [], "maxVif", 10)
         run = struct("filterReference", [], "seed", 0, "cacheDir", "", ...
-            "parallel", false, "outDir", "", "overwrite", false, "mixedRelease", false)
+            "parallel", false, "outDir", "", "overwrite", false, "mixedRelease", false, ...
+            "format", "mat")
+        export = struct("creator", "", "creatorOrcid", "", "creatorEmail", "", ...
+            "institution", "", "publisher", "", "license", "CC-BY-4.0", "title", "", ...
+            "project", "")
     end
 
     methods
@@ -234,7 +245,10 @@ function known = schema(section)
         case "noise"
             known = ["order" "method" "maxLag" "lags" "welchAverages"];
         case "run"
-            known = ["filterReference" "seed" "cacheDir" "parallel" "outDir" "overwrite" "mixedRelease"];
+            known = ["filterReference" "seed" "cacheDir" "parallel" "outDir" "overwrite" "mixedRelease" "format"];
+        case "export"
+            known = ["creator" "creatorOrcid" "creatorEmail" "institution" "publisher" ...
+                "license" "title" "project"];
         otherwise
             known = strings(1, 0);
     end

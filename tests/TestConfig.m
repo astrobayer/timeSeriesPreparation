@@ -2,17 +2,18 @@ classdef TestConfig < matlab.unittest.TestCase
 %TESTCONFIG  timeSeriesPreparation.Config: sections, strict fields, product, crn preset.
 %
 %   DESCRIPTION
-%     The nine sections of CONCEPT 5 exist and each has fields: crn holds
+%     The ten sections of CONCEPT 5 exist and each has fields: crn holds
 %     preset (X-04), align its four options (X-06), fill its three (X-08),
 %     unc its five (X-07), drivers its four (X-09), mask its five (X-05),
-%     qc its nine (X-17 templates), noise its five and run its three (X-10, X-14).
+%     qc its nine (X-17 templates), noise its five, run its eight (X-10, X-14, X-15, X-18) and
+%     export its eight (X-18).
 %     Config(arc) records mission and product and takes the crn preset and
 %     the minimum-data gate from the product. set refuses an unknown section or field;
 %     fault injection of the refusal is the refusal itself: a misspelt
 %     section and a field no schema lists must both fire.
 %
 %   COVERAGE
-%     contract       - the nine sections, each with fields; qc's, noise's
+%     contract       - the ten sections, each with fields; qc's, noise's
 %                      and run's defaults (qc.screen's and noise's own; order
 %                      and filterReference [], seed 0, cacheDir "", parallel false,
 %                      outDir "", overwrite false, mixedRelease false) and setting them; mask's defaults and its presets
@@ -30,13 +31,14 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function nineSectionsAllDefined(testCase)
+            % Ten since X-18 (export); the name is kept so the test history reads on.
             cfg = timeSeriesPreparation.Config();
             testCase.verifyEqual(cfg.Sections, ...
-                ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]);
+                ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run" "export"]);
             for sec = cfg.Sections
                 testCase.verifyNotEmpty(fieldnames(cfg.(sec)), sec);
             end
@@ -142,7 +144,11 @@ classdef TestConfig < matlab.unittest.TestCase
             testCase.verifyEqual(cfg.noise, struct("order", [], "method", "exact", ...
                 "maxLag", 100, "lags", 20, "welchAverages", 32));
             testCase.verifyEqual(cfg.run, struct("filterReference", [], "seed", 0, "cacheDir", "", ...
-                "parallel", false, "outDir", "", "overwrite", false, "mixedRelease", false));
+                "parallel", false, "outDir", "", "overwrite", false, "mixedRelease", false, ...
+                "format", "mat"));
+            testCase.verifyEqual(cfg.export, struct("creator", "", "creatorOrcid", "", ...
+                "creatorEmail", "", "institution", "", "publisher", "", "license", "CC-BY-4.0", ...
+                "title", "", "project", ""));
             cfg = set(set(set(cfg, "qc", "hampelWindow", 31), "noise", "order", [2 0]), ...
                 "run", "filterReference", true);
             testCase.verifyEqual([cfg.qc.hampelWindow cfg.noise.order], [31 2 0]);

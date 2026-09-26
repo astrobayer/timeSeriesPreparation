@@ -82,7 +82,7 @@ function drv = drivers(arc, series, options)
 %   See also timeSeriesPreparation.correlate, timeSeriesPreparation.align, timeSeriesPreparation.internal.resampleOnto.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-24 10:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-24 10:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc (1,1) timeSeriesPreparation.Arc

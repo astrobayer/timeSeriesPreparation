@@ -10,7 +10,7 @@ classdef TestHelpExamples < matlab.unittest.TestCase
 %     generator's configuration.
 %
 %   COVERAGE
-%     'contract' - every documented EXAMPLE of timeSeriesPreparation v1.1.0 runs.
+%     'contract' - every documented EXAMPLE of timeSeriesPreparation v1.2.0 runs.
 
     methods (Test, TestTags = {'contract'})
         function timeSeriesPreparation_internal_blockLength_example1(testCase)
@@ -35,6 +35,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.internal.fileSha256: The SHA-256 of a three-byte file.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_fileSha256_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.internal.fileSha256 did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_internal_provJsonLd_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.internal.provJsonLd: The graph of a two-stage provenance, decoded again.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_provJsonLd_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.internal.provJsonLd did not run cleanly.");
         end
 
         function timeSeriesPreparation_internal_provenance_example1(testCase)
@@ -361,6 +367,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.drivers did not run cleanly.");
         end
 
+        function timeSeriesPreparation_exportNetcdf_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.exportNetcdf: A ten-sample arc with one layer to a temporary file, and back.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_exportNetcdf_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.exportNetcdf did not run cleanly.");
+        end
+
         function timeSeriesPreparation_fill_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.fill: An AR(1) at 1 Hz with a 5 s gap, modelled and filled.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_fill_1(), ...
@@ -395,6 +407,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.partialCorrelation: A residual that depends on beta' only, beta' and eclipse correlated.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_partialCorrelation_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.partialCorrelation did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_readNetcdf_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.readNetcdf: Export a five-sample arc and read its time and observations back.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_readNetcdf_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.readNetcdf did not run cleanly.");
         end
 
         function timeSeriesPreparation_regressDrivers_example1(testCase)
@@ -433,6 +451,13 @@ function example_timeSeriesPreparation_internal_fileSha256_1()  %#ok<DEFNU>
     f = tempname; fid = fopen(f, "w"); fwrite(fid, 'abc'); fclose(fid);
     h = timeSeriesPreparation.internal.fileSha256(f);
     delete(f);
+end
+
+function example_timeSeriesPreparation_internal_provJsonLd_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.internal.provJsonLd, verbatim from its help block.
+    p = struct("stage", {"mask", "fill"}, "version", "1.2.0", "time", "2026-09-26T17:00:00Z", "detail", struct());
+    txt = timeSeriesPreparation.internal.provJsonLd(p, Inputs = "ACT1B_2020-01-02_C_04.txt", Output = "2020-01-02.nc", Creator = "A. Author", Created = "2026-09-26T18:00:00Z");
+    g = jsondecode(txt);
 end
 
 function example_timeSeriesPreparation_internal_provenance_1()  %#ok<DEFNU>
@@ -798,6 +823,17 @@ function example_timeSeriesPreparation_drivers_1()  %#ok<DEFNU>
     drv = timeSeriesPreparation.drivers(arc, beta);
 end
 
+function example_timeSeriesPreparation_exportNetcdf_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.exportNetcdf, verbatim from its help block.
+    t = int64(7306 * 86400 - 43200 + 18) * int64(1e9) + int64(0:9)' * int64(1e9);
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-02_C_04.txt", "product", "ACT1B");
+    arc = addLayer(timeSeriesPreparation.Arc(t, (1:10)' * 1e-9, aux), "user", (1:10)' > 8);
+    f = tempname + ".nc";
+    info = timeSeriesPreparation.exportNetcdf(f, arc, Metadata = struct("creator", "A. Author"));
+    back = timeSeriesPreparation.readNetcdf(f);
+    delete(f, info.prov);
+end
+
 function example_timeSeriesPreparation_fill_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.fill, verbatim from its help block.
     aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-01_C_04.txt", "product", "ACT1B");
@@ -846,6 +882,16 @@ function example_timeSeriesPreparation_partialCorrelation_1()  %#ok<DEFNU>
     eclipse = 0.7 * beta + randn(rs, 500, 1);
     residual = 0.5 * beta + randn(rs, 500, 1);
     res = timeSeriesPreparation.partialCorrelation([residual beta eclipse], Names = ["residual" "betaPrime" "eclipse"], NBoot = 200);
+end
+
+function example_timeSeriesPreparation_readNetcdf_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.readNetcdf, verbatim from its help block.
+    t = int64(7306 * 86400 - 43200 + 18) * int64(1e9) + int64(0:4)' * int64(1e9);
+    aux = struct("obsNames", {{'lin_accl_x'}}, "variableNames", {{'lin_accl_x'}}, "variableFieldNames", {{'lin_accl_x'}}, "variableUnits", struct("lin_accl_x", "m/s2"), "fileName", "ACT1B_2020-01-02_C_04.txt", "product", "ACT1B");
+    f = tempname + ".nc";
+    info = timeSeriesPreparation.exportNetcdf(f, timeSeriesPreparation.Arc(t, zeros(5, 1), aux), Metadata = struct("creator", "A. Author"));
+    d = timeSeriesPreparation.readNetcdf(f);
+    delete(f, info.prov);
 end
 
 function example_timeSeriesPreparation_regressDrivers_1()  %#ok<DEFNU>

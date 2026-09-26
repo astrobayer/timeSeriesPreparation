@@ -12,11 +12,13 @@
         <tocitem target="timeSeriesPreparation.crnKernel.html">timeSeriesPreparation.crnKernel</tocitem>
         <tocitem target="timeSeriesPreparation.crossval.html">timeSeriesPreparation.crossval</tocitem>
         <tocitem target="timeSeriesPreparation.drivers.html">timeSeriesPreparation.drivers</tocitem>
+        <tocitem target="timeSeriesPreparation.exportNetcdf.html">timeSeriesPreparation.exportNetcdf</tocitem>
         <tocitem target="timeSeriesPreparation.fill.html">timeSeriesPreparation.fill</tocitem>
         <tocitem target="timeSeriesPreparation.internal.blockLength.html">timeSeriesPreparation.internal.blockLength</tocitem>
         <tocitem target="timeSeriesPreparation.internal.contentHash.html">timeSeriesPreparation.internal.contentHash</tocitem>
         <tocitem target="timeSeriesPreparation.internal.dlyap.html">timeSeriesPreparation.internal.dlyap</tocitem>
         <tocitem target="timeSeriesPreparation.internal.fileSha256.html">timeSeriesPreparation.internal.fileSha256</tocitem>
+        <tocitem target="timeSeriesPreparation.internal.provJsonLd.html">timeSeriesPreparation.internal.provJsonLd</tocitem>
         <tocitem target="timeSeriesPreparation.internal.provenance.html">timeSeriesPreparation.internal.provenance</tocitem>
         <tocitem target="timeSeriesPreparation.internal.requirePackage.html">timeSeriesPreparation.internal.requirePackage</tocitem>
         <tocitem target="timeSeriesPreparation.internal.resampleOnto.html">timeSeriesPreparation.internal.resampleOnto</tocitem>
@@ -36,6 +38,7 @@
         <tocitem target="timeSeriesPreparation.qc.residuals.html">timeSeriesPreparation.qc.residuals</tocitem>
         <tocitem target="timeSeriesPreparation.qc.screen.html">timeSeriesPreparation.qc.screen</tocitem>
         <tocitem target="timeSeriesPreparation.qc.templateBank.html">timeSeriesPreparation.qc.templateBank</tocitem>
+        <tocitem target="timeSeriesPreparation.readNetcdf.html">timeSeriesPreparation.readNetcdf</tocitem>
         <tocitem target="timeSeriesPreparation.regressDrivers.html">timeSeriesPreparation.regressDrivers</tocitem>
         <tocitem target="timeSeriesPreparation.run.html">timeSeriesPreparation.run</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.allanVariance.html">timeSeriesPreparation.spectral.allanVariance</tocitem>

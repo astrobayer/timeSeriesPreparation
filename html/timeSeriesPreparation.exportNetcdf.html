@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.exportNetcdf</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.exportNetcdf</h1>
+<p>One arc, its residual and QC events as a CF-1.12/ACDD-1.3 NetCDF-4 file with PROV-O provenance.</p>
+<h2>Syntax</h2>
+<pre><code>info = timeSeriesPreparation.exportNetcdf(file, arc, Metadata = m)
+info = timeSeriesPreparation.exportNetcdf(file, arc, Residual = s, Events = T, Metadata = m, Overwrite = true)</code></pre>
+<h2>Description</h2>
+<p>The exchange format of a prepared day (X-18, CONCEPT 5.2; owner decisions 2026-09-26). The file is NetCDF-4 (deflate 4, shuffle) and states Conventions &quot;CF-1.12, ACDD-1.3&quot;. Variables: time              int64 GPS nanoseconds, arc.t bit for bit: units &quot;nanoseconds since 2000-01-01 12:00:00&quot;, calendar &quot;standard&quot;, units_metadata &quot;leap_seconds: none&quot; (GPS counts no leap seconds; CF 1.12 section 4.4, kept by the owner although CF 1.13 withdrew the attribute in favour of the calendar &quot;tai&quot;). &lt;name&gt;            each observation column, double, named and with the units of arc.names and arc.units; NaN is the _FillValue. weights           arc.weights, units &quot;1&quot;. filled            byte 0/1 (flag_values, flag_meanings &quot;measured filled&quot;). layers            uint32, bit j-1 set where layer j removes the sample; flag_masks and flag_meanings give the bits and the layer names (absent without layers). residual_&lt;name&gt;   with Residual: its columns, same epochs. event_*           with Events, on dimension &quot;event&quot;: event_start, event_end (int64 GPS ns, as time), event_class, event_axis, event_source (byte codes with flag_values and flag_meanings), event_amplitude, event_sigma, event_confidence. Global attributes: the ACDD 1.3 set (title, summary, keywords, id, history, source, platform, instrument, processing_level, product_version, date_created, creator_name/_email/_url/_type/_institution, institution, publisher_name, license, project, time_coverage_start/ _end/_duration/_resolution), l1b_release, frame, schema_version (&quot;1&quot;, the layout above), observation_variables and residual_variables (the names in column order), event_count (-1 without Events, else their number), and prov_jsonld, the PROV-O graph of the arc&#x27;s provenance (internal.provJsonLd). The same graph is written to the sidecar &lt;file name&gt;.prov.jsonld beside the file. id is the SHA-256 of t and obs (internal.contentHash), so equal data give equal ids.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>file</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- Path of the .nc file to write.</td></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- The prepared arc.</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Residual</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>The residual on arc.t (run&#x27;s diagnostics.residual).</td></tr>
+<tr><td><code>Events</code></td><td>N,8</td><td><code>table</code></td><td>&mdash;</td><td>qc.eventTable rows (run&#x27;s flags.events).</td></tr>
+<tr><td><code>Metadata</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Config.export: creator (required), creatorOrcid, creatorEmail, institution, publisher, license, title, project.</td></tr>
+<tr><td><code>Overwrite</code></td><td>1,1</td><td><code>logical</code></td><td>false</td><td>Replace an existing file and sidecar.</td></tr>
+<tr><td><code>Created</code></td><td>1,1</td><td><code>string</code></td><td>now</td><td>date_created, ISO 8601 UTC.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>info</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: file, prov (the sidecar path), sha256 and provSha256 (internal.fileSha256), id, variables (1,:) string.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>time, the observations, weights, filled, layers and the residual are written as stored: readNetcdf returns them bit for bit (TestExport). Event epochs are UTC datetimes; their GPS nanoseconds come from a duration and are exact to about 1 microsecond.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:exportNetcdf:metadataMissing</code></td><td>Input</td><td>Metadata has no creator; none is invented.</td></tr>
+<tr><td><code>timeSeriesPreparation:exportNetcdf:inputName</code></td><td>Input</td><td>an observation name is not a NetCDF-safe identifier or collides with a reserved variable (time, weights, filled, layers, residual_*, event_*).</td></tr>
+<tr><td><code>timeSeriesPreparation:exportNetcdf:inputEpoch</code></td><td>Input</td><td>Residual is not on arc.t.</td></tr>
+<tr><td><code>timeSeriesPreparation:exportNetcdf:inputEvents</code></td><td>Input</td><td>Events is not a qc.eventTable.</td></tr>
+<tr><td><code>timeSeriesPreparation:exportNetcdf:tooManyLayers</code></td><td>Input</td><td>the arc has more than 32 layers.</td></tr>
+<tr><td><code>timeSeriesPreparation:exportNetcdf:fileExists</code></td><td>State</td><td>file or its sidecar exists and Overwrite is false.</td></tr>
+</table>
+<h2>Example</h2>
+<p>A ten-sample arc with one layer to a temporary file, and back.</p>
+<pre><code>t = int64(7306 * 86400 - 43200 + 18) * int64(1e9) + int64(0:9)&#x27; * int64(1e9);
+aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACT1B_2020-01-02_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+arc = addLayer(timeSeriesPreparation.Arc(t, (1:10)&#x27; * 1e-9, aux), &quot;user&quot;, (1:10)&#x27; &gt; 8);
+f = tempname + &quot;.nc&quot;;
+info = timeSeriesPreparation.exportNetcdf(f, arc, Metadata = struct(&quot;creator&quot;, &quot;A. Author&quot;));
+back = timeSeriesPreparation.readNetcdf(f);
+delete(f, info.prov);</code></pre>
+<h2>Limitations</h2>
+<p>Global attributes are written as NetCDF char; keep the metadata ASCII. The events are a plain table on dimension &quot;event&quot;, not a CF discrete-sampling geometry. At most 32 layers.</p>
+<h2>References</h2>
+<p>CF Conventions 1.12 (2024-12-04), sections 2, 3.5 (flags) and 4.4 (time, units_metadata); CF 1.13 (2025-12-17) Appendix M. ACDD 1.3 (ESIP, 2015). W3C PROV-O (2013). docs/CONCEPT.md 5.2; HANDOVER X-18.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.readNetcdf</code>, <code>timeSeriesPreparation.internal.provJsonLd</code>, <code>timeSeriesPreparation.run</code>, <code>timeSeriesPreparation.Config</code></p>
+<p class="footer">timeSeriesPreparation v1.2.0 - generated from the help block of +timeSeriesPreparation/exportNetcdf.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

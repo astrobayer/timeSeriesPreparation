@@ -29,12 +29,15 @@ arc = addLayer(arc, name, remove)
 arc = fillSamples(arc, values, mask, detail)
 arc = appendProvenance(arc, stage, detail)
 out = derive(arc, t, obs, stage, detail, Units = units)
-timeSeriesPreparation.Arc.requireOneRelease(arcs)</code></pre>
+timeSeriesPreparation.Arc.requireOneRelease(arcs)
+s = saveobj(arc)
+arc = timeSeriesPreparation.Arc.loadobj(s)</code></pre>
 <h2>Description</h2>
 <p>The container every stage of this toolbox reads and returns (CONCEPT 5). It is built from gracefoReading&#x27;s triple [t, obs, aux] by FIELD NAMES - aux.obsNames, variableNames, variableFieldNames, variableUnits and fileName/product (readL1b) or fileNames/products (readL1bMulti) - and calls no gracefoReading function, so it works without the reader installed. Time must be int64 GPS nanoseconds (&#x27;TimeFormat&#x27; &quot;gpsns&quot;): a double cannot hold 2020-era GPS nanoseconds (about 6.3e17 &gt; 2^53) without rounding. Columns are selected by name; there is no positional fallback.</p>
 <p>Release rule (CONCEPT 5.2): the L1B release of every file is read from its name (&lt;PRODUCT&gt;_&lt;date&gt;_&lt;sat&gt;_&lt;RR&gt;), or from the header line &quot;product_version:&quot; when the name does not carry it, and stored in release and provenance. An arc whose files come from more than one release refuses unless AllowMixedRelease is true; requireOneRelease applies the same rule to a campaign (an array of arcs).</p>
 <p>Weights and layers: a layer is a named N x 1 logical, true = remove. Layers are additive and can only remove: addLayer refuses to replace a layer, and weights = min over all layers (1 kept, 0 removed). filled is set by the gap stage (X-08) through fillSamples, which writes values into obs where mask is true on the same epochs, flags those rows in filled and appends a &quot;fill&quot; provenance entry; it is all false otherwise. provenance is append-only, one entry per stage: stage, toolbox version, UTC time, detail.</p>
 <p>derive is how a stage returns data on new epochs (crnApply, later align): the result keeps names, mission, product, satellite, release, files and frame, carries the provenance and appends the stage&#x27;s entry; weights, layers and filled start afresh, because they belong to the old epochs.</p>
+<p>Schema version (X-18, CONCEPT 5.2): Arc.SchemaVersion names the layout of the stored arc, &quot;2&quot; since release 1.2.0. save stores the struct of saveobj (every property and schemaVersion); load calls loadobj, which restores it. An arc saved by 1.1.0 or earlier (schema &quot;1&quot;, saved as the object itself, same properties) reaches loadobj as an Arc and is taken unchanged. A struct of any other schemaVersion refuses, so a file of a later release is never read with the wrong layout.</p>
 <h2>Inputs</h2>
 <table>
 <tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
@@ -49,6 +52,7 @@ timeSeriesPreparation.Arc.requireOneRelease(arcs)</code></pre>
 <tr><td><code>units</code></td><td>1,:</td><td><code>string</code></td><td>&mdash;</td><td>- derive: units of the new obs columns.</td></tr>
 <tr><td><code>values</code></td><td>N,M</td><td><code>double</code></td><td>&mdash;</td><td>- fillSamples: filled observations; only the entries under mask are used, finite.</td></tr>
 <tr><td><code>mask</code></td><td>N,M</td><td><code>logical</code></td><td>&mdash;</td><td>- fillSamples: true = entry filled.</td></tr>
+<tr><td><code>s</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- loadobj: the struct saveobj made (or an Arc saved by schema 1).</td></tr>
 </table>
 <h2>Options</h2>
 <table>
@@ -60,7 +64,8 @@ timeSeriesPreparation.Arc.requireOneRelease(arcs)</code></pre>
 <h2>Outputs</h2>
 <table>
 <tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
-<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Properties: t, obs, names, units, mission, product, satellite, release, files, frame, frameSource, weights, layers, filled, provenance.</td></tr>
+<tr><td><code>arc</code></td><td>1,1</td><td><code>Arc</code></td><td>&mdash;</td><td>- Properties: t, obs, names, units, mission, product, satellite, release, files, frame, frameSource, weights, layers, filled, provenance; the constant SchemaVersion (&quot;2&quot;).</td></tr>
+<tr><td><code>s</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- saveobj: schemaVersion and every property.</td></tr>
 </table>
 <h2>Accuracy</h2>
 <p>Exact: t and obs are stored as given, bit for bit, and selecting columns copies them without arithmetic. Weights are exactly 0 or 1.</p>
@@ -76,6 +81,7 @@ timeSeriesPreparation.Arc.requireOneRelease(arcs)</code></pre>
 <tr><td><code>timeSeriesPreparation:Arc:mixedProduct</code></td><td>Metadata</td><td>the files hold different products or satellites.</td></tr>
 <tr><td><code>timeSeriesPreparation:Arc:mixedRelease</code></td><td>Metadata</td><td>the files, or the arcs of a campaign, come from more than one L1B release.</td></tr>
 <tr><td><code>timeSeriesPreparation:Arc:badLayer</code></td><td>Layers</td><td>the layer is not N x 1 logical, its name is not a field name, or a layer of that name exists.</td></tr>
+<tr><td><code>timeSeriesPreparation:Arc:schemaVersion</code></td><td>Storage</td><td>loadobj got a struct whose schemaVersion is not &quot;2&quot;, or no Arc and no struct.</td></tr>
 </table>
 <h2>Example</h2>
 <p>A ten-sample ACT1B-like arc from a hand-made aux struct.</p>
@@ -89,6 +95,6 @@ arc = addLayer(arc, &quot;demo&quot;, (1:10)&#x27; &gt; 8);</code></pre>
 <p>docs/CONCEPT.md sections 5, 5.1, 5.2; gracefoReading.readL1b help (the aux fields).</p>
 <h2>See also</h2>
 <p><code>timeSeriesPreparation.Config</code>, <code>gracefoReading.readL1b</code>, <code>gracefoReading.readL1bMulti</code></p>
-<p class="footer">timeSeriesPreparation v1.1.0 - generated from the help block of +timeSeriesPreparation/Arc.m by ci-actions/matlab-docs. Do not edit.</p>
+<p class="footer">timeSeriesPreparation v1.2.0 - generated from the help block of +timeSeriesPreparation/Arc.m by ci-actions/matlab-docs. Do not edit.</p>
 </body>
 </html>

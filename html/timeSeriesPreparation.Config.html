@@ -21,14 +21,14 @@ th { background: #f0f0f0; }
 </head>
 <body>
 <h1>timeSeriesPreparation.Config</h1>
-<p>Instrument settings in nine sections, strict about field names.</p>
+<p>Instrument settings in ten sections, strict about field names.</p>
 <h2>Syntax</h2>
 <pre><code>cfg = timeSeriesPreparation.Config()
 cfg = timeSeriesPreparation.Config(arc)
 cfg = set(cfg, section, field, value)
 s   = toStruct(cfg)</code></pre>
 <h2>Description</h2>
-<p>The settings of every stage, in the sections of CONCEPT 5: mask, qc, crn, align, fill, noise, unc, drivers, run. Each section has a schema, the list of fields it knows; set refuses a section or a field outside it, so a misspelt option fails instead of being silently ignored. Config(arc) records the arc&#x27;s mission and product and returns the preset for that product (CONCEPT 5).</p>
+<p>The settings of every stage, in the sections of CONCEPT 5: mask, qc, crn, align, fill, noise, unc, drivers, run, export. Each section has a schema, the list of fields it knows; set refuses a section or a field outside it, so a misspelt option fails instead of being silently ignored. Config(arc) records the arc&#x27;s mission and product and returns the preset for that product (CONCEPT 5).</p>
 <p>Each section holds the options of its stage (X-10: every section has its fields; run passes them on). An option whose default would be an assumption defaults to empty (R5). Applications take a Config as &#x27;Preproc&#x27; and hash it with their own options; toStruct gives them a plain struct to hash.</p>
 <p>mask (X-05): fields removeBits (qualflg bits that remove), snrFraction (the &quot;snr&quot; threshold as a fraction of the median), thrMargin and eclipseMargin ([] = half the CRN fit interval of the crn preset) and crnEdge (false). Presets (owner decisions 2026-09-24, from the RL04 file headers): ACT1B removes bits 5-7, the L1B fill flags; KBR1B and LRI1B remove bit 0 (phase break) and bits 6-7 (fill flags) and set snrFraction 0.5, provisional until real data refine it. Every other bit - ACT1B clock-offset extrapolation (3/4), KBR1B time-tag bias correction (5) - is reported by mask, not removed. Any other product removes no bit and has no snr layer unless told.</p>
 <p>crn (X-04): field preset, the crnKernel preset the product was filtered with in L1B processing - &quot;ACC&quot; for ACC1B (GRACE) and ACT1B (GRACE-FO), &quot;KBR&quot; for KBR1B (R-1 App. B; R-2 PDF p. 20). Any other product leaves it &quot;&quot; (not known, so not assumed).</p>
@@ -38,7 +38,8 @@ s   = toStruct(cfg)</code></pre>
 <p>unc (X-07): the gate and the uncertainty stages (CONCEPT 6.1, rows 6 and 7). minWeightFraction is the minimum-data gate of observability (CONCEPT 5.2): an axis keeping less weight than this refuses. The presets set 0.5 for ACC1B, ACT1B, KBR1B and LRI1B (owner decision 2026-09-23: half the arc must survive, provisional until the regression baseline ORC-10 can refine it); any other product leaves it [] and observability then needs it given. blockLength ([] = automatic, Politis-White), nBoot (1000), level (0.6827, 1 sigma) and folds (5) are the defaults of bootstrap and crossval.</p>
 <p>qc (X-10): the options of qc.screen - whitening (&quot;none&quot;), window ([]), hampelWindow (61 samples), hampelThreshold (4 sigma), impulseThreshold (5 sigma), jumpModel (&quot;level&quot;), jumpPenalty ([] = BIC) and jumpMinSegment (30 samples) - with qc.screen&#x27;s own defaults, ported from NonGravForces 0.12.0; no product sets others. templates (X-17): false; true lets run add the matched-filter events of qc.detectTemplates, one layer per class of the bank.</p>
 <p>noise (X-10): order ([p q], no default, R5: without it run skips the noise stage) and noise&#x27;s options method (&quot;exact&quot;), maxLag (100 samples), lags (20) and welchAverages (32), with noise&#x27;s defaults.</p>
-<p>run (X-10): filterReference ([] = not stated; true filters the reference with the crn preset before align, false leaves it; see run) and seed (0), the caller&#x27;s seed of the random stages; cacheDir (&quot;&quot; = the stage cache is off, R5; X-14), the folder of run&#x27;s stage cache. Campaigns (X-15): parallel (false; true runs the arcs in parfor when a pool can be used), outDir (&quot;&quot; = results stay in memory, R5; else the root of the per-day files and the manifest), overwrite (false: existing day files and manifests are kept) and mixedRelease (false: the arcs must share one L1B release, CONCEPT 5.2).</p>
+<p>run (X-10): filterReference ([] = not stated; true filters the reference with the crn preset before align, false leaves it; see run) and seed (0), the caller&#x27;s seed of the random stages; cacheDir (&quot;&quot; = the stage cache is off, R5; X-14), the folder of run&#x27;s stage cache. Campaigns (X-15): parallel (false; true runs the arcs in parfor when a pool can be used), outDir (&quot;&quot; = results stay in memory, R5; else the root of the per-day files and the manifest), overwrite (false: existing day files and manifests are kept) and mixedRelease (false: the arcs must share one L1B release, CONCEPT 5.2). format (X-18): &quot;mat&quot; (default), &quot;netcdf&quot; or &quot;both&quot;, the day files a campaign with outDir writes.</p>
+<p>export (X-18): the dataset metadata of exportNetcdf and of the campaign manifest&#x27;s DataCite block - creator (required for NetCDF; &quot;&quot; refuses rather than inventing one), creatorOrcid, creatorEmail, institution, publisher, license (&quot;CC-BY-4.0&quot;), title and project; all &quot;&quot; but the license (R5).</p>
 <h2>Inputs</h2>
 <table>
 <tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
@@ -51,14 +52,14 @@ s   = toStruct(cfg)</code></pre>
 <table>
 <tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
 <tr><td><code>cfg</code></td><td>1,1</td><td><code>Config</code></td><td>&mdash;</td><td>- Properties: mission, product, and one struct per section.</td></tr>
-<tr><td><code>s</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- mission, product and the nine sections.</td></tr>
+<tr><td><code>s</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- mission, product and the ten sections.</td></tr>
 </table>
 <h2>Accuracy</h2>
 <p>Not applicable, because the class computes no number; values are stored as given.</p>
 <h2>Errors</h2>
 <table>
 <tr><th>identifier</th><th>cause</th><th>condition</th></tr>
-<tr><td><code>timeSeriesPreparation:Config:unknownSection</code></td><td>Settings</td><td>section is not one of the nine sections.</td></tr>
+<tr><td><code>timeSeriesPreparation:Config:unknownSection</code></td><td>Settings</td><td>section is not one of the ten sections.</td></tr>
 <tr><td><code>timeSeriesPreparation:Config:unknownField</code></td><td>Settings</td><td>field is not in the section&#x27;s schema.</td></tr>
 </table>
 <h2>Example</h2>
@@ -71,6 +72,6 @@ s = toStruct(cfg);</code></pre>
 <p>docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults). R-1: GRACE L1B ATBD, JPL D-27672, App. B. R-2: GRACE-FO L1 Handbook, JPL D-56935.</p>
 <h2>See also</h2>
 <p><code>timeSeriesPreparation.Arc</code>, <code>timeSeriesPreparation.run</code>, <code>timeSeriesPreparation.mask</code>, <code>timeSeriesPreparation.crnKernel</code>, <code>timeSeriesPreparation.align</code>, <code>timeSeriesPreparation.fill</code>, <code>timeSeriesPreparation.observability</code>, <code>timeSeriesPreparation.drivers</code></p>
-<p class="footer">timeSeriesPreparation v1.1.0 - generated from the help block of +timeSeriesPreparation/Config.m by ci-actions/matlab-docs. Do not edit.</p>
+<p class="footer">timeSeriesPreparation v1.2.0 - generated from the help block of +timeSeriesPreparation/Config.m by ci-actions/matlab-docs. Do not edit.</p>
 </body>
 </html>
