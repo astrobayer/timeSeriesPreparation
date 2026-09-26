@@ -33,11 +33,12 @@ classdef TestQcEquivalence < matlab.unittest.TestCase
 %                   priors); the refusals.
 %     contract    - every unit of +qc is covered by a case.
 %     robustness  - a one-ulp change of an output is detected.
-%     speed       - hampel at least 10 times faster than the port,
+%     speed       - hampel at least 5 times faster than the port (owner,
+%                   2026-09-26, after 6.42 and 7.57 measured against 10),
 %                   detectJumps not slower, screen at least 2 times faster.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-26 09:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-26 09:55 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (TestParameter)
         Case
@@ -101,9 +102,9 @@ classdef TestQcEquivalence < matlab.unittest.TestCase
     end
 
     methods (Test, TestTags = {'speed'})
-        function hampelTenfold(testCase)
+        function hampelFivefold(testCase)
             x = oneDay();
-            verifyFaster(testCase, "hampel", 10, @() qcPort.hampel(x), ...
+            verifyFaster(testCase, "hampel", 5, @() qcPort.hampel(x), ...
                 @() timeSeriesPreparation.qc.hampel(x));
         end
 

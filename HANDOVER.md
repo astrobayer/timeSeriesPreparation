@@ -37,7 +37,8 @@ Tier B. CONCEPT row X-16 with the owner's decisions of 2026-09-26:
 - **Speed, as a ratio against the port** (owner decision), timed in the
   same test on one day, 86400 x 3 at 1 Hz, best of three runs each (a
   separate warm-up call was dropped in round 2 to fit the 60-min job):
-  - `hampel` at least 10 times faster (owner decision);
+  - `hampel` at least 5 times faster (owner decision 2026-09-26, after
+    CI measured 6.42 and 7.57 against the first bar of 10);
   - `detectJumps` not slower (owner decision);
   - `screen` at least 2 times faster (my proposal: hampel dominates the
     port's screen; the owner may raise it).
@@ -56,12 +57,13 @@ Tier B. CONCEPT row X-16 with the owner's decisions of 2026-09-26:
     grows and prunes;
   - screenManyImpulses: forty pulses on three axes, so the event lookup
     runs for many events.
-- TestQcEquivalence +3 speed tests (speed): hampelTenfold,
+- TestQcEquivalence +3 speed tests (speed): hampelFivefold (hampelTenfold
+  until round 3),
   detectJumpsNotSlower, screenTwofold.
 - Fault injection:
   - speed: each speed test first applies its ratio check to the port
-    against itself (its slowest run over its fastest), with the bar of the
-    hampel test (10), and requires the check to fail; only then does it
+    against itself (its slowest run over its fastest), with the bar 10,
+    and requires the check to fail; only then does it
     check the new unit;
   - equality: the existing oneUlpIsDetected.
 
@@ -83,6 +85,17 @@ and the cost is quadratic (about 60 s per axis with the port). Round 2
 (bars unchanged): PELT without gathers per step (above), hampel in
 cache-sized blocks, the speed tests without the extra warm-up and
 fault-injection runs. Prediction unchanged: 676 + 0 + 0.
+
+**CI round 2 (34d18e8): 675 + 1 + 0**, whole suite in 33 min
+(TestQcEquivalence 12 min 50 s). Per tag as predicted except speed
+10 + 1. The one failure: hampel: port 1.122 s, unit 0.148 s, ratio
+7.57 < 10. screen and detectJumps passed (their ratios print only on
+failure). Every equivalence case passed.
+
+**Owner decision 2026-09-26:** after two pure-MATLAB rounds (6.42, 7.57),
+the hampel bar is 5, about 2/3 of the measured 7.57, instead of a MEX
+layer. Round 3 changes only the bar and the test's name (hampelFivefold).
+Prediction: 676 + 0 + 0, per tag as above.
 
 ## X-14 — stage cache — merged 2026-09-26 (PR #59, `a264793`; issue #17 closed); scope was frozen 2026-09-25
 
