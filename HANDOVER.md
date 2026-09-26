@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.34 · 2026-09-26 · X-18 (NetCDF export, PROV-O, Arc schema) scope frozen; X-17 done — merged (PR #63, `db47634`), #20 closed**
+**Revision 0.35 · 2026-09-26 · X-11 (report) scope frozen; X-18 done — merged (PR #64, `5cba363`), release v1.2.0, #21 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,67 @@ restates:
 
 ---
 
-## X-18 — CF/ACDD NetCDF export, PROV-O, Arc schema version → release 1.2.0; scope frozen 2026-09-26
+## X-11 — report; scope frozen 2026-09-26
+
+Tier B. CONCEPT row X-11 (v3 WP-20, the instrument part), with the owner's
+decisions of 2026-09-26 (interview while PR #64 awaited its merge).
+
+**Scope (frozen):**
+- `report(res, Visible = "on", ExportTo = "")` (L2; it reads a run
+  result and never calls run). It returns out with:
+  - figures: a struct of four figure handles.
+  - notes: a struct of four strings, "" or why the panel is empty,
+    taken from diagnostics.skipped.
+  - files: the paths written.
+  - html: the page path, or "".
+- The four figures:
+  - series: per axis, the observation and the reference (mean
+    removed) and the residual, plus a timeline of every layer, the
+    gaps and the filled samples.
+  - events: flags.events by class and axis, coloured by source.
+  - noise: per axis, the residual PSD (spectral.powerSpectrum) against
+    the fitted model's PSD (spectral.arma2psd), plus noiseReference's
+    ASD squared when the product has one (ACT1B/ACC1B -> "ACC", KBR1B,
+    LRI1B).
+  - alignment: checkAlignment's r(lag) per axis with the refined lag,
+    and correlate's r(lag) with its interval per axis and driver when
+    that stage ran.
+- With ExportTo: series.png, events.png, noise.png and alignment.png at
+  200 dpi (exportgraphics), and report.html, one self-contained page.
+  The page holds the summary table, the skipped stages, the flags, the
+  events (up to 200 rows), the provenance and the config hash, with the
+  PNGs embedded as data URIs.
+- A campaign result: ExportTo is required. Each day that ran is
+  reported into ExportTo/<yyyy-mm-dd>/ with Visible off, and its
+  figures are closed after export. index.html holds the summary table
+  (status, identifier, weight fraction, events, files, SHA-256), with
+  links to the days.
+- No pixel reference is kept (owner decision; renderers differ between
+  MATLAB updates), so there is no precision test.
+- The version stays 1.2.0; CHANGELOG "Unreleased" lists report. The next
+  release is the owner's call.
+
+**Tests: TestReport (6).**
+- contract 4:
+  - figureHandles: four figures, Visible off.
+  - exportWritesFiles: four PNGs and report.html, whose four data URIs
+    and doctype are checked.
+  - stageNotRunNoted: a bare run notes why noise and alignment are
+    empty.
+  - campaignIndex: index.html and one report.html per day, linked.
+- robustness 1: refusals: a struct that is no run result
+  (`report:inputResult`); a campaign without ExportTo
+  (`report:exportToRequired`).
+- speed 1: speedPerFigure: a six-hour three-axis run with the noise
+  stage; report with export takes under 10 s per figure. The bar of 0 s
+  must fail (fault injection).
+- TestHelpExamples +1 (report; contract).
+
+**Prediction** (before any run): **723 + 0 + 0 = 723**, that is 716 + 6
++ 1. Per tag: contract 225, reference 259, precision 23, robustness 139,
+metamorphic 44, vectorisation 21, speed 12.
+
+## X-18 — CF/ACDD NetCDF export, PROV-O, Arc schema version → release 1.2.0 — merged 2026-09-26 (PR #64, `5cba363`; issue #21 closed; v1.2.0 tagged by the workflow); scope was frozen 2026-09-26
 
 Tier B. CONCEPT row X-18 and 5.2 with the owner's decisions of 2026-09-26
 (interview after PR #63). Standards, current on 2026-09-26: CF 1.12 for
@@ -2150,7 +2210,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-18 in progress** (scope above). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**X-11 in progress** (scope above). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
