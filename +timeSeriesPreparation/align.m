@@ -96,7 +96,7 @@ function out = align(obs, ref, options)
 %   See also timeSeriesPreparation.checkAlignment, timeSeriesPreparation.Arc, timeSeriesPreparation.internal.resampleOnto.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         obs (1,1) timeSeriesPreparation.Arc

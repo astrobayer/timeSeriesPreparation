@@ -10,7 +10,7 @@ classdef TestHelpExamples < matlab.unittest.TestCase
 %     generator's configuration.
 %
 %   COVERAGE
-%     'contract' - every documented EXAMPLE of timeSeriesPreparation v1.0.0 runs.
+%     'contract' - every documented EXAMPLE of timeSeriesPreparation v1.1.0 runs.
 
     methods (Test, TestTags = {'contract'})
         function timeSeriesPreparation_internal_blockLength_example1(testCase)
@@ -29,6 +29,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.internal.dlyap: AR(1) with phi = 0.9: the stationary variance is 1/(1 - 0.81).
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_dlyap_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.internal.dlyap did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_internal_fileSha256_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.internal.fileSha256: The SHA-256 of a three-byte file.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_internal_fileSha256_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.internal.fileSha256 did not run cleanly.");
         end
 
         function timeSeriesPreparation_internal_provenance_example1(testCase)
@@ -408,6 +414,13 @@ end
 function example_timeSeriesPreparation_internal_dlyap_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.internal.dlyap, verbatim from its help block.
     P = timeSeriesPreparation.internal.dlyap(0.9, 1, 1e-14, 60);
+end
+
+function example_timeSeriesPreparation_internal_fileSha256_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.internal.fileSha256, verbatim from its help block.
+    f = tempname; fid = fopen(f, "w"); fwrite(fid, 'abc'); fclose(fid);
+    h = timeSeriesPreparation.internal.fileSha256(f);
+    delete(f);
 end
 
 function example_timeSeriesPreparation_internal_provenance_1()  %#ok<DEFNU>

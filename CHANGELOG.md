@@ -5,6 +5,22 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
 
 ## Unreleased
 
+## 1.1.0 — 2026-09-26
+
+Campaign release (GUIDE section 7: X-14 → X-16 → X-15 → v1.1.0).
+
+- **X-15** campaign mode of `run`: an Arc array runs every arc through the
+  stages with seed cfg.run.seed + k - 1; a refusing arc keeps its
+  MException and the campaign continues. Reference, Thrusters and (as
+  cells) QualFlags, Eclipse, User and Design may be given per arc. The
+  arcs must share one L1B release unless cfg.run.mixedRelease is set.
+  cfg.run.parallel runs the arcs in `parfor` when a pool can be used
+  (equal to serial). With cfg.run.outDir, each arc's result is a MAT v7.3
+  day file `<mission>/<satellite>/<yyyy>/<yyyy-mm-dd>.mat` and
+  `manifest.json` records the campaign (software, dates, config hash,
+  per arc source files, content hash, file SHA-256, status); existing
+  files are kept unless cfg.run.overwrite is set. New
+  `internal.fileSha256`.
 - **X-16** QC speed, pure MATLAB, numbers unchanged: `qc.hampel` computes
   the moving median and the exact window MAD vectorised (`movmedian`,
   window blocks) instead of a per-sample loop; `qc.detectJumps` caches

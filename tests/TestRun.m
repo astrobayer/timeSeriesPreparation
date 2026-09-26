@@ -26,14 +26,14 @@ classdef TestRun < matlab.unittest.TestCase
 %                      00:05:00 UTC; the CRN-filtered reference equals
 %                      crnApply; gate, bootstrap, crossval and correlation
 %                      equal their direct calls; collocation fills as fill.
-%     robustness     - an arc array (campaignDeferred), a stage's refusal
+%     robustness     - two References for one arc (inputCount), a stage's refusal
 %                      (observability:sizeMismatch) and the minimum-data
 %                      gate (observability:insufficientData) stop the run.
 %     precision, speed, vectorisation, metamorphic - exempt: run adds no
 %                      arithmetic; each stage's tests hold these.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Fields = ["arc" "reference" "diagnostics" "correlation" "flags" "config" "provenance"]
@@ -216,8 +216,8 @@ classdef TestRun < matlab.unittest.TestCase
     methods (Test, TestTags = {'robustness'})
         function refusalsStopTheRun(testCase)
             arc = pair(300);
-            testCase.verifyError(@() timeSeriesPreparation.run([arc arc]), ...
-                "timeSeriesPreparation:run:campaignDeferred");
+            testCase.verifyError(@() timeSeriesPreparation.run(arc, Reference = [arc arc]), ...
+                "timeSeriesPreparation:run:inputCount");
             testCase.verifyError(@() timeSeriesPreparation.run(arc, Design = ones(10, 1)), ...
                 "timeSeriesPreparation:observability:sizeMismatch");
         end

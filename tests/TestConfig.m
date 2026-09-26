@@ -14,7 +14,8 @@ classdef TestConfig < matlab.unittest.TestCase
 %   COVERAGE
 %     contract       - the nine sections, each with fields; qc's, noise's
 %                      and run's defaults (qc.screen's and noise's own; order
-%                      and filterReference [], seed 0, cacheDir "") and setting them; mask's defaults and its presets
+%                      and filterReference [], seed 0, cacheDir "", parallel false,
+%                      outDir "", overwrite false, mixedRelease false) and setting them; mask's defaults and its presets
 %                      (ACT1B bits 5-7; KBR1B, LRI1B bits 0, 6, 7 and
 %                      snrFraction 0.5; others none); drivers' defaults ("pchip", [], [], 10); align's defaults (pchip, [], 60 s, 1 s) and
 %                      setting them; fill's defaults ("none", [], []) and
@@ -29,7 +30,7 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function nineSectionsAllDefined(testCase)
@@ -140,7 +141,8 @@ classdef TestConfig < matlab.unittest.TestCase
                 "jumpModel", "level", "jumpPenalty", [], "jumpMinSegment", 30));
             testCase.verifyEqual(cfg.noise, struct("order", [], "method", "exact", ...
                 "maxLag", 100, "lags", 20, "welchAverages", 32));
-            testCase.verifyEqual(cfg.run, struct("filterReference", [], "seed", 0, "cacheDir", ""));
+            testCase.verifyEqual(cfg.run, struct("filterReference", [], "seed", 0, "cacheDir", "", ...
+                "parallel", false, "outDir", "", "overwrite", false, "mixedRelease", false));
             cfg = set(set(set(cfg, "qc", "hampelWindow", 31), "noise", "order", [2 0]), ...
                 "run", "filterReference", true);
             testCase.verifyEqual([cfg.qc.hampelWindow cfg.noise.order], [31 2 0]);
