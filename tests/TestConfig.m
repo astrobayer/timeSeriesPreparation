@@ -163,7 +163,7 @@ classdef TestConfig < matlab.unittest.TestCase
         function toStructCarriesEverything(testCase)
             s = toStruct(timeSeriesPreparation.Config());
             testCase.verifyEqual(string(fieldnames(s))', ...
-                ["mission" "product" "mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]);
+                ["mission" "product" "mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run" "export"]);
         end
     end
 

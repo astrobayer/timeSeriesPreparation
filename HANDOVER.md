@@ -97,6 +97,12 @@ returns a struct); DOI registration.
 11, 4 and 3. Per tag: contract 220, reference 259, precision 23,
 robustness 138, metamorphic 44, vectorisation 21, speed 11.
 
+**CI round 1 (d448919, matlab job 108468198898): 715 + 1 + 0 = 716.**
+The count per tag was as predicted. One pin was missed:
+TestConfig/toStructCarriesEverything lists the fields of toStruct, and
+"export" was missing from it. Fix: add "export" to that list. The
+prediction is unchanged: 716 + 0 + 0.
+
 ## X-17 — QC template bank — merged 2026-09-26 (PR #63, `db47634`; issue #20 closed); scope was frozen 2026-09-26
 
 Tier B. CONCEPT 6.1 row 2 and row X-17, with the owner's decisions of
