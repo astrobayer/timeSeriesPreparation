@@ -65,7 +65,7 @@ th { background: #f0f0f0; }
 t = datetime(2020, 1, 1, &quot;TimeZone&quot;, &quot;UTC&quot;) + seconds((0:999)&#x27;);
 [events, info] = timeSeriesPreparation.qc.detectJumps(x, Epoch = t);</code></pre>
 <h2>Limitations</h2>
-<p>Quadratic in the worst case when pruning keeps many candidates. The candidates live in a preallocated buffer (X-16); the cost of each step is vectorised over them.</p>
+<p>Quadratic when pruning keeps many candidates, which happens on a long series with few jumps (about 3 min for one day of three axes at 1 Hz with the port). Each step is vectorised over the candidates, whose cumulative sums and F(tau) are cached beside them (X-16).</p>
 <h2>References</h2>
 <p>Killick, R., Fearnhead, P., Eckley, I. A. (2012). Optimal detection of changepoints with a linear computational cost. J. Am. Stat. Assoc. 107, 1590-1598. Schwarz, G. (1978). Estimating the dimension of a model. Ann. Stat. 6, 461-464.</p>
 <h2>See also</h2>

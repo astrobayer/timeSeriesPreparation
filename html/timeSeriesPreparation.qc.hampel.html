@@ -58,7 +58,7 @@ th { background: #f0f0f0; }
 <pre><code>x = randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 2), 1000, 1); x(500) = 12;
 mask = timeSeriesPreparation.qc.hampel(x);</code></pre>
 <h2>Limitations</h2>
-<p>O(K W) per channel, vectorised (X-16). A full, finite window has an odd count, so its median is its middle element: movmedian gives it without arithmetic. The MAD is one median over the windows, gathered in blocks of at most 2^22 elements (32 MiB). Edge windows and windows with NaN take median with &quot;omitnan&quot;. The outputs equal the X-05 port&#x27;s per-sample loop bit for bit (TestQcEquivalence).</p>
+<p>O(K W) per channel, vectorised (X-16). A full, finite window has an odd count, so its median is its middle element: movmedian gives it without arithmetic. The MAD is one median over the windows, gathered in cache-sized blocks of at most 2^16 elements. Edge windows and windows with NaN take median with &quot;omitnan&quot;. The outputs equal the X-05 port&#x27;s per-sample loop bit for bit (TestQcEquivalence).</p>
 <h2>References</h2>
 <p>Hampel, F. R. (1974). The influence curve and its role in robust estimation. J. Am. Stat. Assoc. 69, 383-393. Pearson (2002), cited as the port cites it (&quot;EURASIP JASP&quot;), not re-read.</p>
 <h2>See also</h2>

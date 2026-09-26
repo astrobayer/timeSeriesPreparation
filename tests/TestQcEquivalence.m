@@ -18,9 +18,9 @@ classdef TestQcEquivalence < matlab.unittest.TestCase
 %     against the port). Its cases cover the new code paths: Inf and short
 %     series in hampel, hampel's block boundary, a long PELT run, many
 %     impulses in screen. The speed tests time the port and the unit on
-%     one day, 86400 x 3 at 1 Hz, after one warm-up call each, best of
-%     three runs. Before checking the unit, each applies its ratio check to
-%     the port against itself with the bar 10, which must fail (fault
+%     one day, 86400 x 3 at 1 Hz, best of three runs each. Before checking
+%     the unit, each applies its ratio check to the port against itself
+%     (slowest run over fastest) with the bar 10, which must fail (fault
 %     injection).
 %
 %   COVERAGE
@@ -37,7 +37,7 @@ classdef TestQcEquivalence < matlab.unittest.TestCase
 %                   detectJumps not slower, screen at least 2 times faster.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-26 07:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.0.0 | 2026-09-26 09:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (TestParameter)
         Case
@@ -216,9 +216,9 @@ function run = caseFunction(name)
             r = randn(rs(25), 1, 20);                   % a row, shorter than the window
             run = @(ns) [outs(2, f(ns, "hampel"), x), outs(2, f(ns, "hampel"), r, 'Window', 61)];
         case "hampelBlocks"
-            x = randn(rs(26), 70000, 1);                % blocks of floor(2^22/61) = 68759 windows
-            x(68750:68770) = NaN;
-            x([68758 68780 69999]) = [10; -9; 8];
+            x = randn(rs(26), 5000, 1);                 % blocks of floor(2^16/61) = 1074 windows; a partial last block
+            x(2140:2160) = NaN;                         % across the boundary at sample 2149
+            x([2148 2150 4999]) = [10; -9; 8];
             run = @(ns) outs(2, f(ns, "hampel"), x);
         case "detectJumpsLong"
             x = randn(rs(27), 20000, 1);
@@ -238,25 +238,26 @@ function run = caseFunction(name)
 end
 
 function verifyFaster(testCase, name, bar, old, new)
-% The port's time over the unit's must reach bar. The check is first
-% applied to the port against itself with the bar 10 and must fail.
+% The port's best time over the unit's must reach bar. The check is first
+% applied to the port against itself (its slowest run over its fastest)
+% with the bar 10 and must fail.
     met = @(tOld, tNew, b) tOld / tNew >= b;
-    tOld = best(old);
-    testCase.assertFalse(met(tOld, best(old), 10), ...
+    tPort = runs(old);
+    testCase.assertFalse(met(max(tPort), min(tPort), 10), ...
         name + ": the ratio check passed the port against itself (fault injection).");
-    tNew = best(new);
+    tOld = min(tPort);
+    tNew = min(runs(new));
     testCase.verifyTrue(met(tOld, tNew, bar), sprintf( ...
         "%s: port %.3f s, unit %.3f s, ratio %.2f < %g.", name, tOld, tNew, tOld / tNew, bar));
 end
 
-function t = best(fn)
-% Best of three timed runs after one warm-up call.
-    fn();
-    t = inf;
+function t = runs(fn)
+% Three timed runs; the best of them discounts the first call's warm-up.
+    t = zeros(1, 3);
     for k = 1:3
         t0 = tic;
         fn();
-        t = min(t, toc(t0));
+        t(k) = toc(t0);
     end
 end
 
