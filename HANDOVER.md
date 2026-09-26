@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.32 · 2026-09-26 · X-15 (campaign mode, release 1.1.0) scope frozen; X-16 done — merged (PR #60, `ca5230f`), #19 closed**
+**Revision 0.33 · 2026-09-26 · X-17 (QC template bank) scope frozen; X-15 done — merged (PR #61, `a82c710`), release v1.1.0, #18 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,73 @@ restates:
 
 ---
 
-## X-15 — campaign mode of `run`, per-day storage, manifest → release 1.1.0; scope frozen 2026-09-26
+## X-17 — QC template bank; scope frozen 2026-09-26
+
+Tier B. CONCEPT 6.1 row 2 and row X-17, with the owner's decisions of
+2026-09-26 and the throwaway scan PR #62 (closed unmerged; three runs, the
+last two complete: jobs 108411906583 and 108423640544).
+
+**Scan findings (ACT1B residual to a 301-s moving median; 2020-01 and
+2020-07; GRACE-FO C and D):**
+- **Thruster:** THR1B records with an on-time give a stable stack.
+  - N: C 14 146 + 12 971, D 12 084 + 12 467.
+  - Peak at the record: y −1.16e-8 (C) / −1.47e-8 (D) m/s², z
+    +2.1e-9 / +2.2e-9 m/s², x 0 (C) / 1e-10 (D); main lobe about ±15 s with
+    CRN sidelobes.
+  - The two months agree to 6 % of the peak (largest difference 9e-10 on y).
+- **Magnetorquer:** MAG1B `torque1A`…`torque3B` vary continuously; their
+  only large steps are around the D outage 2020-01-19…22. No switching
+  spikes. **Owner: left to N-11 as a regressor.**
+- **Heater:** no heater column in THR1B, MAG1B, AHK1B or IHK1B; IHK1B's 39
+  sensors are named only 01…39 (one sample per 120 s). No key series, no
+  shape. **Owner: deferred;** the sensor map of IHK1B would unblock it.
+- **z-spikes:** after excluding ±70 s around THR1B records, y has no
+  candidates; z has ~60 per day and satellite, broad (~30 s) plateaus of
+  about +3e-9 m/s², up to 136 σ (C 2020-01-21 25375 s). Not the sharp 10 Hz
+  twang. **Owner: ignored.**
+- **x axis:** 34–58 % of the ACT1B x residual is exactly 0 on every day of
+  both satellites; x is unusable for spike detection.
+
+**Scope (frozen):**
+- `qc.templateBank`: the bank as data with provenance: class "thruster",
+  per satellite C and D, the 121 x 3 stack (lags −60…60 s, m/s²), the
+  event-weighted mean of the two months, with its event counts.
+- `qc.detectTemplates(r, Epoch = t, Satellite = s)`: the residual is
+  high-passed as in the scan (minus its 301-s moving median); a 3-axis
+  matched filter with the unit-norm template; score = filter output over
+  its robust sigma; peaks above Threshold (8) at least 121 s apart become
+  qc.eventTable rows of class "impulse", amplitude = size relative to the
+  median event, sigma from the robust sigma. A THR1B prior within
+  PriorWindow_s (5 s) makes the source "THR1B" with confidence 1. One mask
+  per class over the template's support (|template| >= 5 % of its peak).
+- `Config.qc.templates` (false = off, R5). With true, a Reference and
+  three axes of a satellite in the bank, `run` calls detectTemplates on
+  the qc residual after qc, with the THR1B firings of Thrusters as priors,
+  and adds one layer per class ("tplThruster"); `diagnostics.templates`
+  holds its info ([] otherwise).
+- TestQcEquivalence's unit list admits the two new +qc units (they are
+  not part of the frozen port).
+
+**Tests: TestTemplates (9).**
+- contract 3: bankShape, outputSchema, runLayerOnlyWhenAsked.
+- reference 3:
+  - plantedRecoveredC and plantedRecoveredD: three templates (scale 0.5,
+    1, 2) in white noise are found at their samples, each scale within
+    5 sigma;
+  - realThrusterDay: DC-8 (ACT1B + THR1B D 2020-01-04): detections exist
+    and more than half of them lie within 5 s of a THR1B firing.
+- robustness 3:
+  - refusals (unknown satellite, wrong shape, threshold <= 0);
+  - noiseOnly: one day of white noise with a NaN run gives no detection;
+  - wrongSign: a negated template is not detected (fault injection).
+- TestHelpExamples +2 (templateBank, detectTemplates; contract).
+
+**Prediction** (before any run): **698 + 0 + 0 = 698**. That is 687 plus
+TestTemplates 9 and TestHelpExamples 2.
+Per tag: contract 213, reference 254, precision 23, robustness 132,
+metamorphic 44, vectorisation 21, speed 11.
+
+## X-15 — campaign mode of `run`, per-day storage, manifest → release 1.1.0 — merged 2026-09-26 (PR #61, `a82c710`; issue #18 closed; v1.1.0 released by the workflow); scope was frozen 2026-09-26
 
 Tier B. CONCEPT 6.6 and 5.2 with the owner's decisions of 2026-09-26.
 Needs X-14 (merged), X-16 (merged) and G-03 (gracefoReading #18, closed
@@ -1972,7 +2038,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-15 in progress** (scope above). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**X-17 in progress** (scope above). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
