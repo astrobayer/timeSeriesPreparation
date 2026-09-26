@@ -41,7 +41,7 @@ function scanTemplateCandidates(root, months)
                 end
                 [t, r, sig] = residual(folder, day, sat);
                 if isempty(t)
-                    out(end+1) = sprintf("%s %s: no ACT1B", day, sat); %#ok<AGROW>
+                    out(end+1, 1) = sprintf("%s %s: no ACT1B", day, sat); %#ok<AGROW>
                     continue
                 end
                 tThr = thrusterEvents(folder, day, sat);
@@ -58,17 +58,17 @@ function scanTemplateCandidates(root, months)
                         end
                     end
                 end
-                out(end+1) = sprintf("%s %s: sigma %s; events thruster %d, magnetorquer %d, twang %d", ...
+                out(end+1, 1) = sprintf("%s %s: sigma %s; events thruster %d, magnetorquer %d, twang %d", ...
                     day, sat, mat2str(sig, 3), numel(tThr), numel(tMtq), numel(tTw)); %#ok<AGROW>
             end
             for c = classes
                 w = W.(c);
                 for a = 1:3
                     med = median(w(:, :, a), 1, "omitnan");
-                    out(end+1) = sprintf("STACK %s %s %s axis %d N %d: %s", mo, sat, c, a, size(w, 1), ...
+                    out(end+1, 1) = sprintf("STACK %s %s %s axis %d N %d: %s", mo, sat, c, a, size(w, 1), ...
                         strjoin(compose("%.3g", med), " ")); %#ok<AGROW>
                 end
-                out(end+1) = sprintf("BEST %s %s %s: %s sigma on %s at %s s, axis %s", mo, sat, c, ...
+                out(end+1, 1) = sprintf("BEST %s %s %s: %s sigma on %s at %s s, axis %s", mo, sat, c, ...
                     best.(c)(1), best.(c)(2), best.(c)(3), best.(c)(4)); %#ok<AGROW>
             end
         end
@@ -81,23 +81,37 @@ end
 function s = inventory(folder, day, sat)
     s = strings(0, 1);
     f = dir(fullfile(folder, "*_" + day + "_" + sat + "_*.txt"));
-    s(end+1) = sprintf("INVENTORY %s %s: %s", day, sat, strjoin(string({f.name}), " "));
+    s(end+1, 1) = sprintf("INVENTORY %s %s: %s", day, sat, strjoin(string({f.name}), " "));
     for p = ["THR1B" "MAG1B" "AHK1B" "IHK1B" "HRT1B"]
         g = dir(fullfile(folder, p + "_" + day + "_" + sat + "_*.txt"));
         if isempty(g)
-            s(end+1) = sprintf("COLUMNS %s: no file", p); %#ok<AGROW>
+            s(end+1, 1) = sprintf("COLUMNS %s: no file", p); %#ok<AGROW>
             continue
         end
-        try
-            [~, ~, aux] = gracefoReading.readL1b(fullfile(g(1).folder, g(1).name), "TimeFormat", "gpsns");
-            n = string(aux.obsNames(:))';
-            s(end+1) = sprintf("COLUMNS %s: %s", p, strjoin(n, " ")); %#ok<AGROW>
-            h = n(contains(lower(n), ["heat" "htr"]));
-            s(end+1) = sprintf("HEATER %s: %s", p, strjoin(h, " ")); %#ok<AGROW>
-        catch err
-            s(end+1) = sprintf("COLUMNS %s: ERROR %s %s", p, err.identifier, err.message); %#ok<AGROW>
-        end
+        [names, heat] = headerNames(fullfile(g(1).folder, g(1).name));   % header only: IHK1B/HRT1B are large
+        s(end+1, 1) = sprintf("COLUMNS %s: %s", p, strjoin(names, " ")); %#ok<AGROW>
+        s(end+1, 1) = sprintf("HEATER %s: %s", p, strjoin(heat, " || ")); %#ok<AGROW>
     end
+end
+
+function [names, heat] = headerNames(file)
+% Variable names and every header line mentioning a heater, from the YAML
+% header only (up to the end-of-header marker or 3000 lines).
+    names = strings(1, 0); heat = strings(1, 0);
+    fid = fopen(file, "r");
+    if fid < 0, names = "UNREADABLE"; return, end
+    for k = 1:3000
+        l = fgetl(fid);
+        if ~ischar(l), break, end
+        l = string(strtrim(l));
+        if contains(lower(l), ["end of header" "end_of_header" "# end of yaml"])
+            break
+        end
+        tok = regexp(l, "^-\s*([^:]+):\s*$", "tokens", "once");   % YAML "- <variable>:" items
+        if ~isempty(tok), names(end+1) = string(tok{1}); end %#ok<AGROW>
+        if contains(lower(l), ["heat" "htr"]), heat(end+1) = l; end %#ok<AGROW>
+    end
+    fclose(fid);
 end
 
 function t0 = dayStart(day)
