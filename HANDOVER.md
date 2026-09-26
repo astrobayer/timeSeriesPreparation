@@ -78,6 +78,13 @@ TestCampaign 10 and TestHelpExamples 1.
 Per tag: contract 208, reference 251, precision 23, robustness 129,
 metamorphic 44, vectorisation 21, speed 11.
 
+**CI round 1 (c470185): 686 + 1 + 0.** A real pool ran ('Processes', 8
+workers). TestCampaign/parallelEqualsSerial failed on all three arcs: each
+result carries its Config, and cfg.run.parallel is true in the parallel
+campaign and false in the serial one. Fix: the test sets that one field
+equal before comparing and names the first differing field on failure.
+Prediction unchanged: 687 + 0 + 0.
+
 ## X-16 — QC speed — merged 2026-09-26 (PR #60, `ca5230f`; issue #19 closed); scope was frozen 2026-09-26
 
 Tier B. CONCEPT row X-16 with the owner's decisions of 2026-09-26:

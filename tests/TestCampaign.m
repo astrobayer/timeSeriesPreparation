@@ -23,12 +23,12 @@ classdef TestCampaign < matlab.unittest.TestCase
 %     robustness     - a failing arc is captured and the campaign goes on;
 %                      existing files are not overwritten unless asked;
 %                      a mixed release refuses unless asked; parallel
-%                      equals serial.
+%                      equals serial but for cfg.run.parallel itself.
 %     precision, speed, vectorisation, metamorphic - exempt: a campaign
 %                      adds no arithmetic; each arc is the single run.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-26 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-26 13:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function campaignResultFields(testCase)
@@ -184,8 +184,12 @@ classdef TestCampaign < matlab.unittest.TestCase
                 Config = set(cfg, "run", "parallel", true));
             testCase.verifyEqual(par.parallel, canUseParallelPool());
             for k = 1:3
-                testCase.verifyTrue(isequaln(content(par.results{k}), content(serial.results{k})), ...
-                    sprintf("arc %d differs between parallel and serial", k));
+                p = par.results{k};
+                testCase.verifyTrue(p.config.run.parallel);
+                p.config.run.parallel = false;           % the one setting that differs by design
+                a = content(p); b = content(serial.results{k});
+                testCase.verifyTrue(isequaln(a, b), ...
+                    sprintf("arc %d differs between parallel and serial, first at %s", k, firstDifference(a, b, "result")));
             end
         end
     end
@@ -230,6 +234,30 @@ function arc = arcOf(t, obs, day, unit, release)
     aux = struct("obsNames", {names}, "variableNames", {names}, "variableFieldNames", {names}, ...
         "variableUnits", units, "fileName", "ACT1B_" + day + "_C_" + release + ".txt", "product", "ACT1B");
     arc = timeSeriesPreparation.Arc(t, obs, aux);
+end
+
+function where = firstDifference(a, b, where)
+% The path of the first field, cell or element at which a and b differ.
+    if isequaln(a, b)
+        where = "";
+        return
+    end
+    if isstruct(a) && isstruct(b) && isequal(size(a), size(b)) && isequal(fieldnames(a), fieldnames(b))
+        for k = 1:numel(a)
+            for fn = reshape(string(fieldnames(a)), 1, [])
+                w = firstDifference(a(k).(fn), b(k).(fn), where + "(" + k + ")." + fn);
+                if w ~= "", where = w; return, end
+            end
+        end
+    elseif iscell(a) && iscell(b) && isequal(size(a), size(b))
+        for k = 1:numel(a)
+            w = firstDifference(a{k}, b{k}, where + "{" + k + "}");
+            if w ~= "", where = w; return, end
+        end
+    elseif isnumeric(a) && isnumeric(b) && isequal(size(a), size(b))
+        d = abs(double(a(:)) - double(b(:)));
+        where = where + sprintf(" (max |difference| %.3g)", max(d, [], "omitnan"));
+    end
 end
 
 function x = content(x)
