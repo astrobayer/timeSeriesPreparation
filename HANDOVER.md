@@ -80,6 +80,13 @@ TestTemplates 9 and TestHelpExamples 2.
 Per tag: contract 213, reference 254, precision 23, robustness 132,
 metamorphic 44, vectorisation 21, speed 11.
 
+**CI verdict (317398d, matlab job 108448432540): 698 + 0 + 0 = 698,
+green.** Per tag as predicted: contract 213, reference 254, precision 23,
+robustness 132, metamorphic 44, vectorisation 21, speed 11. TestTemplates
+9/9 in 9.3 s, realThrusterDay (DC-8) included: more than half of the
+detections on GRACE-FO D 2020-01-04 lie within 5 s of a THR1B firing.
+Whole suite 32 min. audit green.
+
 ## X-15 — campaign mode of `run`, per-day storage, manifest → release 1.1.0 — merged 2026-09-26 (PR #61, `a82c710`; issue #18 closed; v1.1.0 released by the workflow); scope was frozen 2026-09-26
 
 Tier B. CONCEPT 6.6 and 5.2 with the owner's decisions of 2026-09-26.
