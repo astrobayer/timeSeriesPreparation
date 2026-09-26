@@ -1,0 +1,40 @@
+# THROWAWAY: runs only on its own PR and is never merged (X-17, owner decisions 2026-09-26).
+# Scans the GRACE-FO L1B RL04 months already in the owner's DATAPOOL read-only for spike-template events.
+name: scan-templates
+on:
+  pull_request:
+    paths: ['.github/workflows/scan.yml', 'tools/scanTemplateCandidates.m']
+permissions:
+  contents: read
+concurrency:
+  group: scan-templates
+  cancel-in-progress: false
+jobs:
+  scan:
+    name: template candidates 2020-01, 2020-07
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Check out gracefoReading
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: astrobayer/gracefoReading
+          ref: v1.1.0
+          token: ${{ secrets.REFERENCE_READ_TOKEN }}
+          path: deps/gracefoReading
+
+      - name: Scan (read-only)
+        uses: matlab-actions/run-command@bfa857648f4895aa98a446fe41c85e0788421ed5 # v3
+        env:
+          READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}
+        with:
+          command: addpath(genpath('deps/gracefoReading')); addpath('tools'); scanTemplateCandidates(getenv('READING_DATA_POOL'), ["2020-01" "2020-07"])
+
+      - name: Publish scan
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: template-scan
+          path: artifacts/
