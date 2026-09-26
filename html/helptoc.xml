@@ -16,6 +16,7 @@
         <tocitem target="timeSeriesPreparation.internal.blockLength.html">timeSeriesPreparation.internal.blockLength</tocitem>
         <tocitem target="timeSeriesPreparation.internal.contentHash.html">timeSeriesPreparation.internal.contentHash</tocitem>
         <tocitem target="timeSeriesPreparation.internal.dlyap.html">timeSeriesPreparation.internal.dlyap</tocitem>
+        <tocitem target="timeSeriesPreparation.internal.fileSha256.html">timeSeriesPreparation.internal.fileSha256</tocitem>
         <tocitem target="timeSeriesPreparation.internal.provenance.html">timeSeriesPreparation.internal.provenance</tocitem>
         <tocitem target="timeSeriesPreparation.internal.requirePackage.html">timeSeriesPreparation.internal.requirePackage</tocitem>
         <tocitem target="timeSeriesPreparation.internal.resampleOnto.html">timeSeriesPreparation.internal.resampleOnto</tocitem>

@@ -1,8 +1,9 @@
 function res = run(arc, options)
-%RUN  The instrument stages on one arc, each run when its input is given.
+%RUN  The instrument stages on one arc or a campaign, each run when its input is given.
 %
 %   SYNTAX
 %     res = timeSeriesPreparation.run(arc)
+%     res = timeSeriesPreparation.run(arcs, Reference = refs, Config = cfg)
 %     res = timeSeriesPreparation.run(arc, Reference = ref, Config = cfg)
 %     res = timeSeriesPreparation.run(arc, QualFlags = aux, Thrusters = thr, Eclipse = ecl, Events = ev, Soe = soe, User = remove)
 %     res = timeSeriesPreparation.run(arc, Reference = ref, Response = h, Bias = b, Scale = S, Design = X, Statistic = f, Loss = g, Drivers = series)
@@ -77,27 +78,63 @@ function res = run(arc, options)
 %     stages (mask, align, gate, fill) always compute. "" (the default)
 %     is off (R5).
 %
+%     Campaign mode (X-15, CONCEPT 6.6 and 5.2; owner decisions
+%     2026-09-26). An Arc array of two or more arcs is a campaign: every
+%     arc runs the stages above, and a stage that refuses on one arc stops
+%     only that arc; its MException is kept and the campaign continues.
+%       inputs      Reference and Thrusters may be an Arc array, QualFlags,
+%                   Eclipse, User and Design a cell, with one entry per
+%                   arc; any other value is shared by all arcs.
+%       seeds       arc k runs with cfg.run.seed + k - 1: it equals the
+%                   single run of arcs(k) with that seed. Without a Config,
+%                   arc k takes Config(arcs(k)); the campaign settings come
+%                   from Config(arcs(1)).
+%       release     the arcs share one L1B release unless
+%                   cfg.run.mixedRelease is true (Arc.requireOneRelease).
+%       parallel    cfg.run.parallel = true runs the arcs in parfor when
+%                   canUseParallelPool is true, else serially; the seeds
+%                   make both equal. res.parallel says which ran.
+%       storage     with cfg.run.outDir set, each arc's result goes to the
+%                   MAT v7.3 file outDir/<mission>/<satellite>/<yyyy>/
+%                   <yyyy-mm-dd>.mat (GPS date of its first epoch) as
+%                   result, with schemaVersion "1"; an existing file is
+%                   kept unless cfg.run.overwrite is true (status
+%                   "unsaved"), and a file this campaign wrote is never
+%                   overwritten. outDir/manifest.json records the campaign
+%                   (software, dates, config hash and seed, and per arc its
+%                   source files, content hash, file, SHA-256, status).
+%                   "" (the default) keeps everything in memory (R5).
+%
 %   INPUTS
-%     arc  (1,1) Arc   -   The observation; its product selects the preset.
+%     arc  (1,:) Arc   -   The observation, or two or more arcs for a
+%                          campaign; the product selects the preset.
 %
 %   OPTIONS
 %     Config     (1,1) Config            [Config(arc)]  Settings.
-%     Reference  (1,1) Arc               []   Reference with arc's columns
+%     Reference  (1,:) Arc               []   Reference with arc's columns
 %                                             and units (a model, a second
-%                                             instrument).
-%     QualFlags  (1,1) struct            []   As mask.
-%     Thrusters  (1,1) Arc               []   As mask (THR1B).
-%     Eclipse    (1,1) struct            []   As mask.
+%                                             instrument); in a campaign
+%                                             one per arc, or one shared.
+%     QualFlags  (1,1) struct            []   As mask; in a campaign a
+%                                             cell, one per arc, or shared.
+%     Thrusters  (1,:) Arc               []   As mask (THR1B); in a
+%                                             campaign one per arc, or
+%                                             shared.
+%     Eclipse    (1,1) struct            []   As mask; a cell per arc in a
+%                                             campaign, or shared.
 %     Events     (:,4) table             []   As mask.
 %     Soe        (:,:) table             []   As mask.
-%     User       (N,1) logical           []   As mask.
+%     User       (N,1) logical           []   As mask; a cell per arc in a
+%                                             campaign, or shared.
 %     Response   (L,1) double            []   Pulse template of qc.screen;
 %                                             [] skips its impulse step.
 %     Bias       (1,M) double            []   Preliminary bias of the
 %                                             residual, as qc.residuals.
 %     Scale      (M,M) double            []   Preliminary scale, as
 %                                             qc.residuals.
-%     Design     (N,P) double            []   Regressors for the gate.
+%     Design     (N,P) double            []   Regressors for the gate; a
+%                                             cell per arc in a campaign,
+%                                             or shared.
 %     Names      (1,P) string            []   Their names.
 %     Statistic  (1,1) function_handle   []   statFcn of bootstrap.
 %     Loss       (1,1) function_handle   []   lossFcn of crossval.
@@ -131,6 +168,18 @@ function res = run(arc, options)
 %       provenance   (1,:) struct   arc's provenance, ending with the
 %                                   "run" entry (stages, skipped, cache,
 %                                   configHash).
+%                             A campaign returns instead:
+%       results      (N,1) cell     Each arc's result as above; [] where
+%                                   the arc refused.
+%       summary      (N,9) table    index, day, mission, satellite, status
+%                                   ("ok", "error", "unsaved"),
+%                                   identifier, message, file (relative
+%                                   to outDir), sha256.
+%       errors       (N,1) cell     The MException of each refused arc, or
+%                                   [].
+%       manifest     struct or []   What manifest.json holds ([] without
+%                                   outDir).
+%       parallel     (1,1) logical  True if the arcs ran in parfor.
 %
 %   ACCURACY
 %     Each stage's own; run adds no arithmetic but the residual, obs minus
@@ -140,10 +189,16 @@ function res = run(arc, options)
 %
 %   ERRORS
 %     Input:
-%       timeSeriesPreparation:run:campaignDeferred - arc is an array of
-%           arcs; campaign mode (CONCEPT 6.6) is a later work package.
+%       timeSeriesPreparation:run:inputCount - arc is empty; a per-arc
+%           option has another count than the campaign's arcs; one arc
+%           gets more than one Reference.
+%     State:
+%       timeSeriesPreparation:run:fileExists - outDir holds a manifest and
+%           cfg.run.overwrite is false (the campaign refuses before any
+%           arc runs); in a campaign's summary, a day file that exists.
 %     The identifiers of the stages propagate; a stage that refuses stops
-%     the run.
+%     the run, or in a campaign that arc. Arc:mixedRelease propagates
+%     from Arc.requireOneRelease.
 %
 %   EXAMPLE
 %     % A 1 Hz ACT1B-like arc against its signal: mask, align, QC, gaps.
@@ -157,23 +212,24 @@ function res = run(arc, options)
 %     res.diagnostics.stages
 %
 %   LIMITATIONS
-%     One arc per call; campaigns follow (CONCEPT 6.6). qc.screen gets no
-%     impulse or jump priors from run. The report (X-11) does not exist
+%     qc.screen gets no impulse or jump priors from run. A campaign keeps
+%     all results in memory besides writing them; the day files are not
+%     locked against a second process. The report (X-11) does not exist
 %     yet. The cache has no eviction and no locking (internal.stageCache).
 %
 %   REFERENCES
-%     docs/CONCEPT.md sections 4 (result fields), 6.1 (stages), 6.5 (gaps);
-%     HANDOVER X-10 (owner decisions 2026-09-24).
+%     docs/CONCEPT.md sections 4 (result fields), 5.2 (storage), 6.1
+%     (stages), 6.5 (gaps), 6.6 (campaigns); HANDOVER X-10 and X-15.
 %
-%   See also timeSeriesPreparation.Config, timeSeriesPreparation.internal.stageCache, timeSeriesPreparation.mask, timeSeriesPreparation.align, timeSeriesPreparation.qc.screen, timeSeriesPreparation.noise, timeSeriesPreparation.fill, timeSeriesPreparation.correlate.
+%   See also timeSeriesPreparation.Config, timeSeriesPreparation.internal.stageCache, timeSeriesPreparation.internal.fileSha256, timeSeriesPreparation.mask, timeSeriesPreparation.align, timeSeriesPreparation.qc.screen, timeSeriesPreparation.noise, timeSeriesPreparation.fill, timeSeriesPreparation.correlate.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-25 23:55 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-26 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc timeSeriesPreparation.Arc
         options.Config timeSeriesPreparation.Config {mustBeScalarOrEmpty} = timeSeriesPreparation.Config.empty
-        options.Reference timeSeriesPreparation.Arc {mustBeScalarOrEmpty} = timeSeriesPreparation.Arc.empty
+        options.Reference = timeSeriesPreparation.Arc.empty
         options.QualFlags = []
         options.Thrusters = []
         options.Eclipse = []
@@ -183,18 +239,33 @@ function res = run(arc, options)
         options.Response double = []
         options.Bias double = []
         options.Scale double = []
-        options.Design double = []
+        options.Design = []
         options.Names string = strings(1, 0)
         options.Statistic {mustBeScalarOrEmpty} = []
         options.Loss {mustBeScalarOrEmpty} = []
         options.Drivers struct = struct([])
     end
 
-    if numel(arc) ~= 1
-        error("timeSeriesPreparation:run:campaignDeferred", ...
-            "run takes one arc; got %d. Campaign mode (CONCEPT 6.6) follows in a later work package.", ...
-            numel(arc));
+    if isempty(arc)
+        error("timeSeriesPreparation:run:inputCount", "run needs at least one arc; got an empty Arc array.");
     end
+    if numel(arc) > 1
+        res = campaign(reshape(arc, 1, []), options);
+        return
+    end
+    if numel(options.Reference) > 1
+        error("timeSeriesPreparation:run:inputCount", ...
+            "One arc takes one Reference; got %d. Pass an Arc array as arc for a campaign.", ...
+            numel(options.Reference));
+    end
+    res = runArc(arc, options);
+end
+
+% ------------------------------------------------------------------------
+
+function res = runArc(arc, options)
+% The stages on one arc (CONCEPT 6.1): the single run, and each arc of a
+% campaign.
     cfg = options.Config;
     if isempty(cfg)
         cfg = timeSeriesPreparation.Config(arc);
@@ -385,6 +456,187 @@ function res = run(arc, options)
 end
 
 % ------------------------------------------------------------------------
+
+function res = campaign(arcs, options)
+% Campaign mode (X-15, CONCEPT 6.6 and 5.2; owner decisions 2026-09-26).
+    n = numel(arcs);
+    for name = perArcOptions()
+        v = options.(name);
+        if (iscell(v) || (isa(v, "timeSeriesPreparation.Arc") && numel(v) > 1)) && numel(v) ~= n
+            error("timeSeriesPreparation:run:inputCount", ...
+                "%s has %d entries for %d arcs; pass one per arc or one shared value.", ...
+                name, numel(v), n);
+        end
+    end
+    cfg = options.Config;
+    if isempty(cfg)
+        cfg = timeSeriesPreparation.Config(arcs(1));
+    end
+    r = cfg.run;
+    timeSeriesPreparation.Arc.requireOneRelease(arcs, AllowMixedRelease = logical(r.mixedRelease));
+    outDir = string(r.outDir);
+    overwrite = logical(r.overwrite);
+    if outDir ~= "" && isfile(fullfile(outDir, "manifest.json")) && ~overwrite
+        error("timeSeriesPreparation:run:fileExists", ...
+            "%s already holds a campaign manifest; set cfg.run.overwrite or choose another outDir.", outDir);
+    end
+
+    results = cell(n, 1);
+    errs = cell(n, 1);
+    useParallel = logical(r.parallel) && canUseParallelPool();
+    if useParallel
+        parfor k = 1:n
+            [results{k}, errs{k}] = tryArc(arcs(k), arcOptions(options, arcs(k), k));
+        end
+    else
+        for k = 1:n
+            [results{k}, errs{k}] = tryArc(arcs(k), arcOptions(options, arcs(k), k));
+        end
+    end
+
+    day = strings(n, 1); mission = day; satellite = day; status = day;
+    identifier = day; message = day; file = day; sha = day;
+    written = strings(0, 1);
+    for k = 1:n
+        a = arcs(k);
+        day(k) = gpsDay(a.t);
+        mission(k) = orUnknown(a.mission);
+        satellite(k) = orUnknown(a.satellite);
+        if isempty(errs{k})
+            status(k) = "ok";
+        else
+            status(k) = "error";
+            identifier(k) = string(errs{k}.identifier);
+            message(k) = string(errs{k}.message);
+            continue
+        end
+        if outDir == ""
+            continue
+        end
+        rel = strjoin([mission(k), satellite(k), extractBefore(day(k), 5), day(k) + ".mat"], "/");
+        target = fullfile(outDir, rel);
+        if ismember(target, written) || (isfile(target) && ~overwrite)
+            status(k) = "unsaved";
+            identifier(k) = "timeSeriesPreparation:run:fileExists";
+            message(k) = "the day file " + rel + " exists; set cfg.run.overwrite (a file this campaign wrote is never overwritten)";
+            continue
+        end
+        try
+            folder = fileparts(target);
+            if ~isfolder(folder)
+                mkdir(folder);
+            end
+            result = results{k}; %#ok<NASGU> saved by name
+            schemaVersion = "1"; %#ok<NASGU>
+            save(target, "result", "schemaVersion", "-v7.3");
+            written(end+1, 1) = target; %#ok<AGROW>
+            file(k) = rel;
+            sha(k) = timeSeriesPreparation.internal.fileSha256(target);
+        catch err
+            status(k) = "unsaved";
+            identifier(k) = string(err.identifier);
+            message(k) = string(err.message);
+        end
+    end
+    summary = table((1:n)', day, mission, satellite, status, identifier, message, file, sha, ...
+        'VariableNames', ["index" "day" "mission" "satellite" "status" "identifier" "message" "file" "sha256"]);
+
+    manifest = [];
+    if outDir ~= ""
+        manifest = campaignManifest(arcs, summary, cfg, useParallel);
+        if ~isfolder(outDir)
+            mkdir(outDir);
+        end
+        fid = fopen(fullfile(outDir, "manifest.json"), "w", "n", "UTF-8");
+        fwrite(fid, jsonencode(manifest, PrettyPrint = true), "char");
+        fclose(fid);
+    end
+    res = struct("results", {results}, "summary", summary, "errors", {errs}, ...
+        "manifest", manifest, "parallel", useParallel);
+end
+
+function names = perArcOptions()
+% Options that may carry one value per arc of a campaign.
+    names = ["Reference" "Thrusters" "QualFlags" "Eclipse" "User" "Design"];
+end
+
+function o = arcOptions(options, arc, k)
+% The options of arc k: its entry of each per-arc option, and the seed
+% cfg.run.seed + k - 1.
+    o = options;
+    for name = perArcOptions()
+        v = o.(name);
+        if iscell(v)
+            o.(name) = v{k};
+        elseif isa(v, "timeSeriesPreparation.Arc") && numel(v) > 1
+            o.(name) = v(k);
+        end
+    end
+    c = o.Config;
+    if isempty(c)
+        c = timeSeriesPreparation.Config(arc);
+    end
+    o.Config = set(c, "run", "seed", c.run.seed + k - 1);
+end
+
+function [r, e] = tryArc(arc, o)
+% One arc of a campaign; a refusal is kept, not raised.
+    r = [];
+    e = [];
+    try
+        r = runArc(arc, o);
+    catch err
+        e = err;
+    end
+end
+
+function d = gpsDay(t)
+% yyyy-mm-dd of the first epoch in GPS time (L1B files are GPS days).
+    if isempty(t)
+        d = "undated";
+        return
+    end
+    g = datetime(2000, 1, 1, 12, 0, 0) + seconds(double(t(1)) * 1e-9);
+    d = string(g, "yyyy-MM-dd");
+end
+
+function v = orUnknown(v)
+    v = string(v);
+    if v == ""
+        v = "unknown";
+    end
+end
+
+function m = campaignManifest(arcs, summary, cfg, useParallel)
+% The per-campaign data-management record (CONCEPT 5.2): DataCite-style
+% identification, PROV-style inputs, one entry per arc.
+    n = numel(arcs);
+    dated = summary.day(summary.day ~= "undated");
+    first = ""; last = "";
+    if ~isempty(dated)
+        dated = sort(dated);                             % yyyy-mm-dd sorts as it counts
+        first = dated(1); last = dated(end);
+    end
+    rows = cell(n, 1);
+    for k = 1:n
+        a = arcs(k);
+        rows{k} = struct("index", k, "day", summary.day(k), "mission", summary.mission(k), ...
+            "satellite", summary.satellite(k), "product", string(a.product), ...
+            "release", string(a.release), "files", {cellstr(a.files(:)')}, ...
+            "contentHash", timeSeriesPreparation.internal.contentHash(arcContent(a)), ...
+            "file", summary.file(k), "sha256", summary.sha256(k), "status", summary.status(k), ...
+            "identifier", summary.identifier(k), "message", summary.message(k));
+    end
+    m = struct("schemaVersion", "1", ...
+        "title", "timeSeriesPreparation campaign, " + first + " to " + last, ...
+        "software", struct("name", "timeSeriesPreparation", ...
+            "version", timeSeriesPreparation.internal.toolboxVersion()), ...
+        "created", string(datetime("now", "TimeZone", "UTC", "Format", "yyyy-MM-dd'T'HH:mm:ss'Z'")), ...
+        "firstDay", first, "lastDay", last, ...
+        "config", struct("hash", timeSeriesPreparation.internal.contentHash(toStruct(cfg)), ...
+            "seed", cfg.run.seed, "parallel", useParallel), ...
+        "arcs", vertcat(rows{:}));
+end
 
 function [outs, cache] = cached(cache, stage, nOut, compute, varargin)
 % One cacheable stage (X-14): with cache.dir "" it only computes; otherwise

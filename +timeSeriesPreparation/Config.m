@@ -76,7 +76,12 @@ classdef Config
 %     reference with the crn preset before align, false leaves it; see
 %     run) and seed (0), the caller's seed of the random stages; cacheDir
 %     ("" = the stage cache is off, R5; X-14), the folder of run's stage
-%     cache.
+%     cache. Campaigns (X-15): parallel (false; true runs the arcs in
+%     parfor when a pool can be used), outDir ("" = results stay in
+%     memory, R5; else the root of the per-day files and the manifest),
+%     overwrite (false: existing day files and manifests are kept) and
+%     mixedRelease (false: the arcs must share one L1B release, CONCEPT
+%     5.2).
 %
 %   INPUTS
 %     arc      (1,1) Arc      -   The arc whose product selects the preset.
@@ -117,7 +122,7 @@ classdef Config
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.run, timeSeriesPreparation.mask, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.0.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
@@ -139,7 +144,8 @@ classdef Config
         unc = struct("minWeightFraction", [], "blockLength", [], "nBoot", 1000, ...
             "level", 0.6827, "folds", 5)
         drivers = struct("method", "pchip", "maxGap", [], "maxLag", [], "maxVif", 10)
-        run = struct("filterReference", [], "seed", 0, "cacheDir", "")
+        run = struct("filterReference", [], "seed", 0, "cacheDir", "", ...
+            "parallel", false, "outDir", "", "overwrite", false, "mixedRelease", false)
     end
 
     methods
@@ -226,7 +232,7 @@ function known = schema(section)
         case "noise"
             known = ["order" "method" "maxLag" "lags" "welchAverages"];
         case "run"
-            known = ["filterReference" "seed" "cacheDir"];
+            known = ["filterReference" "seed" "cacheDir" "parallel" "outDir" "overwrite" "mixedRelease"];
         otherwise
             known = strings(1, 0);
     end

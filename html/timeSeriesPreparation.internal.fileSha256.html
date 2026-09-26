@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.internal.fileSha256</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.internal.fileSha256</h1>
+<p>SHA-256 of a file&#x27;s bytes, as 64 lowercase hex digits.</p>
+<h2>Syntax</h2>
+<pre><code>h = timeSeriesPreparation.internal.fileSha256(file)</code></pre>
+<h2>Description</h2>
+<p>The integrity record of a campaign&#x27;s day files (X-15, CONCEPT 5.2): the plain SHA-256 of the bytes, as sha256sum prints it, so a file can be checked outside MATLAB against the manifest. It differs from internal.contentHash, which hashes MATLAB values through a tagged byte stream. The file is read whole (java.security.MessageDigest).</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>file</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- Path of an existing file.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>h</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- 64 lowercase hexadecimal digits.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact. TestCampaign pins the FIPS 180-4 values: &quot;abc&quot; gives ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad, the empty file e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:fileSha256:fileNotFound</code></td><td>Input</td><td>file cannot be opened for reading.</td></tr>
+</table>
+<h2>Example</h2>
+<p>The SHA-256 of a three-byte file.</p>
+<pre><code>f = tempname; fid = fopen(f, &quot;w&quot;); fwrite(fid, &#x27;abc&#x27;); fclose(fid);
+h = timeSeriesPreparation.internal.fileSha256(f);
+delete(f);</code></pre>
+<h2>Limitations</h2>
+<p>The whole file is held in memory once; a day file of run is tens of MB.</p>
+<h2>References</h2>
+<p>NIST FIPS 180-4, Secure Hash Standard (2015), SHA-256 and example B.1; docs/CONCEPT.md 5.2 (per-day storage, manifest).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.internal.contentHash</code>, <code>timeSeriesPreparation.run</code></p>
+<p class="footer">timeSeriesPreparation v1.1.0 - generated from the help block of +timeSeriesPreparation/+internal/fileSha256.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

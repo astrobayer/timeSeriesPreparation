@@ -1,11 +1,11 @@
 % timeSeriesPreparation - physics-free preparation of GRACE and GRACE-FO time series
-% Version 1.0.0  2026-09-25
+% Version 1.1.0  2026-09-26
 %
 %   Design: docs/CONCEPT.md. Order of work: docs/GUIDE.md.
 %
 %   Single point of access (L3)
-%     run        - The instrument stages on one arc, each run when its input
-%                  is given.
+%     run        - The instrument stages on one arc or a campaign, each run
+%                  when its input is given.
 %
 %   Containers (L1)
 %     Arc        - One instrument time series on int64 GPS-ns epochs, with
@@ -59,6 +59,8 @@
 %                                the stage cache.
 %     internal.dlyap           - Stationary covariance P = T P T' + Q, the one
 %                                Lyapunov solver of the toolbox.
+%     internal.fileSha256      - SHA-256 of a file's bytes, the integrity
+%                                record of a campaign's day files.
 %     internal.provenance      - Metadata record of the qc units.
 %     internal.requirePackage  - Refuse at the point of use when an optional
 %                                dependency is not on the path.
