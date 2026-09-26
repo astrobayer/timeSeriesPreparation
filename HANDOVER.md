@@ -70,6 +70,12 @@ decisions of 2026-09-26 (interview while PR #64 awaited its merge).
 + 1. Per tag: contract 225, reference 259, precision 23, robustness 139,
 metamorphic 44, vectorisation 21, speed 12.
 
+**CI verdict (e4d8802, matlab job 108488884689): 723 + 0 + 0 = 723,
+green.** Per tag as predicted: contract 225, reference 259, precision 23,
+robustness 139, metamorphic 44, vectorisation 21, speed 12. TestReport
+passed 6/6 in 47 s, speedPerFigure included; the report example ran
+without a warning. The whole suite took 33.6 min and audit was green.
+
 ## X-18 — CF/ACDD NetCDF export, PROV-O, Arc schema version → release 1.2.0 — merged 2026-09-26 (PR #64, `5cba363`; issue #21 closed; v1.2.0 tagged by the workflow); scope was frozen 2026-09-26
 
 Tier B. CONCEPT row X-18 and 5.2 with the owner's decisions of 2026-09-26
