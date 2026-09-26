@@ -67,6 +67,8 @@ classdef Config
 %     impulseThreshold (5 sigma), jumpModel ("level"), jumpPenalty ([] =
 %     BIC) and jumpMinSegment (30 samples) - with qc.screen's own
 %     defaults, ported from NonGravForces 0.12.0; no product sets others.
+%     templates (X-17): false; true lets run add the matched-filter
+%     events of qc.detectTemplates, one layer per class of the bank.
 %
 %     noise (X-10): order ([p q], no default, R5: without it run skips the
 %     noise stage) and noise's options method ("exact"), maxLag (100
@@ -122,7 +124,7 @@ classdef Config
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.run, timeSeriesPreparation.mask, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run"]
@@ -135,7 +137,7 @@ classdef Config
             "eclipseMargin", [], "crnEdge", false)
         qc = struct("whitening", "none", "window", [], "hampelWindow", 61, ...
             "hampelThreshold", 4, "impulseThreshold", 5, "jumpModel", "level", ...
-            "jumpPenalty", [], "jumpMinSegment", 30)
+            "jumpPenalty", [], "jumpMinSegment", 30, "templates", false)
         crn = struct("preset", "")
         align = struct("method", "pchip", "maxGap", [], "maxLag", 60, "threshold", 1)
         fill = struct("method", "none", "maxGap", [], "window", [])
@@ -228,7 +230,7 @@ function known = schema(section)
             known = ["minWeightFraction" "blockLength" "nBoot" "level" "folds"];
         case "qc"
             known = ["whitening" "window" "hampelWindow" "hampelThreshold" ...
-                "impulseThreshold" "jumpModel" "jumpPenalty" "jumpMinSegment"];
+                "impulseThreshold" "jumpModel" "jumpPenalty" "jumpMinSegment" "templates"];
         case "noise"
             known = ["order" "method" "maxLag" "lags" "welchAverages"];
         case "run"

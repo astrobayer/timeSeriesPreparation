@@ -46,7 +46,8 @@
 %                       of two coordinates.
 %     qc              - Residual quality control: outliers, impulses, jumps,
 %                       event table (NonGravForces.qc 0.12.0, numbers
-%                       unchanged; help timeSeriesPreparation.qc).
+%                       unchanged), template bank and its matched filter
+%                       (X-17; help timeSeriesPreparation.qc).
 %
 %   Spectra and time-series models (L0, sigtools v1.3.1; conventions of X-02)
 %     spectral   - help timeSeriesPreparation.spectral

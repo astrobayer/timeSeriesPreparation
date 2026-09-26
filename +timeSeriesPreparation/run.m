@@ -43,6 +43,12 @@ function res = run(arc, options)
 %                     Bias, Scale, Response and cfg.qc; the rows it masks
 %                     on any axis form the layer "qc". Epochs are passed
 %                     as UTC: GPS minus the leap seconds of the date.
+%       templates     cfg.qc.templates true, qc run on 3 columns and the
+%                     arc's satellite in the bank: qc.detectTemplates on
+%                     the qc residual (UTC epochs) with the THR1B firings
+%                     of Thrusters as priors; each class adds its layer
+%                     (info.layers, "tplThruster") and its events join
+%                     flags.events (X-17).
 %       noise         cfg.noise.order given: noise(s, order) with
 %                     cfg.noise, s the residual arc (arc minus Bias + Scale
 %                     x reference, with arc's layers) when a Reference is
@@ -151,6 +157,8 @@ function res = run(arc, options)
 %                                   reason; mask (mask's info); alignment
 %                                   (checkAlignment's report); qc (struct
 %                                   of mask, events and info of qc.screen);
+%                                   templates (struct of events and info
+%                                   of qc.detectTemplates);
 %                                   residual (Arc); noise (noise's model);
 %                                   gate (observability's report);
 %                                   bootstrap, crossval (struct of the
@@ -160,7 +168,8 @@ function res = run(arc, options)
 %                                   skipped stage is [].
 %       correlation  struct or []   correlate's result.
 %       flags        (1,1) struct   events (N,8) qc.eventTable of the
-%                                   qc detections; alignment (1,M) string,
+%                                   qc and templates detections, sorted
+%                                   by tStart; alignment (1,M) string,
 %                                   checkAlignment's verdicts (empty if
 %                                   not run); weightFraction, the mean of
 %                                   arc.weights; nFilled, the rows filled.
@@ -224,7 +233,7 @@ function res = run(arc, options)
 %   See also timeSeriesPreparation.Config, timeSeriesPreparation.internal.stageCache, timeSeriesPreparation.internal.fileSha256, timeSeriesPreparation.mask, timeSeriesPreparation.align, timeSeriesPreparation.qc.screen, timeSeriesPreparation.noise, timeSeriesPreparation.fill, timeSeriesPreparation.correlate.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-26 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc timeSeriesPreparation.Arc
@@ -276,7 +285,7 @@ function res = runArc(arc, options)
     stages = strings(1, 0);
     skipped = table(strings(0, 1), strings(0, 1), 'VariableNames', ["stage" "reason"]);
     dg = struct("stages", [], "skipped", [], "mask", [], "alignment", [], "qc", [], ...
-        "residual", [], "noise", [], "gate", [], "bootstrap", [], "crossval", [], "fill", [], ...
+        "templates", [], "residual", [], "noise", [], "gate", [], "bootstrap", [], "crossval", [], "fill", [], ...
         "cache", []);
     cache = struct("dir", string(cfg.run.cacheDir), "table", table(strings(0, 1), strings(0, 1), ...
         strings(0, 1), strings(0, 1), 'VariableNames', ["stage" "key" "status" "reason"]));
@@ -345,6 +354,26 @@ function res = runArc(arc, options)
         flags.events = events;
         arc = addLayer(arc, "qc", any(qmask, 2));
         stages(end+1) = "qc";
+    end
+
+    % 2b templates (X-17)
+    bank = timeSeriesPreparation.qc.templateBank();
+    if ~cfg.qc.templates
+        skipped = skip(skipped, "templates", "cfg.qc.templates is false");
+    elseif ~any(stages == "qc") || M ~= 3
+        skipped = skip(skipped, "templates", "needs the qc stage on 3 columns");
+    elseif ~all(structfun(@(b) isfield(b, arc.satellite), bank))
+        skipped = skip(skipped, "templates", sprintf("the bank has no templates for satellite '%s'", arc.satellite));
+    else
+        [tev, tinfo] = timeSeriesPreparation.qc.detectTemplates(qinfo.residual, ...
+            Epoch = utcOf(arc.t), Satellite = arc.satellite, Bank = bank, ...
+            Priors = thrusterPriors(options.Thrusters));
+        dg.templates = struct("events", tev, "info", tinfo);
+        flags.events = sortrows([flags.events; tev], 'tStart');
+        for k = 1:numel(tinfo.classes)
+            arc = addLayer(arc, tinfo.layers(k), tinfo.(tinfo.classes(k)).mask);
+        end
+        stages(end+1) = "templates";
     end
 
     % the series the noise model describes: the residual, or the arc itself
@@ -693,6 +722,22 @@ end
 
 function T = skip(T, stage, reason)
     T(end+1, :) = {string(stage), string(reason)};
+end
+
+function T = thrusterPriors(thr)
+% The THR1B firings (records with a positive on_time_*) as qc.eventTable
+% rows, source "THR1B", from the record epoch to the end of the longest
+% on-time; the empty table without Thrusters.
+    T = timeSeriesPreparation.qc.eventTable();
+    if isempty(thr), return, end
+    on = startsWith(thr.names, "on_time_");
+    onTime = thr.obs(:, on) / 1000;
+    fired = any(onTime > 0, 2);
+    n = nnz(fired);
+    t0 = utcOf(thr.t(fired));
+    T = timeSeriesPreparation.qc.eventTable(t0, t0 + seconds(max(onTime(fired, :), [], 2)), ...
+        repmat("impulse", n, 1), repmat("all", n, 1), NaN(n, 1), NaN(n, 1), ...
+        repmat("THR1B", n, 1), ones(n, 1));
 end
 
 function e = utcOf(t)

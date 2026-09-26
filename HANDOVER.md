@@ -44,9 +44,13 @@ last two complete: jobs 108411906583 and 108423640544).
 - `qc.detectTemplates(r, Epoch = t, Satellite = s)`: the residual is
   high-passed as in the scan (minus its 301-s moving median); a 3-axis
   matched filter with the unit-norm template; score = filter output over
-  its robust sigma; peaks above Threshold (8) at least 121 s apart become
-  qc.eventTable rows of class "impulse", amplitude = size relative to the
-  median event, sigma from the robust sigma. A THR1B prior within
+  its robust sigma; peaks of |score| above Threshold (8) at least 121 s
+  apart, largest first, claim their neighbourhood and the positive ones
+  become qc.eventTable rows (found while building: a negated median
+  template has positive autocorrelation sidelobes of 15 to 26 sigma, so a
+  negative peak must block them) of class "impulse", amplitude = size relative to the
+  median event times the template's largest sample (m/s², the
+  eventTable's unit of the data), sigma from the robust sigma. A THR1B prior within
   PriorWindow_s (5 s) makes the source "THR1B" with confidence 1. One mask
   per class over the template's support (|template| >= 5 % of its peak).
 - `Config.qc.templates` (false = off, R5). With true, a Reference and

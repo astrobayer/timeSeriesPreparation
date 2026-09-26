@@ -30,10 +30,12 @@
         <tocitem target="timeSeriesPreparation.partialCorrelation.html">timeSeriesPreparation.partialCorrelation</tocitem>
         <tocitem target="timeSeriesPreparation.qc.detectImpulses.html">timeSeriesPreparation.qc.detectImpulses</tocitem>
         <tocitem target="timeSeriesPreparation.qc.detectJumps.html">timeSeriesPreparation.qc.detectJumps</tocitem>
+        <tocitem target="timeSeriesPreparation.qc.detectTemplates.html">timeSeriesPreparation.qc.detectTemplates</tocitem>
         <tocitem target="timeSeriesPreparation.qc.eventTable.html">timeSeriesPreparation.qc.eventTable</tocitem>
         <tocitem target="timeSeriesPreparation.qc.hampel.html">timeSeriesPreparation.qc.hampel</tocitem>
         <tocitem target="timeSeriesPreparation.qc.residuals.html">timeSeriesPreparation.qc.residuals</tocitem>
         <tocitem target="timeSeriesPreparation.qc.screen.html">timeSeriesPreparation.qc.screen</tocitem>
+        <tocitem target="timeSeriesPreparation.qc.templateBank.html">timeSeriesPreparation.qc.templateBank</tocitem>
         <tocitem target="timeSeriesPreparation.regressDrivers.html">timeSeriesPreparation.regressDrivers</tocitem>
         <tocitem target="timeSeriesPreparation.run.html">timeSeriesPreparation.run</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.allanVariance.html">timeSeriesPreparation.spectral.allanVariance</tocitem>

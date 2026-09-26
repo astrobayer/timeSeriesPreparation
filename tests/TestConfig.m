@@ -5,7 +5,7 @@ classdef TestConfig < matlab.unittest.TestCase
 %     The nine sections of CONCEPT 5 exist and each has fields: crn holds
 %     preset (X-04), align its four options (X-06), fill its three (X-08),
 %     unc its five (X-07), drivers its four (X-09), mask its five (X-05),
-%     qc its eight, noise its five and run its three (X-10, X-14).
+%     qc its nine (X-17 templates), noise its five and run its three (X-10, X-14).
 %     Config(arc) records mission and product and takes the crn preset and
 %     the minimum-data gate from the product. set refuses an unknown section or field;
 %     fault injection of the refusal is the refusal itself: a misspelt
@@ -30,7 +30,7 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function nineSectionsAllDefined(testCase)
@@ -138,7 +138,7 @@ classdef TestConfig < matlab.unittest.TestCase
             cfg = timeSeriesPreparation.Config();
             testCase.verifyEqual(cfg.qc, struct("whitening", "none", "window", [], ...
                 "hampelWindow", 61, "hampelThreshold", 4, "impulseThreshold", 5, ...
-                "jumpModel", "level", "jumpPenalty", [], "jumpMinSegment", 30));
+                "jumpModel", "level", "jumpPenalty", [], "jumpMinSegment", 30, "templates", false));
             testCase.verifyEqual(cfg.noise, struct("order", [], "method", "exact", ...
                 "maxLag", 100, "lags", 20, "welchAverages", 32));
             testCase.verifyEqual(cfg.run, struct("filterReference", [], "seed", 0, "cacheDir", "", ...

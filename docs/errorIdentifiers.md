@@ -65,6 +65,11 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:detectJumps:inputPriors` | `+timeSeriesPreparation/+qc/detectJumps.m` | Input | Priors is not a qc.eventTable. |
 | `timeSeriesPreparation:detectJumps:inputRange` | `+timeSeriesPreparation/+qc/detectJumps.m` | Input | Penalty is not positive, MinSegment is below 2 (3 for slope) or not an integer, or PriorWindow_s is not positive. |
 | `timeSeriesPreparation:detectJumps:inputShape` | `+timeSeriesPreparation/+qc/detectJumps.m` | Input | r is not Kx1 or Kx3, or Epoch is not Kx1. |
+| `timeSeriesPreparation:detectTemplates:inputEpoch` | `+timeSeriesPreparation/+qc/detectTemplates.m` | Input | Epoch is missing, not a datetime or not UTC. |
+| `timeSeriesPreparation:detectTemplates:inputPriors` | `+timeSeriesPreparation/+qc/detectTemplates.m` | Input | Priors is not a qc.eventTable. |
+| `timeSeriesPreparation:detectTemplates:inputRange` | `+timeSeriesPreparation/+qc/detectTemplates.m` | Input | Threshold or PriorWindow_s is not positive. |
+| `timeSeriesPreparation:detectTemplates:inputShape` | `+timeSeriesPreparation/+qc/detectTemplates.m` | Input | r is not K x 3, or Epoch is not K x 1. |
+| `timeSeriesPreparation:detectTemplates:unknownSatellite` | `+timeSeriesPreparation/+qc/detectTemplates.m` | Input | the bank has no template for Satellite. |
 | `timeSeriesPreparation:drivers:badSeries` | `+timeSeriesPreparation/drivers.m` | Input | series lacks a field, or a driver's name is not a field name, its t is not an int64 strictly increasing column, or its value is not a real double column of t's size without Inf. |
 | `timeSeriesPreparation:drivers:duplicateName` | `+timeSeriesPreparation/drivers.m` | Input | two drivers share a name. |
 | `timeSeriesPreparation:drivers:unitUnknown` | `+timeSeriesPreparation/drivers.m` | Input | a driver states no unit. Options outside their domain are refused by the arguments block with a MATLAB: identifier. |
@@ -168,4 +173,4 @@ this file and the help blocks disagree.
 | `timeSeriesPreparation:tsPacf:nonPD` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | \|PACF\| > 1 at some lag: the pairwise ACF is not positive-definite. |
 | `timeSeriesPreparation:tsPacf:unobservableLag` | `+timeSeriesPreparation/+tsmodels/tsPacf.m` | Gaps | a lag up to maxLag has no complete pair. |
 
-161 identifier(s).
+166 identifier(s).
