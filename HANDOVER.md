@@ -15,9 +15,11 @@ restates:
 Tier B. CONCEPT row X-16 with the owner's decisions of 2026-09-26:
 - **Pure MATLAB.** No C layer, no MEX: one code path on every platform.
 - **Scope: the whole of `qc.screen`** (widened from the two named units):
-  - `hampel`: the per-sample loop becomes W x n window blocks (NaN-padded
-    edges, non-finite samples as NaN), `median(..., 1, "omitnan")` for the
-    median and the exact window MAD; blocks of at most 2^22 elements.
+  - `hampel`: the per-sample loop becomes vectorised windows. A full,
+    finite window (odd count) takes its median from `movmedian` (the middle
+    element, no arithmetic) and its MAD from one `median` over W x n window
+    blocks of at most 2^22 elements. Edge windows and windows with NaN take
+    `median(..., "omitnan")`; `movsum` counts the finite samples.
   - `detectJumps`: PELT's candidate list lives in a preallocated buffer
     instead of being rebuilt by concatenation every step; same candidates,
     same order, same arithmetic.
@@ -36,6 +38,10 @@ Tier B. CONCEPT row X-16 with the owner's decisions of 2026-09-26:
   - `detectJumps` not slower (owner decision);
   - `screen` at least 2 times faster (my proposal: hampel dominates the
     port's screen; the owner may raise it).
+  - My estimate before any run (2026-09-26): hampel reaches about 3–4
+    times, not 10. The owner kept 10 (decision 2026-09-26). If CI measures
+    less, I keep optimising in MATLAB; if that fails, the bar or a MEX
+    layer goes back to the owner. The bar is not lowered by me.
 
 **Tests.**
 - TestQcEquivalence +4 cases (reference):
