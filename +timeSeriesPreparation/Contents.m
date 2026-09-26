@@ -1,5 +1,5 @@
 % timeSeriesPreparation - physics-free preparation of GRACE and GRACE-FO time series
-% Version 1.1.0  2026-09-26
+% Version 1.2.0  2026-09-26
 %
 %   Design: docs/CONCEPT.md. Order of work: docs/GUIDE.md.
 %
@@ -10,7 +10,7 @@
 %   Containers (L1)
 %     Arc        - One instrument time series on int64 GPS-ns epochs, with
 %                  weights, layers and provenance.
-%     Config     - Instrument settings in nine sections.
+%     Config     - Instrument settings in ten sections.
 %     crnKernel  - The CRN-class digital filter of the GRACE L1B ATBD, as printed.
 %     noiseReference - Published noise ASDs of the GRACE-FO instruments (LRI,
 %                  KBR, ACC).
@@ -48,6 +48,9 @@
 %                       event table (NonGravForces.qc 0.12.0, numbers
 %                       unchanged), template bank and its matched filter
 %                       (X-17; help timeSeriesPreparation.qc).
+%     exportNetcdf    - One arc, its residual and QC events as a CF-1.12/
+%                       ACDD-1.3 NetCDF-4 file with PROV-O provenance.
+%     readNetcdf      - A file of exportNetcdf back as a struct.
 %
 %   Spectra and time-series models (L0, sigtools v1.3.1; conventions of X-02)
 %     spectral   - help timeSeriesPreparation.spectral
@@ -63,6 +66,8 @@
 %     internal.fileSha256      - SHA-256 of a file's bytes, the integrity
 %                                record of a campaign's day files.
 %     internal.provenance      - Metadata record of the qc units.
+%     internal.provJsonLd      - W3C PROV-O graph of an arc's provenance, as
+%                                JSON-LD.
 %     internal.requirePackage  - Refuse at the point of use when an optional
 %                                dependency is not on the path.
 %     internal.resampleOnto    - Interpolate a series onto new epochs, never

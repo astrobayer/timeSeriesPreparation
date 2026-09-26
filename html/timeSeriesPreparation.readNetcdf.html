@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.readNetcdf</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.readNetcdf</h1>
+<p>A file of exportNetcdf back as a struct: time, observations, weights, layers, residual, events, attributes.</p>
+<h2>Syntax</h2>
+<pre><code>d = timeSeriesPreparation.readNetcdf(file)</code></pre>
+<h2>Description</h2>
+<p>The reader of the X-18 exchange format (CONCEPT 5.2; HANDOVER X-18). It reads the layout that exportNetcdf writes, schema_version &quot;1&quot;: the observation and residual variables named by the global attributes observation_variables and residual_variables, in that order; layers decoded from their bits by flag_masks and flag_meanings; the events, when event_count is not -1, rebuilt as a qc.eventTable with UTC epochs (GPS minus the leap seconds, as run). It returns a struct, not an Arc: an Arc is built from the L1B reader&#x27;s metadata, which the file keeps only as attributes.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>file</code></td><td>1,1</td><td><code>string</code></td><td>&mdash;</td><td>- A NetCDF file written by exportNetcdf.</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>d</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: t (K,1) int64 GPS ns; obs (K,M) double; names, units (1,M) string; weights (K,1) double; filled (K,1) logical; layers (1,1) struct of (K,1) logical; residual, [] or a struct with obs, names (without the prefix) and units; events, [] or an (N,8) qc.eventTable; attributes (1,1) struct, the global attributes.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Exact for t, obs, weights, filled, layers and the residual (the values are read as stored). Event epochs to about 1 microsecond (see exportNetcdf).</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:readNetcdf:fileNotFound</code></td><td>Input</td><td>file does not exist.</td></tr>
+<tr><td><code>timeSeriesPreparation:readNetcdf:schemaVersion</code></td><td>Input</td><td>the file&#x27;s schema_version is not &quot;1&quot;, or it has none (not written by exportNetcdf).</td></tr>
+</table>
+<h2>Example</h2>
+<p>Export a five-sample arc and read its time and observations back.</p>
+<pre><code>t = int64(7306 * 86400 - 43200 + 18) * int64(1e9) + int64(0:4)&#x27; * int64(1e9);
+aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableFieldNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableUnits&quot;, struct(&quot;lin_accl_x&quot;, &quot;m/s2&quot;), &quot;fileName&quot;, &quot;ACT1B_2020-01-02_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+f = tempname + &quot;.nc&quot;;
+info = timeSeriesPreparation.exportNetcdf(f, timeSeriesPreparation.Arc(t, zeros(5, 1), aux), Metadata = struct(&quot;creator&quot;, &quot;A. Author&quot;));
+d = timeSeriesPreparation.readNetcdf(f);
+delete(f, info.prov);</code></pre>
+<h2>Limitations</h2>
+<p>Reads schema_version &quot;1&quot; only; files of other writers refuse.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md 5.2; HANDOVER X-18; CF Conventions 1.12 section 3.5 (flags).</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.exportNetcdf</code>, <code>timeSeriesPreparation.qc.eventTable</code></p>
+<p class="footer">timeSeriesPreparation v1.2.0 - generated from the help block of +timeSeriesPreparation/readNetcdf.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

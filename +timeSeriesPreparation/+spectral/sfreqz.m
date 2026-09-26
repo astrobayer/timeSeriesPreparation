@@ -61,7 +61,7 @@ function [H, w] = sfreqz(b, a, w, Fs)
 %   See also timeSeriesPreparation.spectral.sinvfreqz, timeSeriesPreparation.spectral.sstmcb, timeSeriesPreparation.spectral.arma2psd, timeSeriesPreparation.spectral.psd2arma.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         b {mustBeNumeric}

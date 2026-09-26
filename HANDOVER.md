@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.33 · 2026-09-26 · X-17 (QC template bank) scope frozen; X-15 done — merged (PR #61, `a82c710`), release v1.1.0, #18 closed**
+**Revision 0.34 · 2026-09-26 · X-18 (NetCDF export, PROV-O, Arc schema) scope frozen; X-17 done — merged (PR #63, `db47634`), #20 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,108 @@ restates:
 
 ---
 
-## X-17 — QC template bank; scope frozen 2026-09-26
+## X-18 — CF/ACDD NetCDF export, PROV-O, Arc schema version → release 1.2.0; scope frozen 2026-09-26
+
+Tier B. CONCEPT row X-18 and 5.2 with the owner's decisions of 2026-09-26
+(interview after PR #63). Standards, current on 2026-09-26: CF 1.12 for
+the time coordinate (owner's choice, see below), ACDD 1.3, W3C PROV-O
+(2013) serialised as JSON-LD, DataCite Metadata Schema 4.7 (2026-03-03).
+
+**Finding before the freeze:** CF 1.13 (17 Dec 2025, Appendix M) withdrew
+the `units_metadata = "leap_seconds: …"` values that CF 1.12 introduced,
+in favour of the calendars `utc` and `tai`; GPS time would then be
+calendar `tai` with reference 2000-01-01 12:00:19. Put to the owner:
+**keep CF-1.12 with `leap_seconds: none`.** The file says
+`Conventions = "CF-1.12, ACDD-1.3"`, so a reader knows which rules apply.
+
+**Scope (frozen):**
+- `exportNetcdf(file, arc, Residual = s, Events = T, Metadata = m,
+  Overwrite = false)` (new, L2): one NetCDF-4 file (deflate 4, shuffle),
+  CF-1.12 + ACDD-1.3:
+  - `time` (int64, GPS ns): units "nanoseconds since 2000-01-01
+    12:00:00", calendar "standard", units_metadata "leap_seconds: none",
+    standard_name "time", axis "T". Values equal `arc.t` bit for bit.
+  - one double variable per observation column, named as `arc.names`,
+    with its units and _FillValue NaN; `weights` (units "1"); `filled`
+    (byte, flag_values 0 1); `layers` (uint32, one bit per layer,
+    flag_masks and flag_meanings = the layer names; more than 32 layers
+    refuse).
+  - with Residual (an Arc on arc.t): `residual_<name>` per column.
+  - with Events (qc.eventTable): dimension `event`; `event_start`,
+    `event_end` (int64 GPS ns, as time); `event_class`, `event_axis`,
+    `event_source` (byte codes, flag_values and flag_meanings);
+    `event_amplitude`, `event_sigma`, `event_confidence` (double).
+  - global attributes: ACDD 1.3 (title, summary, id, history, source,
+    platform, instrument, processing_level, product_version,
+    date_created, creator_*, institution, publisher_name, license,
+    time_coverage_*), `schema_version` "1" and `prov_jsonld`, the PROV-O
+    graph; the same graph goes to the sidecar `<name>.prov.jsonld`.
+  - metadata m: creator (required; empty refuses), creatorOrcid,
+    creatorEmail, institution, publisher, license ("CC-BY-4.0"), title,
+    project.
+- `readNetcdf(file)` (new, L2): the file back as a struct (t, obs, names,
+  units, weights, filled, layers, residual, events, attributes); the
+  round trip is bit-exact.
+- `internal.provJsonLd(provenance, ...)` (new, L0): PROV-O JSON-LD of an
+  Arc's provenance: the input L1B files as prov:Entity, every stage as a
+  prov:Activity (startedAtTime, used, wasAssociatedWith the
+  timeSeriesPreparation prov:SoftwareAgent), the creator as prov:Person
+  (ORCID as @id when given), the file as the generated entity.
+- `Config.export` (new section, creator etc. as above, empty by default)
+  and `cfg.run.format` ("mat" default, "netcdf", "both"). A campaign with
+  "netcdf" or "both" and no creator refuses before any arc runs
+  (`run:exportMetadata`). It writes `<yyyy-mm-dd>.nc` and
+  `<yyyy-mm-dd>.prov.jsonld` beside the MAT file. The summary gains the
+  columns netcdf and netcdfSha256. The manifest gains per arc netcdf,
+  netcdfSha256, prov and provSha256, and a `datacite` block (DataCite 4.7
+  mandatory properties: creators, titles, publisher, publicationYear,
+  resourceType "Dataset", plus version, rights and formats).
+- Arc schema version: the constant `Arc.SchemaVersion` = "2". saveobj
+  stores a struct with schemaVersion. loadobj restores it, accepts an Arc
+  object saved by 1.1.0 or earlier (schema "1", no saveobj then), and
+  refuses an unknown version (`Arc:schemaVersion`). The campaign's day
+  file schemaVersion becomes "2".
+- Release 1.2.0: Contents.m, every help footer, CHANGELOG.
+
+Out of scope: CF DSG encoding of the events (they are a plain table on
+dimension `event`); reading NetCDF back into an Arc object (readNetcdf
+returns a struct); DOI registration.
+
+**Tests (predicted):**
+- TestExport (11):
+  - contract 3: fileLayout, timeCoordinate, provenanceGraph.
+  - reference 4: arcRoundTrip, residualAndEventsRoundTrip,
+    campaignNetcdf, campaignBoth.
+  - robustness 4: refusals, campaignRefusesWithoutCreator,
+    existingFileKept, nanSurvives.
+- TestArcSchema (4):
+  - contract: schemaVersionConstant.
+  - reference: saveLoadRoundTrip.
+  - robustness: loadobjAcceptsV1Object, loadobjRefusesUnknownVersion.
+- TestHelpExamples +3 (exportNetcdf, readNetcdf, internal.provJsonLd;
+  contract).
+- TestConfig, TestCampaign and TestLayering follow: ten sections, the
+  summary columns, schemaVersion "2", and the two new L2 units.
+
+**Prediction** (before any run): **716 + 0 + 0 = 716**. That is 698 plus
+11, 4 and 3. Per tag: contract 220, reference 259, precision 23,
+robustness 138, metamorphic 44, vectorisation 21, speed 11.
+
+**CI round 1 (d448919, matlab job 108468198898): 715 + 1 + 0 = 716.**
+The count per tag was as predicted. One pin was missed:
+TestConfig/toStructCarriesEverything lists the fields of toStruct, and
+"export" was missing from it. Fix: add "export" to that list. The
+prediction is unchanged: 716 + 0 + 0.
+
+**CI verdict (7bee802, matlab job 108475902234): 716 + 0 + 0 = 716,
+green.** Per tag as predicted: contract 220, reference 259, precision 23,
+robustness 138, metamorphic 44, vectorisation 21, speed 11. TestExport
+passed 11/11 and TestArcSchema 4/4. TestCampaign passed on a real pool
+(Processes, 8 workers) with saveobj/loadobj in the transfer. The whole
+suite ran in 33.5 min and the audit was green. The release workflow tags
+1.2.0 on merge.
+
+## X-17 — QC template bank — merged 2026-09-26 (PR #63, `db47634`; issue #20 closed); scope was frozen 2026-09-26
 
 Tier B. CONCEPT 6.1 row 2 and row X-17, with the owner's decisions of
 2026-09-26 and the throwaway scan PR #62 (closed unmerged; three runs, the
@@ -2049,7 +2150,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-17 in progress** (scope above). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**X-18 in progress** (scope above). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).

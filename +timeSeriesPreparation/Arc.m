@@ -9,6 +9,8 @@ classdef Arc
 %     arc = appendProvenance(arc, stage, detail)
 %     out = derive(arc, t, obs, stage, detail, Units = units)
 %     timeSeriesPreparation.Arc.requireOneRelease(arcs)
+%     s = saveobj(arc)
+%     arc = timeSeriesPreparation.Arc.loadobj(s)
 %
 %   DESCRIPTION
 %     The container every stage of this toolbox reads and returns (CONCEPT
@@ -44,6 +46,14 @@ classdef Arc
 %     weights, layers and filled start afresh, because they belong to the old
 %     epochs.
 %
+%     Schema version (X-18, CONCEPT 5.2): Arc.SchemaVersion names the layout
+%     of the stored arc, "2" since release 1.2.0. save stores the struct of
+%     saveobj (every property and schemaVersion); load calls loadobj, which
+%     restores it. An arc saved by 1.1.0 or earlier (schema "1", saved as
+%     the object itself, same properties) reaches loadobj as an Arc and is
+%     taken unchanged. A struct of any other schemaVersion refuses, so a
+%     file of a later release is never read with the wrong layout.
+%
 %   INPUTS
 %     t       (N,1) int64    -   GPS nanoseconds past 2000-01-01 12:00:00,
 %                                strictly increasing.
@@ -61,6 +71,8 @@ classdef Arc
 %     values  (N,M) double   -   fillSamples: filled observations; only the
 %                                entries under mask are used, finite.
 %     mask    (N,M) logical  -   fillSamples: true = entry filled.
+%     s       (1,1) struct   -   loadobj: the struct saveobj made (or an
+%                                Arc saved by schema 1).
 %
 %   OPTIONS
 %     Columns            (1,:) string   [all]     Observation names to keep,
@@ -73,7 +85,9 @@ classdef Arc
 %   OUTPUTS
 %     arc  (1,1) Arc   -   Properties: t, obs, names, units, mission,
 %                          product, satellite, release, files, frame,
-%                          frameSource, weights, layers, filled, provenance.
+%                          frameSource, weights, layers, filled, provenance;
+%                          the constant SchemaVersion ("2").
+%     s    (1,1) struct  -   saveobj: schemaVersion and every property.
 %
 %   ACCURACY
 %     Exact: t and obs are stored as given, bit for bit, and selecting
@@ -103,6 +117,9 @@ classdef Arc
 %     Layers:
 %       timeSeriesPreparation:Arc:badLayer - the layer is not N x 1 logical,
 %           its name is not a field name, or a layer of that name exists.
+%     Storage:
+%       timeSeriesPreparation:Arc:schemaVersion - loadobj got a struct whose
+%           schemaVersion is not "2", or no Arc and no struct.
 %
 %   EXAMPLE
 %     % A ten-sample ACT1B-like arc from a hand-made aux struct.
@@ -123,7 +140,11 @@ classdef Arc
 %   See also timeSeriesPreparation.Config, gracefoReading.readL1b, gracefoReading.readL1bMulti.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+
+    properties (Constant)
+        SchemaVersion = "2"
+    end
 
     properties (SetAccess = private)
         t = int64.empty(0, 1)
@@ -317,7 +338,35 @@ classdef Arc
         end
     end
 
+    methods
+        function s = saveobj(arc)
+            s = struct("schemaVersion", timeSeriesPreparation.Arc.SchemaVersion);
+            for f = storedFields()
+                s.(f) = arc.(f);
+            end
+        end
+    end
+
     methods (Static)
+        function arc = loadobj(s)
+            if isa(s, "timeSeriesPreparation.Arc")
+                arc = s;                                % schema 1: saved as the object
+                return
+            end
+            if ~isstruct(s) || ~isfield(s, "schemaVersion") ...
+                    || ~isequal(string(s.schemaVersion), timeSeriesPreparation.Arc.SchemaVersion)
+                v = "none";
+                if isstruct(s) && isfield(s, "schemaVersion"), v = string(s.schemaVersion); end
+                error("timeSeriesPreparation:Arc:schemaVersion", ...
+                    "Stored arc has schema version %s; this release reads %s " + ...
+                    "(and objects of schema 1).", v, timeSeriesPreparation.Arc.SchemaVersion);
+            end
+            arc = timeSeriesPreparation.Arc();
+            for f = storedFields()
+                arc.(f) = s.(f);
+            end
+        end
+
         function requireOneRelease(arcs, options)
             arguments
                 arcs (1,:) timeSeriesPreparation.Arc
@@ -335,6 +384,12 @@ classdef Arc
 end
 
 % ------------------------------------------------------------------------
+
+function f = storedFields()
+% The properties saveobj stores, in declaration order.
+    f = ["t" "obs" "names" "units" "mission" "product" "satellite" "release" ...
+        "files" "frame" "frameSource" "weights" "layers" "filled" "provenance"];
+end
 
 function checkTime(t)
 % int64 GPS ns, a column, strictly increasing.

@@ -5,6 +5,26 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
 
 ## Unreleased
 
+## 1.2.0 — 2026-09-26
+
+Exchange release (GUIDE section 7: X-17 → X-18 → v1.2.0).
+
+- **X-18** CF/ACDD NetCDF export: `exportNetcdf` writes an arc, its
+  residual and its QC events as NetCDF-4 with Conventions
+  "CF-1.12, ACDD-1.3". Time is int64 GPS nanoseconds with
+  `units_metadata = "leap_seconds: none"` (owner's choice; CF 1.13 has
+  since withdrawn that attribute in favour of the calendar "tai"). Layers
+  are CF flag bits and events are coded flags. The PROV-O graph of the
+  arc's provenance is written as JSON-LD both in the file and in a
+  `.prov.jsonld` sidecar (new `internal.provJsonLd`). `readNetcdf`
+  returns the file bit for bit. `Config.export` holds the creator and the
+  other dataset metadata; there is no default creator. `cfg.run.format`
+  is "mat", "netcdf" or "both"; a campaign writing NetCDF without a
+  creator refuses. The campaign summary gains `netcdf` and
+  `netcdfSha256`, and the manifest (schema 2) gains a DataCite 4.7 block.
+  Arc has `SchemaVersion` "2" with saveobj/loadobj: arcs saved by 1.1.0
+  load unchanged and unknown versions refuse. Day files carry
+  schemaVersion "2".
 - **X-17** QC template bank: `qc.templateBank` holds the empirical
   thruster stacks of the GRACE-FO ACT1B residual (C and D, lags -60..60 s,
   two months of the DATAPOOL, scan PR #62); `qc.detectTemplates` finds
