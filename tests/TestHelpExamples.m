@@ -85,6 +85,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
                 "EXAMPLE 1 of timeSeriesPreparation.qc.detectJumps did not run cleanly.");
         end
 
+        function timeSeriesPreparation_qc_detectTemplates_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.qc.detectTemplates: A median thruster event planted in white noise is found at its epoch.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_detectTemplates_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.qc.detectTemplates did not run cleanly.");
+        end
+
         function timeSeriesPreparation_qc_eventTable_example1(testCase)
             % EXAMPLE 1 of timeSeriesPreparation.qc.eventTable: A jump and an outlier.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_eventTable_1(), ...
@@ -107,6 +113,12 @@ classdef TestHelpExamples < matlab.unittest.TestCase
             % EXAMPLE 1 of timeSeriesPreparation.qc.screen: A spike and a step in white noise, no pulse template.
             testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_screen_1(), ...
                 "EXAMPLE 1 of timeSeriesPreparation.qc.screen did not run cleanly.");
+        end
+
+        function timeSeriesPreparation_qc_templateBank_example1(testCase)
+            % EXAMPLE 1 of timeSeriesPreparation.qc.templateBank: The y peak of the thruster template of GRACE-FO D.
+            testCase.verifyWarningFree(@() example_timeSeriesPreparation_qc_templateBank_1(), ...
+                "EXAMPLE 1 of timeSeriesPreparation.qc.templateBank did not run cleanly.");
         end
 
         function timeSeriesPreparation_spectral_allanVariance_example1(testCase)
@@ -471,6 +483,15 @@ function example_timeSeriesPreparation_qc_detectJumps_1()  %#ok<DEFNU>
     [events, info] = timeSeriesPreparation.qc.detectJumps(x, Epoch = t);
 end
 
+function example_timeSeriesPreparation_qc_detectTemplates_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.qc.detectTemplates, verbatim from its help block.
+    b = timeSeriesPreparation.qc.templateBank();
+    r = 1.5e-10 * randn(RandStream("twister", "Seed", 3), 3000, 3);
+    r(1440:1560, :) = r(1440:1560, :) + b.thruster.D;
+    t = datetime(2020, 1, 4, "TimeZone", "UTC") + seconds((0:2999)');
+    events = timeSeriesPreparation.qc.detectTemplates(r, Epoch = t, Satellite = "D");
+end
+
 function example_timeSeriesPreparation_qc_eventTable_1()  %#ok<DEFNU>
 % EXAMPLE 1 of timeSeriesPreparation.qc.eventTable, verbatim from its help block.
     t = datetime(2020, 1, 1, "TimeZone", "UTC") + seconds([10; 20]);
@@ -496,6 +517,12 @@ function example_timeSeriesPreparation_qc_screen_1()  %#ok<DEFNU>
     x(700) = 3e-8; x(2500:end) = x(2500:end) + 5e-9;
     t = datetime(2020, 1, 1, "TimeZone", "UTC") + seconds((0:2999)');
     [mask, events] = timeSeriesPreparation.qc.screen(x, zeros(3000, 1), t);
+end
+
+function example_timeSeriesPreparation_qc_templateBank_1()  %#ok<DEFNU>
+% EXAMPLE 1 of timeSeriesPreparation.qc.templateBank, verbatim from its help block.
+    b = timeSeriesPreparation.qc.templateBank();
+    peak = min(b.thruster.D(:, 2));
 end
 
 function example_timeSeriesPreparation_spectral_allanVariance_1()  %#ok<DEFNU>

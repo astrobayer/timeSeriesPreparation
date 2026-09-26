@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.qc.templateBank</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.qc.templateBank</h1>
+<p>Empirical spike templates of the ACT1B residual, per class and satellite.</p>
+<h2>Syntax</h2>
+<pre><code>bank = timeSeriesPreparation.qc.templateBank()</code></pre>
+<h2>Description</h2>
+<p>The labelled template bank of QC (CONCEPT 6.1 row 2, X-17; owner decisions 2026-09-26). Each template is the median stack of the GRACE-FO ACT1B residual (lin_accl minus its 301-s moving median) around real events, measured by the throwaway scan PR #62 on the DATAPOOL months 2020-01 and 2020-07, the event-weighted mean of the two months. One class so far: thruster   around every THR1B record with an on-time: C 27 117 events, D 24 551. y dips by 1.2e-8 (C) / 1.5e-8 (D) m/s^2 at the record, z rises by 2.1e-9 / 2.2e-9 m/s^2; main lobe about +-15 s with CRN sidelobes. The two months agree to 6 % of the peak. Not in the bank (HANDOVER X-17): magnetic torquer (a coupling to continuous currents, N-11), heater (no key series in L1B RL04), broad z-spikes (ignored, owner decision).</p>
+<h2>Inputs</h2>
+<p>(none)</p>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>bank</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Field per class (&quot;thruster&quot;), each a struct with fields lags (121,1) s, -60..60; C and D, the (121,3) template in m/s^2 on x, y, z; nEvents (1,1) struct with C and D; source (1,1) string.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>Stack medians of 24 551 to 27 117 events; the month-to-month difference is below 9e-10 m/s^2 (6 % of the peak). The x column is 0 on C: more than a third of the C x residual is exactly 0 (HANDOVER X-17).</p>
+<h2>Errors</h2>
+<p>(none) - the bank is data; it does not refuse.</p>
+<h2>Example</h2>
+<p>The y peak of the thruster template of GRACE-FO D.</p>
+<pre><code>b = timeSeriesPreparation.qc.templateBank();
+peak = min(b.thruster.D(:, 2));</code></pre>
+<h2>Limitations</h2>
+<p>ACT1B at 1 Hz only; ACC1A templates follow with X-12. Two months of GRACE-FO C and D; classic GRACE after G-02.</p>
+<h2>References</h2>
+<p>HANDOVER X-17 (scan PR #62, jobs 108411906583, 108423640544); docs/CONCEPT.md 6.1 row 2.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.qc.detectTemplates</code>, <code>timeSeriesPreparation.qc.screen</code></p>
+<p class="footer">timeSeriesPreparation v1.1.0 - generated from the help block of +timeSeriesPreparation/+qc/templateBank.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>

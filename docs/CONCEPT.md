@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.27 (DRAFT) · 2026-09-26 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.28 (DRAFT) · 2026-09-26 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.28 | X-17: the template bank holds one empirical class, thruster (per satellite, from ~52 000 THR1B events of 2020-01/07); magnetic-torquer signals are a coupling to continuous currents and go to N-11; heater spikes are deferred (no key series in L1B RL04); broad z-spikes are ignored; templates are opt-in in `run` (6.1 row 2, 10.1; owner decisions 2026-09-26, scan PR #62) |
 | 0.27 | X-15: campaign mode of `run` runs serially, `parfor` only when cfg.run.parallel is set, with per-arc seeds; per-day MAT v7.3 files only when cfg.run.outDir is set; the campaign manifest is JSON (6.6, 5.2; owner decisions 2026-09-26) |
 | 0.26 | X-16: pure MATLAB, no C layer; the scope is the whole of `qc.screen` (hampel, detectJumps, detectImpulses, screen), gated by equality to the X-05 port; speed pinned as a ratio against the port: hampel at least 5 times (measured 7.57; the first bar of 10 was not reachable bit-exact in MATLAB), detectJumps not slower, screen at least 2 times (10.1; owner decisions 2026-09-26) |
 | 0.25 | X-14: the stage cache covers crn, qc, noise and correlation; stages with a function-handle input (bootstrap, crossval) are never cached; hits are reported in `diagnostics.cache` and provenance, one MAT file per key, no eviction (6.6; owner decisions 2026-09-25) |
@@ -291,7 +292,7 @@ no positional fallback.
 | # | stage | function | guarantee |
 |---|---|---|---|
 | 1 | mask | `mask` | qualflg layers via `decodeQualFlags`, with the meanings the file header states, including the **L1B fill flags**: ACC gaps ≤ 100 s and ranging gaps < 21 s are cubic-filled in L1B processing (R-2, PDF pp. 18, 20), and ACT1B bits 5–7 and KBR1B/LRI1B bits 6/7 mark interpolated points by their distance from the CRN centre. The presets remove the fill flags and the KBR1B/LRI1B phase break (bit 0); the rest is reported, not removed — among it GRACE-FO ACT1B bits 3/4, which the RL04 header defines as the extrapolated CLK1B clock offset (> 5 s / ≤ 5 s from the CRN centre), not the large-range mode an earlier revision read from R-2 p. 32; an **SNR** layer below a fraction of the median (0.5, provisional); THR1B windows ± half the CRN fit interval; eclipse transitions from a driver series ± the same; CRN edges at gaps (off by default); a user layer; **official event lists** (G-05) as layers and calibration windows: TN-01 MANV rows as [epoch, epoch + stated duration], TN-01a windows stated by the caller, since its prose is never parsed |
-| 2 | QC | `qc` | residual-based outliers; impulses (matched filter on the CRN impulse response, THR1B priors); jumps (reported and turned into parameters, never masked); after X-16, a **labelled template bank** (twang, heater, magnetic-torquer and thruster spikes) with one mask layer per type (X-17) |
+| 2 | QC | `qc` | residual-based outliers; impulses (matched filter on the CRN impulse response, THR1B priors); jumps (reported and turned into parameters, never masked); after X-16, a **labelled template bank** with one mask layer per type (X-17): empirical thruster templates per satellite (opt-in, `cfg.qc.templates`); magnetic torquer goes to N-11, heater is deferred (no key series in RL04), broad z-spikes are ignored |
 | 3 | align | `align`, `checkAlignment` | reference moved onto the observation epochs; lag diagnostic over ±60 s that warns above 1 s and never shifts silently (v3 F2) |
 | 4 | consistency | `crnKernel`, `crnApply` | exact ATBD kernel **as printed** (section 8), normalised at f0, DC gain 1 + 1.1e-7 (ACC) kept, never renormalised to unit DC; chunked per file day with half-span overlap, bit-identical to unchunked; NaN edges. **The convolution sum is evaluated only at the output epochs** (1 Hz for ACC1B from the 10 Hz grid): about 3.6e8 instead of 3.6e9 multiply-adds per day for 3 axes, pinned equal to full-rate convolution followed by sampling |
 | 5 | noise | `noise` on `tsmodels`, `spectral` | residual noise model (AR/ARMA/SARIMA exact ML with gaps, or PSD → ARMA), Ljung-Box, Allan deviation; the model feeds `fill` and the applications' lsqvce covariance; a **reference noise-model library** `noiseReference` (ACC 1/f, KBR system and oscillator, LRI requirement and laser noise; P-13, P-21) as priors and validation targets (W-12, X-07) |
@@ -698,7 +699,7 @@ repository has one open PR at a time.
 | timeSeriesPreparation | X-12 | V-1 CRN verification | WP-24 | handbook |
 | timeSeriesPreparation | X-14 | stage cache (6.6) | — | X-10 |
 | timeSeriesPreparation | X-16 | QC speed (item 12), pure MATLAB, the whole of `qc.screen`: `hampel` on vectorised windows with an exact window MAD, jump detection's candidate bookkeeping in a buffer, impulse and screen event bookkeeping; gated by equality to the X-05 port; speed as a ratio against the port | — | X-05, X-14 |
-| timeSeriesPreparation | X-17 | QC template bank (twang, heater, magnetic torquer, thruster), one mask layer per type, tested on the defect catalogue | — | X-16, V-12 |
+| timeSeriesPreparation | X-17 | QC template bank, one mask layer per type, tested on the defect catalogue: thruster (empirical, per satellite); magnetic torquer → N-11; heater deferred; z-spikes ignored (owner 2026-09-26) | — | X-16, V-12 |
 | timeSeriesPreparation | X-18 | CF/ACDD NetCDF export with PROV-O provenance and DataCite fields; Arc schema version and migration | — | X-15 |
 | timeSeriesPreparation | X-15 | campaign mode of `run` (6.6), per-day storage and the per-campaign manifest (5.2) → **release 1.1** | WP-19 part (`runBatch`) | X-14, X-16, G-03 |
 | timeSeriesPreparation | X-13 | classic GRACE: dictionaries, masks (`qualflg` per V-8), `Config` presets, classic fixtures in the integration test | — | G-02, X-10 |

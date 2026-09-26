@@ -31,14 +31,16 @@ classdef TestQcEquivalence < matlab.unittest.TestCase
 %                   slope, penalty, NaN, three channels), eventTable (empty,
 %                   rows), screen (with and without a template, highpass,
 %                   priors); the refusals.
-%     contract    - every unit of +qc is covered by a case.
+%     contract    - every ported unit of +qc is covered by a case (the
+%                   X-17 units templateBank and detectTemplates are new
+%                   and tested by TestTemplates).
 %     robustness  - a one-ulp change of an output is detected.
 %     speed       - hampel at least 5 times faster than the port (owner,
 %                   2026-09-26, after 6.42 and 7.57 measured against 10),
 %                   detectJumps not slower, screen at least 2 times faster.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-26 09:55 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (TestParameter)
         Case
@@ -86,6 +88,8 @@ classdef TestQcEquivalence < matlab.unittest.TestCase
             files = dir(fullfile(fileparts(fileparts(mfilename("fullpath"))), ...
                 "+timeSeriesPreparation", "+qc", "*.m"));
             found = setdiff(erase(string({files.name}), ".m"), "Contents");
+            % X-17 units are new, not ported; TestTemplates covers them.
+            found = setdiff(found, ["templateBank" "detectTemplates"]);
             testCase.verifyEqual(sort(found), sort(units), "+qc gained or lost a unit.");
         end
     end

@@ -5,6 +5,16 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
 
 ## Unreleased
 
+- **X-17** QC template bank: `qc.templateBank` holds the empirical
+  thruster stacks of the GRACE-FO ACT1B residual (C and D, lags -60..60 s,
+  two months of the DATAPOOL, scan PR #62); `qc.detectTemplates` finds
+  them in a 3-axis residual with a matched filter and a robust score (8
+  sigma), assigns THR1B firings within 5 s and returns one mask per
+  class. `Config.qc.templates` (false) lets `run` add the stage
+  "templates" after qc, the layer "tplThruster" and
+  `diagnostics.templates`. Magnetorquer is left to N-11, the heater is
+  deferred (no key series in L1B RL04), broad z-spikes are ignored.
+
 ## 1.1.0 — 2026-09-26
 
 Campaign release (GUIDE section 7: X-14 → X-16 → X-15 → v1.1.0).

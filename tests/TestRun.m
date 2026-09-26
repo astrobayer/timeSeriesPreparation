@@ -18,7 +18,7 @@ classdef TestRun < matlab.unittest.TestCase
 %   COVERAGE
 %     contract       - the result fields (and the pin fails on an added or
 %                      removed field); a bare arc runs mask and fill only
-%                      and lists the other eight stages as skipped; the
+%                      and lists the other nine stages as skipped; the
 %                      Config used is the one returned; provenance ends
 %                      with the run entry; each skipped stage states why.
 %     reference      - mask, align, qc, residual and noise equal their
@@ -33,7 +33,7 @@ classdef TestRun < matlab.unittest.TestCase
 %                      arithmetic; each stage's tests hold these.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.1.0 | 2026-09-25 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.1.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Fields = ["arc" "reference" "diagnostics" "correlation" "flags" "config" "provenance"]
@@ -44,7 +44,7 @@ classdef TestRun < matlab.unittest.TestCase
             res = timeSeriesPreparation.run(pair(120));
             testCase.verifyEqual(string(fieldnames(res))', testCase.Fields);
             testCase.verifyEqual(string(fieldnames(res.diagnostics))', ["stages" "skipped" ...
-                "mask" "alignment" "qc" "residual" "noise" "gate" "bootstrap" "crossval" "fill" "cache"]);
+                "mask" "alignment" "qc" "templates" "residual" "noise" "gate" "bootstrap" "crossval" "fill" "cache"]);
             testCase.verifyEqual(string(fieldnames(res.flags))', ...
                 ["events" "alignment" "weightFraction" "nFilled"]);
             testCase.verifyClass(res.arc, "timeSeriesPreparation.Arc");
@@ -58,7 +58,7 @@ classdef TestRun < matlab.unittest.TestCase
             arc = pair(300);
             res = timeSeriesPreparation.run(arc);
             testCase.verifyEqual(res.diagnostics.stages, ["mask" "fill"]);
-            testCase.verifyEqual(res.diagnostics.skipped.stage', ["crn" "align" "qc" "noise" ...
+            testCase.verifyEqual(res.diagnostics.skipped.stage', ["crn" "align" "qc" "templates" "noise" ...
                 "gate" "bootstrap" "crossval" "correlation"]);
             testCase.verifyEqual(res.arc.obs, arc.obs);
             testCase.verifyEmpty(res.reference);
