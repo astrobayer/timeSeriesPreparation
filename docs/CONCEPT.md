@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.28 (DRAFT) · 2026-09-26 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.29 (DRAFT) · 2026-09-26 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.29 | X-18: results are exported per day as CF-1.12/ACDD-1.3 NetCDF-4 (arc, residual, QC events; int64 GPS time with `leap_seconds: none`, the owner keeping CF 1.12 although CF 1.13 withdrew that attribute), PROV-O JSON-LD in the file and a sidecar, DataCite 4.7 fields in the manifest; `cfg.run.format` and `Config.export`; the Arc gets a schema version with load-time migration (3.2, 5.2, 10.1; owner decisions 2026-09-26) |
 | 0.28 | X-17: the template bank holds one empirical class, thruster (per satellite, from ~52 000 THR1B events of 2020-01/07); magnetic-torquer signals are a coupling to continuous currents and go to N-11; heater spikes are deferred (no key series in L1B RL04); broad z-spikes are ignored; templates are opt-in in `run` (6.1 row 2, 10.1; owner decisions 2026-09-26, scan PR #62) |
 | 0.27 | X-15: campaign mode of `run` runs serially, `parfor` only when cfg.run.parallel is set, with per-arc seeds; per-day MAT v7.3 files only when cfg.run.outDir is set; the campaign manifest is JSON (6.6, 5.2; owner decisions 2026-09-26) |
 | 0.26 | X-16: pure MATLAB, no C layer; the scope is the whole of `qc.screen` (hampel, detectJumps, detectImpulses, screen), gated by equality to the X-05 port; speed pinned as a ratio against the port: hampel at least 5 times (measured 7.57; the first bar of 10 was not reachable bit-exact in MATLAB), detectJumps not slower, screen at least 2 times (10.1; owner decisions 2026-09-26) |
@@ -154,7 +155,7 @@ These are checked mechanically: calls go downward only.
 ```
 L3  timeSeriesPreparation.run                         single point of access, instrument level
 L2  mask, qc, align, crnApply, noise, fill, observability, bootstrap, crossval, drivers, correlate,
-    regressDrivers, partialCorrelation, binnedMap, report
+    regressDrivers, partialCorrelation, binnedMap, report, exportNetcdf, readNetcdf
 L1  Arc, Config, crnKernel, noiseReference
 L0  +spectral  (sigtools/spectral: 10 functions)      +tsmodels (sigtools/tsmodels: 15 functions)
 ```
@@ -278,6 +279,8 @@ no positional fallback.
 - **Results are stored per day**, not as one array: about 1 GB per
   satellite-year at 1 Hz for 3 axes plus weights. Versioned MAT schema per day,
   and one data-management manifest per campaign (DataCite/PROV fields).
+  With `cfg.run.format` "netcdf" or "both" each day is also a CF-1.12/ACDD-1.3
+  NetCDF-4 file with its PROV-O graph (X-18).
 - **Minimum-data gate (item 16).** An axis whose remaining weight fraction
   falls below a threshold refuses with an identifier; it never returns NaN.
   The threshold is set explicitly in each product preset, with its rationale
