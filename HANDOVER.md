@@ -97,6 +97,12 @@ the hampel bar is 5, about 2/3 of the measured 7.57, instead of a MEX
 layer. Round 3 changes only the bar and the test's name (hampelFivefold).
 Prediction: 676 + 0 + 0, per tag as above.
 
+**CI verdict (70d9a91, run 36227961222): 676 + 0 + 0 = 676, green.** Per
+tag as predicted: contract 204, reference 248, precision 23, robustness
+125, metamorphic 44, vectorisation 21, speed 11. Whole suite 34 min
+(TestQcEquivalence 13 min). audit green. The speed tests print their
+ratios only on failure; the last measured are round 2's (hampel 7.57).
+
 ## X-14 — stage cache — merged 2026-09-26 (PR #59, `a264793`; issue #17 closed); scope was frozen 2026-09-25
 
 Tier B. CONCEPT 6.6 with the owner's decisions of 2026-09-25:
