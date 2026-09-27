@@ -11,7 +11,7 @@ rangingPreparation (LRI/KBR):
 - bootstrap and cross-validation;
 - correlation analysis.
 
-**Status: release 1.2.0 (X-18).** Skeleton and CI (X-00b), sigtools v1.3.1
+**Status: release 1.3.0 (X-11, X-12).** Skeleton and CI (X-00b), sigtools v1.3.1
 as `+spectral` / `+tsmodels` (X-01, conventions X-02), `Arc` and `Config`
 (X-03), the exact ATBD CRN kernel and its output-epoch application (X-04),
 masks and the residual quality control ported from NonGravForces (X-05),
@@ -24,7 +24,10 @@ faster QC (X-16) and campaign mode: an Arc array through `run`, with
 per-day files and a JSON manifest (X-15). Release 1.2.0 adds the QC
 template bank (X-17) and the CF-1.12/ACDD-1.3 NetCDF export with PROV-O
 provenance, DataCite fields in the manifest and a versioned Arc schema
-(X-18). Changes: `CHANGELOG.md`.
+(X-18). Release 1.3.0 adds `report` (figures, a self-contained HTML
+page per day and a campaign index; X-11) and verifies the CRN preset against
+GRACE-FO Level-1A: CRN(ACT1A) reproduces ACT1B to 2.5e-5 relative rms or
+better per axis (X-12). Changes: `CHANGELOG.md`.
 
 ```matlab
 setupTimeSeriesPreparation();              % toolbox and demos on the path; reports gracefoReading
