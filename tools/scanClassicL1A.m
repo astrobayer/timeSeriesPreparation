@@ -29,11 +29,19 @@ function scanClassicL1A(root, days)
         "/grace/Level-1A/JPL/INSTRUMENT/RL03/" + yyyy + "/", ...
         "/grace/Level-1B/JPL/INSTRUMENT/RL02/" + yyyy + "/"];
     listing = struct();
-    for url = probe
+    % Round 2: grace/Level-1A/ answers 403. List every entry of the grace/
+    % root one level down, to learn where (or whether) classic L1A lives.
+    try
+        top = links(webread(host + "/grace/", opts));
+        top = top(endsWith(top, "/") & ~startsWith(top, ["/" "http" ".."]));
+        probe = [probe, host + "/grace/" + reshape(top, 1, [])];
+    catch
+    end
+    for url = unique(probe, "stable")
         try
             hrefs = links(webread(url, opts));
             out(end+1, 1) = say("LIST %s: %d entries", url, numel(hrefs)); %#ok<AGROW>
-            out = [out; "  " + hrefs(1:min(60, end))]; %#ok<AGROW>
+            out = [out; "  " + reshape(hrefs(1:min(60, end)), [], 1)]; %#ok<AGROW>
             listing.(matlab.lang.makeValidName(url)) = hrefs;
         catch err
             out(end+1, 1) = say("LIST %s FAILED: %s", url, err.message); %#ok<AGROW>
@@ -44,7 +52,7 @@ function scanClassicL1A(root, days)
         key = matlab.lang.makeValidName(url);
         if ~isfield(listing, key), continue, end
         for day = days
-            mine = listing.(key)(contains(listing.(key), day));
+            mine = reshape(listing.(key)(contains(listing.(key), day)), [], 1);
             out(end+1, 1) = say("DAY %s %s: %d entries", rel, day, numel(mine)); %#ok<AGROW>
             out = [out; "  " + mine(:)]; %#ok<AGROW>
             folder = fullfile(root, "GRACE", "L1A", "JPL", rel, yyyy, day);
