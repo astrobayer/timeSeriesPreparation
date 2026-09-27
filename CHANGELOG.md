@@ -3,6 +3,19 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
+## Unreleased
+
+- **X-13** classic GRACE (issue #16). Classic arcs carry units and `qualflg`
+  meanings from gracefoReading 1.3.0, taken from JPL D-22027 v1.3 chapter 6;
+  CI moves to that tag. `Config`: ACC1B of mission GRACE removes bits 5–7
+  (filled data, 4.3.2), as ACT1B does; classic KBR1B keeps the KBR1B
+  preset; GRACE-FO ACC1B removes none. `TestIntegration/classicDaysEndToEnd`
+  runs ACC1B and THR1B of A and B, 2008-07-02, through `run` with QualFlags
+  and Thrusters. `TestCrnVerification` reads CLK1B through
+  `gracefoReading.readL1b` (v1.2.0 reads it) instead of its own parser.
+  V-8 closed. The CRN span of classic ACC1B stays open (V-1): ISDC serves no
+  classic Level-1A (scan PR #69).
+
 ## 1.3.0 — 2026-09-27
 
 Report and verification release (X-11, X-12).

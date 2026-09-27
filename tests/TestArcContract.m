@@ -13,14 +13,16 @@ classdef TestArcContract < matlab.unittest.TestCase
 %
 %     Files: MAS1B_2020-01-01_C_04.txt (GRACE-FO, YAML header, RL04) and
 %     ACC1B_2008-01-01_A_02.dat (classic GRACE, binary, RL02), both present
-%     in gracefoReading v1.1.0, the version CI checks out. Only the absence
+%     in gracefoReading v1.3.0, the version CI checks out. Only the absence
 %     of gracefoReading makes these tests incomplete; gracefoReading present
 %     without these files is a failure, since the pinned version has them.
 %
 %   COVERAGE
 %     contract   - readL1b and readL1bMulti return the aux fields Arc reads,
 %                  with the classes it reads them as; Arc builds from both
-%                  formats.
+%                  formats, and the classic arc has its units - the GRACE
+%                  L1B handbook's (D-22027 6.2), which gracefoReading 1.3.0
+%                  supplies because classic headers state none (X-13).
 %     reference  - the release Arc takes from the file name equals the
 %                  header's product_version (two independent statements in
 %                  the file); Arc.obs equals the reader's obs bit for bit.
@@ -28,7 +30,7 @@ classdef TestArcContract < matlab.unittest.TestCase
 %                  readL1b.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-27 22:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Access = private)
         Fixtures
@@ -79,6 +81,8 @@ classdef TestArcContract < matlab.unittest.TestCase
             testCase.verifyEqual([arc.product arc.satellite arc.mission arc.release], ...
                 ["ACC1B" "A" "GRACE" "02"]);
             testCase.verifyEqual(size(arc.obs), size(obs));
+            testCase.verifyEqual(arc.units, [repmat("m/s2", 1, 3), repmat("rad/s2", 1, 3), ...
+                repmat("m/s2", 1, 3)], "Classic units come from gracefoReading >= 1.3.0.");
         end
     end
 

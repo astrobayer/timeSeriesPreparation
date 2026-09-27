@@ -17,8 +17,9 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      and run's defaults (qc.screen's and noise's own; order
 %                      and filterReference [], seed 0, cacheDir "", parallel false,
 %                      outDir "", overwrite false, mixedRelease false) and setting them; mask's defaults and its presets
-%                      (ACT1B bits 5-7; KBR1B, LRI1B bits 0, 6, 7 and
-%                      snrFraction 0.5; others none); drivers' defaults ("pchip", [], [], 10); align's defaults (pchip, [], 60 s, 1 s) and
+%                      (ACT1B and classic ACC1B bits 5-7; KBR1B, classic
+%                      KBR1B and LRI1B bits 0, 6, 7 and snrFraction 0.5;
+%                      GRACE-FO ACC1B and others none); drivers' defaults ("pchip", [], [], 10); align's defaults (pchip, [], 60 s, 1 s) and
 %                      setting them; fill's defaults ("none", [], []) and
 %                      setting them; unc's defaults ([], [], 1000, 0.6827, 5) and
 %                      the gate 0.5 for ACC1B, ACT1B, KBR1B and LRI1B only;
@@ -31,7 +32,7 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-27 22:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function nineSectionsAllDefined(testCase)
@@ -123,6 +124,9 @@ classdef TestConfig < matlab.unittest.TestCase
             cases = {"ACT1B_2020-01-01_D_04.txt", "ACT1B", [5 6 7], []
                      "KBR1B_2020-01-01_Y_04.txt", "KBR1B", [0 6 7], 0.5
                      "LRI1B_2020-01-01_Y_04.txt", "LRI1B", [0 6 7], 0.5
+                     "ACC1B_2008-07-02_A_02.dat", "ACC1B", [5 6 7], []        % X-13, D-22027 4.3.2
+                     "KBR1B_2008-07-02_X_02.dat", "KBR1B", [0 6 7], 0.5       % classic KBR1B
+                     "ACC1B_2020-01-01_C_04.txt", "ACC1B", zeros(1, 0), []    % GRACE-FO: never measured
                      "MAS1B_2020-01-01_C_04.txt", "MAS1B", zeros(1, 0), []};
             for k = 1:size(cases, 1)
                 aux = struct("obsNames", {{'x'}}, "variableNames", {{'x'}}, ...

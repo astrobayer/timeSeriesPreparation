@@ -17,7 +17,8 @@ function [arc, info] = mask(arc, options)
 %         are the file header's own. Each bit in RemoveBits becomes a layer
 %         "qualflg_b<k>". The presets remove the phase break (KBR1B and
 %         LRI1B bit 0) and the L1B fill flags, "interpolated data point
-%         (due to gap)" (ACT1B bits 5-7, KBR1B and LRI1B bits 6-7). Every
+%         (due to gap)" (ACT1B bits 5-7, KBR1B and LRI1B bits 6-7; classic
+%         GRACE ACC1B bits 5-7, "filled data", JPL D-22027 4.3.2). Every
 %         other bit is reported in info.qualflg and removes nothing: the
 %         ACT1B clock-offset extrapolation (bits 3/4), the KBR1B time-tag
 %         bias correction (bit 5), the ACT1B Vp and residual bits (0, 2).
@@ -117,20 +118,25 @@ function [arc, info] = mask(arc, options)
 %     [arc, info] = timeSeriesPreparation.mask(arc, User = (1:10)' > 8);
 %
 %   LIMITATIONS
-%     Classic GRACE decimal qualflg is not decoded (gracefoReading reads bit
-%     strings only; X-13). LRI has no CRN preset (V-2), so its margins must
-%     be given. TN-01a windows are the caller's reading of the list.
+%     Classic GRACE qualflg is decoded as GRACE-FO's (a byte read as a bit
+%     string; meanings from gracefoReading >= 1.3.0, D-22027 chapter 6).
+%     The THR1B margin of classic ACC1B uses the "ACC" preset, whose span
+%     is open for classic L1B (V-1). LRI has no CRN preset (V-2), so its
+%     margins must be given. TN-01a windows are the caller's reading of
+%     the list.
 %
 %   REFERENCES
 %     docs/CONCEPT.md 6.1 row 1; GRACE-FO L1 Data Product User Handbook,
 %     JPL D-56935 (R-2), PDF pp. 18, 20 (L1B gap filling); the qualflg
-%     meanings printed in the RL04 file headers; TN-01, TN-01a (D-4);
+%     meanings printed in the RL04 file headers; GRACE Level-1B Data
+%     Product User Handbook, JPL D-22027 v1.3, 4.3.2 and 6.2 (classic
+%     ACC1B); TN-01, TN-01a (D-4);
 %     HANDOVER X-05 (D-9, owner decisions 2026-09-24).
 %
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.Config, timeSeriesPreparation.qc.screen, gracefoReading.decodeQualFlags, gracefoReading.readEventList.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-27 22:15 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc (1,1) timeSeriesPreparation.Arc
