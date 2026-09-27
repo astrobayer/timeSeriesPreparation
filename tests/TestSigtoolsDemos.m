@@ -17,7 +17,7 @@ classdef TestSigtoolsDemos < matlab.unittest.TestCase
 %                 path after setupTimeSeriesPreparation.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.2.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (TestParameter)
         Demo = {'demo_plotPowerSpectrum', 'allanVariance_demo', ...

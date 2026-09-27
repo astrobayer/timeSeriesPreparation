@@ -47,7 +47,7 @@ classdef TestIntegration < matlab.unittest.TestCase
 %                      stage's tests the rest.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.2.0 | 2026-09-25 13:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-25 13:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         V4Corr  = [0.95 0.95 0.93]      % thresholds; measured 0.984 / 0.973 / 0.955

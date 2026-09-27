@@ -10,7 +10,7 @@ classdef TestHelpExamples < matlab.unittest.TestCase
 %     generator's configuration.
 %
 %   COVERAGE
-%     'contract' - every documented EXAMPLE of timeSeriesPreparation v1.2.0 runs.
+%     'contract' - every documented EXAMPLE of timeSeriesPreparation v1.3.0 runs.
 
     methods (Test, TestTags = {'contract'})
         function timeSeriesPreparation_internal_blockLength_example1(testCase)

@@ -75,7 +75,7 @@ function [b, info] = blockLength(x)
 %   See also timeSeriesPreparation.bootstrap, timeSeriesPreparation.crossval.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.2.0 | 2026-09-23 20:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-23 20:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     [n, M] = size(x);
     kn = max(5, ceil(sqrt(log10(n))));
