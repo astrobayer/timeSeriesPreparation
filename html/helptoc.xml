@@ -40,6 +40,7 @@
         <tocitem target="timeSeriesPreparation.qc.templateBank.html">timeSeriesPreparation.qc.templateBank</tocitem>
         <tocitem target="timeSeriesPreparation.readNetcdf.html">timeSeriesPreparation.readNetcdf</tocitem>
         <tocitem target="timeSeriesPreparation.regressDrivers.html">timeSeriesPreparation.regressDrivers</tocitem>
+        <tocitem target="timeSeriesPreparation.report.html">timeSeriesPreparation.report</tocitem>
         <tocitem target="timeSeriesPreparation.run.html">timeSeriesPreparation.run</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.allanVariance.html">timeSeriesPreparation.spectral.allanVariance</tocitem>
         <tocitem target="timeSeriesPreparation.spectral.arma2acv.html">timeSeriesPreparation.spectral.arma2acv</tocitem>

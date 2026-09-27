@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>timeSeriesPreparation.report</title>
+<style>
+body { font-family: Helvetica, Arial, sans-serif; margin: 2em auto;
+       max-width: 52em; line-height: 1.45; color: #1a1a1a; }
+h1 { font-size: 1.6em; border-bottom: 1px solid #ccc; padding-bottom: .3em; }
+h2 { font-size: 1.1em; margin-top: 1.8em; text-transform: uppercase;
+     letter-spacing: .06em; color: #444; }
+pre { background: #f5f5f5; padding: .7em 1em; overflow-x: auto; }
+code { font-family: Consolas, Menlo, monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: .35em .6em; vertical-align: top;
+         text-align: left; font-size: .95em; }
+th { background: #f0f0f0; }
+.footer { margin-top: 3em; border-top: 1px solid #ccc; padding-top: .6em;
+          color: #666; font-size: .85em; }
+</style>
+</head>
+<body>
+<h1>timeSeriesPreparation.report</h1>
+<p>Figures and a self-contained HTML page of a run result; for a campaign, one page per day and an index.</p>
+<h2>Syntax</h2>
+<pre><code>out = timeSeriesPreparation.report(res)
+out = timeSeriesPreparation.report(res, Visible = &quot;off&quot;, ExportTo = folder)
+out = timeSeriesPreparation.report(campaignRes, ExportTo = folder)</code></pre>
+<h2>Description</h2>
+<p>The instrument report (X-11, CONCEPT 10.1; owner decisions 2026-09-26). It reads what run returned and computes nothing but the spectra it plots; it never calls run. Four figures: series     per axis the observation and the reference, each with its mean removed, and the residual; below, a timeline of every layer, the missing (NaN) samples and the filled ones. events     flags.events over time, one row per class, coloured by source, marked by axis. noise      per axis the PSD of the residual (spectral.powerSpectrum, Welch, on the longest stretch without NaN) against the fitted model&#x27;s PSD (spectral.arma2psd of diagnostics.noise), and the squared reference ASD of noiseReference when the product has one: ACT1B and ACC1B (&quot;ACC&quot;, axis from the column name), KBR1B and LRI1B (range, rate and acceleration columns). alignment  checkAlignment&#x27;s r(lag) per axis with the refined lag, and correlate&#x27;s r(lag) with its interval per axis and driver, when those stages ran. A panel whose stage did not run shows why (diagnostics.skipped), and out.notes says the same.</p>
+<p>With ExportTo, the figures go to series.png, events.png, noise.png and alignment.png at 200 dpi (exportgraphics), and report.html is written: one page with no outside references. It holds the summary (mission, satellite, product, release, files, epochs, stages, weight fraction, filled samples, events, alignment verdicts, config hash, toolbox version), the skipped stages, the events (the first 200), the provenance and the four PNGs as data URIs.</p>
+<p>A campaign result (run on an Arc array) needs ExportTo. Each arc that ran is reported into ExportTo/&lt;day&gt;/ with Visible &quot;off&quot; and its figures are closed. index.html holds the campaign summary (status, identifier, weight fraction, events, files, SHA-256), each day linked.</p>
+<h2>Inputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>res</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- A result of run: a single run (fields arc, reference, diagnostics, correlation, flags, config, provenance) or a campaign (results, summary, errors, manifest, parallel).</td></tr>
+</table>
+<h2>Options</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>Visible</code></td><td>1,1</td><td><code>string</code></td><td>&quot;on&quot;</td><td>&quot;on&quot; or &quot;off&quot;, the figures&#x27; visibility.</td></tr>
+<tr><td><code>ExportTo</code></td><td>1,1</td><td><code>string</code></td><td>&quot;&quot;</td><td>Folder for the PNGs and the HTML page; &quot;&quot; writes nothing (a single run only).</td></tr>
+</table>
+<h2>Outputs</h2>
+<table>
+<tr><th>name</th><th>size</th><th>type</th><th>default</th><th>description</th></tr>
+<tr><td><code>out</code></td><td>1,1</td><td><code>struct</code></td><td>&mdash;</td><td>- Fields: figures (1,1) struct with series, events, noise, alignment (figure handles; a campaign returns an empty struct); notes (1,1) struct of the same names, &quot;&quot; or why the panel is empty; files (1,:) string, the files written; html (1,1) string, the page (or index) written, &quot;&quot; without ExportTo.</td></tr>
+</table>
+<h2>Accuracy</h2>
+<p>The figures show the stored values. The spectra are estimates: Welch with up to 16 averages (Hann, 50 % overlap) on the longest finite stretch, the model PSD on 1024 frequencies.</p>
+<h2>Errors</h2>
+<table>
+<tr><th>identifier</th><th>cause</th><th>condition</th></tr>
+<tr><td><code>timeSeriesPreparation:report:inputResult</code></td><td>Input</td><td>res is neither a run result nor a campaign result.</td></tr>
+<tr><td><code>timeSeriesPreparation:report:exportToRequired</code></td><td>Input</td><td>a campaign result without ExportTo.</td></tr>
+</table>
+<h2>Example</h2>
+<p>Report a ten-minute three-axis run without showing the figures.</p>
+<pre><code>t = int64(7306 * 86400 - 43200 + 18) * int64(1e9) + int64(0:599)&#x27; * int64(1e9);
+names = {&#x27;lin_accl_x&#x27;, &#x27;lin_accl_y&#x27;, &#x27;lin_accl_z&#x27;};
+aux = struct(&quot;obsNames&quot;, {names}, &quot;variableNames&quot;, {names}, &quot;variableFieldNames&quot;, {names}, &quot;variableUnits&quot;, struct(&#x27;lin_accl_x&#x27;, &#x27;m/s2&#x27;, &#x27;lin_accl_y&#x27;, &#x27;m/s2&#x27;, &#x27;lin_accl_z&#x27;, &#x27;m/s2&#x27;), &quot;fileName&quot;, &quot;ACT1B_2020-01-02_C_04.txt&quot;, &quot;product&quot;, &quot;ACT1B&quot;);
+s = 1e-7 * sin(2 * pi * (0:599)&#x27; / 300) * [1 1 1];
+arc = timeSeriesPreparation.Arc(t, s + 1e-9 * randn(RandStream(&quot;twister&quot;, &quot;Seed&quot;, 1), 600, 3), aux);
+res = timeSeriesPreparation.run(arc, Reference = timeSeriesPreparation.Arc(t, s, aux));
+out = timeSeriesPreparation.report(res, Visible = &quot;off&quot;);
+close([out.figures.series out.figures.events out.figures.noise out.figures.alignment]);</code></pre>
+<h2>Limitations</h2>
+<p>No pixel reference is kept (renderers differ between MATLAB updates), so the figures are tested for their content contract and speed only. The page embeds the PNGs, about 0.1 to 0.5 MB each.</p>
+<h2>References</h2>
+<p>docs/CONCEPT.md 10.1 (X-11), docs/inputs/HANDOVER_AccelCal_v3.md WP-20; HANDOVER X-11.</p>
+<h2>See also</h2>
+<p><code>timeSeriesPreparation.run</code>, <code>timeSeriesPreparation.spectral.powerSpectrum</code>, <code>timeSeriesPreparation.spectral.arma2psd</code>, <code>timeSeriesPreparation.noiseReference</code></p>
+<p class="footer">timeSeriesPreparation v1.2.0 - generated from the help block of +timeSeriesPreparation/report.m by ci-actions/matlab-docs. Do not edit.</p>
+</body>
+</html>
