@@ -99,8 +99,11 @@ robustness 140, metamorphic 44, vectorisation 21, speed 12).
   nonExistentField`, "Unrecognized field name qualflg_b7"). The one
   incomplete was mispredicted: MATLAB counts a test that errors as both
   failed and incomplete (reference 261 + 1 + 1). For a fault that errors,
-  predict it that way. Reverted in the next commit; the expected verdict
-  is again 727 + 0 + 0.
+  predict it that way. Reverted in `07baae5`.
+- **Final verdict, CI run 36356980231 on `07baae5` (job 108726558153):
+  727 + 0 + 0 = 727**, every tag as predicted; the classic days log the
+  same numbers as on `5fc32e1`. X-13 is green and waits for the owner's
+  merge.
 
 ## Release 1.3.0 — X-11 + X-12 — merged 2026-09-27 (PR #68, `bc3415a`; v1.3.0 tagged by the workflow); scope was frozen 2026-09-27
 
@@ -2433,7 +2436,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-13 in progress** (scope above; built, PR open). CI pin gracefoReading v1.3.0 merged (PR #70, `71e7ce4`; CI 726 + 0 + 0). Release 1.3.0 merged (PR #68, `bc3415a`; CI 726 + 0 + 0; **release v1.3.0**). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**X-13 green, awaiting merge** (PR #71; CI 727 + 0 + 0 on `07baae5`; fault injection 725 + 2 + 1 as intended). CI pin gracefoReading v1.3.0 merged (PR #70, `71e7ce4`; CI 726 + 0 + 0). Release 1.3.0 merged (PR #68, `bc3415a`; CI 726 + 0 + 0; **release v1.3.0**). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
