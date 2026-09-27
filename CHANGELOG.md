@@ -5,6 +5,16 @@ is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10
 
 ## Unreleased
 
+- **X-12** V-1 closed: `TestCrnVerification` rebuilds JPL's Level-1B chain
+  from the GRACE-FO Level-1A files of C and D, 2020-01-02. The chain maps the
+  ACT1A tags from OBC to receiver time (TIM1B) and on to GPS time (CLK1B),
+  resamples them to 0.1 s and applies `crnApply` with `crnKernel("ACC")`.
+  The result equals ACT1B to 2e-6 … 2.5e-5 relative rms per axis; the bar is
+  2e-3. Tf 70.7 s (classic GRACE handbook) misses and is refuted. The
+  Level-1A days live in the DATAPOOL, downloaded by the CI runner. Found:
+  gracefoReading v1.1.0 cannot read CLK1B (`readL1b:noTime`), so the test
+  parses it itself.
+
 - **X-11** `report` draws four figures from a run result: series with
   layers, gaps and fills; the QC events; the residual PSD against the
   noise model and noiseReference; alignment and correlation. A panel
