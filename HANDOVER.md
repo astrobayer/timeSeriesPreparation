@@ -33,6 +33,12 @@ tag: contract 225, reference 261, precision 23, robustness 140,
 metamorphic 44, vectorisation 21, speed 12. The two version-dependent
 checks (TestArc, TestCampaign) compare with `internal.toolboxVersion()`.
 
+**CI verdict (2c72abd, matlab job 108620473944): 726 + 0 + 0 = 726,
+green.** Per tag as predicted: contract 225, reference 261, precision 23,
+robustness 140, metamorphic 44, vectorisation 21, speed 12. The gate
+reports `timeSeriesPreparation v1.3.0`; no line of the log names 1.2.0.
+The suite took 37.0 min and audit was green.
+
 ## X-12 — V-1: GRACE-FO CRN frequency response on ACT1A → ACT1B — merged 2026-09-27 (PR #67, `0fa7b4b`; issue #15 closed); scope was frozen 2026-09-27
 
 Tier B. CONCEPT row X-12 and V-1, issue #15, with the owner's decisions of
