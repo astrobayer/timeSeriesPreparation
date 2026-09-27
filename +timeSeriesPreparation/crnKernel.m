@@ -32,8 +32,12 @@ function kernel = crnKernel(preset, options)
 %     Presets (ATBD App. B): "ACC" fs 10 Hz, Nc 7, Tf 140.7 s, B 0.035 Hz;
 %     "KBR" fs 10 Hz, Nc 7, Tf 70.7 s, B 0.1 Hz; both f0 = 0.37 mHz. GRACE-FO
 %     ACT1B uses a CRN filter whose numbers its handbook (JPL D-56935, PDF p.
-%     20) does not print; the GRACE values are consistent with the measured
-%     DC gain above, and the full frequency response is checked in X-12.
+%     20) does not print. The GRACE values reproduce it: ACT1A of GRACE-FO C
+%     and D, 2020-01-02, mapped from OBC to GPS time (TIM1B, CLK1B),
+%     resampled to 0.1 s and filtered with this preset, equals ACT1B to a
+%     relative rms of 2e-6 to 2.5e-5 per axis, while Tf 70.7 s - the ACC span
+%     the classic GRACE handbook JPL D-22027 prints - misses by 3.7e-3 to
+%     3.6e-2 (X-12, TestCrnVerification).
 %     "LRI" refuses: its numbers are open (V-2).
 %
 %   INPUTS
@@ -94,7 +98,7 @@ function kernel = crnKernel(preset, options)
 %   See also timeSeriesPreparation.crnApply.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.2.0 | 2026-09-23 08:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-27 10:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         preset (1,1) string

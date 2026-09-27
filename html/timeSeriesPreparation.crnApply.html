@@ -64,7 +64,7 @@ aux = struct(&quot;obsNames&quot;, {{&#x27;lin_accl_x&#x27;}}, &quot;variableNam
 arc = timeSeriesPreparation.Arc(t, ones(36000, 1), aux);
 out = timeSeriesPreparation.crnApply(arc, k, OutputEpochs = t(1:10:end));</code></pre>
 <h2>Limitations</h2>
-<p>No time-tag correction and no interpolation: an input off the grid refuses instead of being resampled (X-12 applies the handbook&#x27;s time corrections for ACT1A). Lifting a model to 10 Hz is the caller&#x27;s.</p>
+<p>No time-tag correction and no interpolation: an input off the grid refuses instead of being resampled; mapping ACT1A from OBC to GPS time and resampling it to the grid is the caller&#x27;s (TestCrnVerification shows the chain, X-12). Lifting a model to 10 Hz is the caller&#x27;s.</p>
 <h2>References</h2>
 <p>R-1: GRACE L1B ATBD, JPL D-27672, App. B, PDF pp. 40-41. docs/CONCEPT.md sections 6.1 (row 4), 8.</p>
 <h2>See also</h2>

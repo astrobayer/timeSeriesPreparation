@@ -77,8 +77,9 @@ function out = crnApply(arc, kernel, options)
 %
 %   LIMITATIONS
 %     No time-tag correction and no interpolation: an input off the grid
-%     refuses instead of being resampled (X-12 applies the handbook's time
-%     corrections for ACT1A). Lifting a model to 10 Hz is the caller's.
+%     refuses instead of being resampled; mapping ACT1A from OBC to GPS time
+%     and resampling it to the grid is the caller's (TestCrnVerification
+%     shows the chain, X-12). Lifting a model to 10 Hz is the caller's.
 %
 %   REFERENCES
 %     R-1: GRACE L1B ATBD, JPL D-27672, App. B, PDF pp. 40-41.
@@ -87,7 +88,7 @@ function out = crnApply(arc, kernel, options)
 %   See also timeSeriesPreparation.crnKernel, timeSeriesPreparation.Arc.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.2.0 | 2026-09-23 08:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.2.0 | 2026-09-27 10:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc (1,1) timeSeriesPreparation.Arc
