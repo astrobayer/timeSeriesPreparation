@@ -92,6 +92,15 @@ robustness 140, metamorphic 44, vectorisation 21, speed 12).
   its fault is gracefoReading < 1.3.0, a workflow change that may not
   share this PR (`.github/` stands alone); v1.2.0 returned no classic
   units, which is what the assertion guards against.
+- **Fault run, CI job 108719939160 on `9db6803`: 725 + 2 + 1 = 727.**
+  Exactly the two predicted tests fail, and nothing else:
+  `TestConfig/maskDefaultsAndPresets` ("ACC1B": actual [5 6], expected
+  [5 6 7]) and `TestIntegration/classicDaysEndToEnd` (`MATLAB:
+  nonExistentField`, "Unrecognized field name qualflg_b7"). The one
+  incomplete was mispredicted: MATLAB counts a test that errors as both
+  failed and incomplete (reference 261 + 1 + 1). For a fault that errors,
+  predict it that way. Reverted in the next commit; the expected verdict
+  is again 727 + 0 + 0.
 
 ## Release 1.3.0 — X-11 + X-12 — merged 2026-09-27 (PR #68, `bc3415a`; v1.3.0 tagged by the workflow); scope was frozen 2026-09-27
 

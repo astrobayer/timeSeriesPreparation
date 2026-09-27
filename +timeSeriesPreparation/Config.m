@@ -192,7 +192,7 @@ classdef Config
                     cfg.mask.removeBits = [5 6 7];
                 case "ACC1B"
                     if cfg.mission == "GRACE"      % D-22027 4.3.2; X-13
-                        cfg.mask.removeBits = [5 6];   % FAULT INJECTION, reverted next
+                        cfg.mask.removeBits = [5 6 7];
                     end
                 case {"KBR1B", "LRI1B"}
                     cfg.mask.removeBits = [0 6 7];
