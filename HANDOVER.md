@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.36 · 2026-09-27 · X-12 (V-1 CRN verification) scope frozen from scan PR #66; X-11 done — merged (PR #65, `7c3c222`), #14 closed**
+**Revision 0.37 · 2026-09-27 · release 1.3.0 (X-11 + X-12) scope frozen; X-12 done — merged (PR #67, `0fa7b4b`), #15 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,36 @@ restates:
 
 ---
 
-## X-12 — V-1: GRACE-FO CRN frequency response on ACT1A → ACT1B; scope frozen 2026-09-27
+## Release 1.3.0 — X-11 + X-12; scope frozen 2026-09-27
+
+Owner decision 2026-09-27 ("Release 1.3.0"), after PR #67 merged. MINOR:
+`report` (X-11) is new capability that leaves every caller working; X-12
+adds a test and documentation only.
+
+**Scope (frozen):**
+- `chore: version 1.2.0 -> 1.3.0`, its own commit (GUIDE 3): Contents.m,
+  every help footer (version only; the date and time move only where
+  content changes), `docs/errorIdentifiers.md` and the generated html
+  (regenerated), TestHelpExamples' header.
+- CHANGELOG: "Unreleased" becomes "1.3.0 — 2026-09-27"; README status.
+- Not changed: literals that name the release in which something happened
+  (`Arc` schema "2 since release 1.2.0", the example provenance record
+  with version "1.2.0").
+- The release workflow tags `v1.3.0` on the merge commit and publishes the
+  release.
+
+**Prediction** (before any run): **726 + 0 + 0 = 726**, unchanged. Per
+tag: contract 225, reference 261, precision 23, robustness 140,
+metamorphic 44, vectorisation 21, speed 12. The two version-dependent
+checks (TestArc, TestCampaign) compare with `internal.toolboxVersion()`.
+
+**CI verdict (2c72abd, matlab job 108620473944): 726 + 0 + 0 = 726,
+green.** Per tag as predicted: contract 225, reference 261, precision 23,
+robustness 140, metamorphic 44, vectorisation 21, speed 12. The gate
+reports `timeSeriesPreparation v1.3.0`; no line of the log names 1.2.0.
+The suite took 37.0 min and audit was green.
+
+## X-12 — V-1: GRACE-FO CRN frequency response on ACT1A → ACT1B — merged 2026-09-27 (PR #67, `0fa7b4b`; issue #15 closed); scope was frozen 2026-09-27
 
 Tier B. CONCEPT row X-12 and V-1, issue #15, with the owner's decisions of
 2026-09-27, the uploaded GRACE L1B handbook (R-4, JPL D-22027 v1.3) and the
@@ -2304,7 +2333,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-12 in progress** (scope above). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**Release 1.3.0 in progress** (scope above). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).

@@ -3,7 +3,9 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
-## Unreleased
+## 1.3.0 — 2026-09-27
+
+Report and verification release (X-11, X-12).
 
 - **X-12** V-1 closed: `TestCrnVerification` rebuilds JPL's Level-1B chain
   from the GRACE-FO Level-1A files of C and D, 2020-01-02. The chain maps the

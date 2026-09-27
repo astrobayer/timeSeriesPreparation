@@ -98,7 +98,7 @@ function kernel = crnKernel(preset, options)
 %   See also timeSeriesPreparation.crnApply.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.2.0 | 2026-09-27 10:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-27 10:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         preset (1,1) string
