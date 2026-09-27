@@ -74,6 +74,25 @@ adds rows or assertions to existing tests.
 **Prediction: 727 + 0 + 0 = 727.** Per tag: contract 225, reference 262,
 precision 23, robustness 140, metamorphic 44, vectorisation 21, speed 12.
 
+**Verdict, CI run 36349933110 on `5fc32e1` (PR #71, 2026-09-27), MATLAB
+R2026a, gracefoReading v1.3.0: 727 + 0 + 0 = 727**, the prediction met in
+total and on every tag (contract 225, reference 262, precision 23,
+robustness 140, metamorphic 44, vectorisation 21, speed 12).
+- Classic days, measured: A 86 400 epochs, 28 144 removed (thr 28 144,
+  608 firings); B 86 400 epochs, 43 683 removed (thr 43 683, 1 262
+  firings). **No record of either day sets bit 5, 6 or 7**, so on real
+  data the qualflg layers are all false and only the fault injection
+  below shows that the preset reaches them. A classic day with filled
+  data would test it on real records; none is in the pool's test days.
+- Fault injection (commit on PR #71, reverted after): classic ACC1B
+  `removeBits = [5 6]`. Predicted 725 + 2 + 0 (contract 224 + 1:
+  `TestConfig/maskDefaultsAndPresets`; reference 261 + 1:
+  `TestIntegration/classicDaysEndToEnd`, which finds no layer
+  `qualflg_b7`). The `TestArcContract` units assertion is not injected:
+  its fault is gracefoReading < 1.3.0, a workflow change that may not
+  share this PR (`.github/` stands alone); v1.2.0 returned no classic
+  units, which is what the assertion guards against.
+
 ## Release 1.3.0 — X-11 + X-12 — merged 2026-09-27 (PR #68, `bc3415a`; v1.3.0 tagged by the workflow); scope was frozen 2026-09-27
 
 Owner decision 2026-09-27 ("Release 1.3.0"), after PR #67 merged. MINOR:
