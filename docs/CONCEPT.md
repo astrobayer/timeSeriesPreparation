@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.30 (DRAFT) · 2026-09-26 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.31 (DRAFT) · 2026-09-27 · written with Claude Opus 5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.31 | X-12: V-1 closed — CRN(ACT1A, 140.7 s) reproduces ACT1B to 2e-6 … 2.5e-5 relative rms per axis after the OBC → receiver → GPS mapping (TIM1B, CLK1B); the 70.7 s span of the classic GRACE handbook (R-4 p. 20) is refuted for GRACE-FO ACT, open for classic GRACE (8, 9; owner decisions 2026-09-27, scan PR #66) |
 | 0.30 | X-11: `report` (L2) draws four figures from a run result (series and masks, QC events, noise PSD against the model and the reference ASD, alignment and correlation) and, with ExportTo, writes PNGs and one self-contained HTML page; a campaign gets one report per day and an index page; no pixel references (10.1; owner decisions 2026-09-26) |
 | 0.29 | X-18: results are exported per day as CF-1.12/ACDD-1.3 NetCDF-4 (arc, residual, QC events; int64 GPS time with `leap_seconds: none`, the owner keeping CF 1.12 although CF 1.13 withdrew that attribute), PROV-O JSON-LD in the file and a sidecar, DataCite 4.7 fields in the manifest; `cfg.run.format` and `Config.export`; the Arc gets a schema version with load-time migration (3.2, 5.2, 10.1; owner decisions 2026-09-26) |
 | 0.28 | X-17: the template bank holds one empirical class, thruster (per satellite, from ~52 000 THR1B events of 2020-01/07); magnetic-torquer signals are a coupling to continuous currents and go to N-11; heater spikes are deferred (no key series in L1B RL04); broad z-spikes are ignored; templates are opt-in in `run` (6.1 row 2, 10.1; owner decisions 2026-09-26, scan PR #62) |

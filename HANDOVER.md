@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.35 · 2026-09-26 · X-11 (report) scope frozen; X-18 done — merged (PR #64, `5cba363`), release v1.2.0, #21 closed**
+**Revision 0.36 · 2026-09-27 · X-12 (V-1 CRN verification) scope frozen from scan PR #66; X-11 done — merged (PR #65, `7c3c222`), #14 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,88 @@ restates:
 
 ---
 
-## X-11 — report; scope frozen 2026-09-26
+## X-12 — V-1: GRACE-FO CRN frequency response on ACT1A → ACT1B; scope frozen 2026-09-27
+
+Tier B. CONCEPT row X-12 and V-1, issue #15, with the owner's decisions of
+2026-09-27, the uploaded GRACE L1B handbook (R-4, JPL D-22027 v1.3) and the
+throwaway scan PR #66 (closed unmerged; three rounds, jobs 108572446547,
+108579518163, 108583599314).
+
+**Data.** The CI runner downloads the Level-1A days from ISDC
+(`grace-fo/Level-1A/JPL/INSTRUMENT/RL04/<yyyy>/`) and keeps them in the
+DATAPOOL under `GRACEFO\L1A\RL04\<yyyy>\<day>\` (owner decision). 2020-01-02
+(`gracefo_1A_2020-01-02_RL04.ascii.noLRI.tgz`, 423 MB, 66 files) is there.
+gracefoReading v1.1.0 reads ACC1A and ACT1A (864 078 × 28 at 10 Hz). Their
+time tags are **OBC time** (`time_ref` R).
+
+**Scan findings:**
+- CRN(ACT1A) against ACT1B at the ACT1B epochs, C and D, 2020-01-02; the
+  time mapping is OBC → receiver (TIM1B) → GPS (CLK1B,
+  GPS = rcv_time + eps_time):
+
+  | Tf | raw tags: rel rms per axis | TIM1B + CLK1B |
+  |---|---|---|
+  | **140.7 s** (ATBD, the preset) | 4e-5 … 3e-4, lag −0.01 s | **2e-6 … 2.5e-5**, lag 0.00 s |
+  | 70.7 s (R-4 p. 20) | 3.7e-3 … 3.6e-2 | 3.7e-3 … 3.6e-2 |
+
+  So the full frequency response of `crnKernel("ACC")` is confirmed for
+  GRACE-FO. The 70.7 s ACC span of the classic handbook does not hold for
+  GRACE-FO ACT; whether it holds for classic GRACE ACC1B is open (X-13).
+- The axis pairing is ACT1B x ← ACT1A z, y ← x, z ← y on both satellites.
+  The GPS − OBC correction is about −11 ms; receiver − OBC is at the
+  1e-7 s level.
+- ACC1A (untransformed) matches only partly (r 0.98 / 0.68): ACT1B comes
+  from ACT1A, as V-5 says.
+- gracefoReading v1.1.0 defects, for a gracefoReading issue (G-side, not
+  this repository):
+  - CLK1B refuses (`readL1b:noTime`, `rcv_time` not recognised);
+  - TIM1B_D has 31 of 10 800 records with rcvtime 0;
+  - CLK1B_D has records with eps_time ≈ 0 (max −1.9e-7 s).
+  The test parses CLK1B itself and drops TIM1B records with a zero time.
+
+**Owner decisions (2026-09-27):**
+- bar: relative rms ≤ **2e-3** per axis (about 2 × the worst scan value
+  with raw tags);
+- fault injection: the 70.7 s span must be at least 10 × worse on every
+  axis;
+- exact mapping TIM1B + CLK1B;
+- data: C and D, 2020-01-02.
+
+**Scope (frozen):**
+- `tests/TestCrnVerification.m` builds JPL's chain, as R-4 §3.3
+  describes it, from the DATAPOOL files:
+  1. ACT1A tags OBC → receiver: linear interpolation in the TIM1B records
+     (obctime → rcvtime); records with a zero time are dropped.
+  2. Receiver → GPS: + eps_time from CLK1B, linear in receiver time;
+     CLK1B is parsed locally.
+  3. Resampled to the 0.1 s grid by linear interpolation, as an Arc (NaN
+     where the neighbouring samples are more than 0.15 s apart).
+  4. `crnApply(arc, crnKernel("ACC"), OutputEpochs = ACT1B epochs)`.
+  5. Per axis, with the pairing above: rel = rms(d) / rms(b − mean b),
+     d = (b − mean b) − (a − mean a), over the epochs where the output is
+     finite.
+- It skips cleanly (assumption) without READING_DATA_POOL or the L1A day.
+- `crnKernel`'s help and CONCEPT V-1 and section 8: the frequency response
+  is confirmed (numbers above); V-1 is closed.
+- R-4's 70.7 s is recorded in CONCEPT V-1 as refuted for GRACE-FO ACT and
+  open for classic GRACE.
+
+Out of scope:
+- a production function for the OBC → GPS mapping; the chain lives in the
+  test until an application needs Level-1A;
+- LRI (V-2);
+- fixing gracefoReading (another repository).
+
+**Tests (predicted):**
+- TestCrnVerification (3):
+  - reference 2: frequencyResponseC, frequencyResponseD;
+  - robustness 1: wrongSpanRefuted (70.7 s, both satellites).
+
+**Prediction** (before any run): **726 + 0 + 0 = 726**, that is 723 + 3.
+Per tag: contract 225, reference 261, precision 23, robustness 140,
+metamorphic 44, vectorisation 21, speed 12.
+
+## X-11 — report — merged 2026-09-27 (PR #65, `7c3c222`; issue #14 closed); scope was frozen 2026-09-26
 
 Tier B. CONCEPT row X-11 (v3 WP-20, the instrument part), with the owner's
 decisions of 2026-09-26 (interview while PR #64 awaited its merge).
@@ -2216,7 +2297,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-11 in progress** (scope above). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**X-12 in progress** (scope above). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
