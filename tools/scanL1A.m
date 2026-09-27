@@ -3,6 +3,8 @@ function scanL1A(root, days)
 %
 %   Never merged (owner decisions 2026-09-27: the CI runner downloads the
 %   Level-1A days itself and keeps them in the DATAPOOL, same layout as L1B).
+%   Round 3 (after round 2 confirmed Tf 140.7 s for ACT1A -> ACT1B): ACT1A
+%   only, raw OBC tags against the exact TIM1B + CLK1B mapping.
 %   Round 2 (round 1 matched no epoch: its gap test caught the µs jitter of
 %   the OBC tags; L1A tags are OBC time, not GPS). For each of DAYS:
 %     1. the ISDC listing of Level-1A/JPL/INSTRUMENT/RL04/<yyyy>/: entries of
@@ -113,22 +115,24 @@ function scanL1A(root, days)
             end
         end
         for p = acc(:)'
-            out = [out; headerOf(p)]; %#ok<AGROW>
-            [t, x, aux, msg] = readIt(p);
-            out(end+1, 1) = "  read " + p + ": " + msg; %#ok<AGROW>
-            if isempty(t), continue, end
             [~, fn] = fileparts(p);
+            if ~startsWith(fn, "ACT1A"), continue, end   % round 3: ACT1A only
+            [t, x, aux, msg] = readIt(p);
+            out(end+1, 1) = "  read " + p + ": " + extractBefore(msg + "; obs:", "; obs:"); %#ok<AGROW>
+            if isempty(t), continue, end
             sat = extractBetween(fn, strlength(fn) - 3, strlength(fn) - 3);
             b = fullfile(root, "GRACEFO", "L1B", "RL04", yyyy, day);
             hit = dir(fullfile(b, "ACT1B_" + day + "_" + sat + "_*.txt"));
-            if isempty(hit)
-                out(end+1, 1) = "  no ACT1B for " + sat; %#ok<AGROW>
+            ht = dir(fullfile(b, "TIM1B_" + day + "_" + sat + "_*.txt"));
+            hc = dir(fullfile(b, "CLK1B_" + day + "_" + sat + "_*.txt"));
+            if isempty(hit) || isempty(ht) || isempty(hc)
+                out(end+1, 1) = "  missing ACT1B/TIM1B/CLK1B for " + sat; %#ok<AGROW>
                 continue
             end
-            [tb, xb, auxb, msgb] = readIt(string(fullfile(hit(1).folder, hit(1).name)));
-            out(end+1, 1) = "  ACT1B " + sat + ": " + msgb; %#ok<AGROW>
-            if isempty(tb), continue, end
-            out = [out; compareCrn(t, x, aux, tb, xb, auxb)]; %#ok<AGROW>
+            [tb, xb, auxb] = readIt(string(fullfile(hit(1).folder, hit(1).name)));
+            [tt, xt] = readIt(string(fullfile(ht(1).folder, ht(1).name)));
+            [rc, eps, epsDrift, clkId] = readClk(string(fullfile(hc(1).folder, hc(1).name)));
+            out = [out; compareExact(t, x, aux, tb, xb, auxb, tt, xt, rc, eps, epsDrift, clkId, sat)]; %#ok<AGROW>
         end
         if ~isempty(tc)
             out = [out; "  (time-correction files present; round 2 applies them)"]; %#ok<AGROW>
@@ -295,6 +299,83 @@ function o = compareCrn(t, x, aux, tb, xb, auxb)
                 rmsOf(hp(Bm(:, j))), lags(ql), rlm); %#ok<AGROW>
         end
     end
+end
+
+function o = compareExact(t, x, aux, tb, xb, auxb, tt, xt, rc, eps, epsDrift, clkId, sat)
+% Round 3: CRN(ACT1A, 140.7 and 70.7 s) against ACT1B with (a) the L1A tags
+% as they are and (b) the exact mapping OBC -> receiver (TIM1B, linear
+% between its records) -> GPS (CLK1B: GPS = rcv_time + eps_time, eps
+% interpolated linearly in receiver time).
+    o = strings(0, 1);
+    na = string(aux.obsNames); nb = string(auxb.obsNames);
+    ia = find(startsWith(na, "lin_accl")); ib = find(startsWith(nb, "lin_accl"));
+    pair = [3 1 2];                                      % ACT1B x<-z, y<-x, z<-y (round 2)
+    day0 = double(tb(1)) * 1e-9;
+    tO = double(t) * 1e-9;                               % OBC seconds past J2000 noon
+    % TIM1B: obctime (integer OBC s) -> receiver time
+    obc = xt(:, 1); rcv = double(tt) * 1e-9;
+    okT = obc > 6e8 & rcv > 6e8;
+    [obc, iu] = unique(obc(okT)); rcv = rcv(okT); rcv = rcv(iu);
+    o(end+1, 1) = sprintf("  %s TIM1B: %d usable of %d records; rcv - obc: min %.9f max %.9f mean %.9f s; slope %.3e s/s", ...
+        sat, numel(obc), numel(okT), min(rcv - obc), max(rcv - obc), mean(rcv - obc), ...
+        (rcv(end) - obc(end) - rcv(1) + obc(1)) / (obc(end) - obc(1)));
+    tR = interp1(obc, rcv, tO, "linear", "extrap");
+    % CLK1B: eps_time on receiver time
+    [rc, ic] = unique(rc); eps = eps(ic);
+    o(end+1, 1) = sprintf("  %s CLK1B: %d records, clock_id %s, eps_time min %.9f max %.9f s, eps_drift median %.3e s/s", ...
+        sat, numel(rc), mat2str(unique(clkId(:))'), min(eps), max(eps), median(epsDrift, "omitnan"));
+    tG = tR + interp1(rc, eps, tR, "linear", "extrap");
+    corr = tG - tO;
+    o(end+1, 1) = sprintf("  %s correction GPS - OBC tag: min %.6f max %.6f mean %.6f s", sat, min(corr), max(corr), mean(corr));
+    tB = double(tb) * 1e-9 - day0;
+    B = xb(:, ib);
+    for Tf = [140.7 70.7]
+        k = timeSeriesPreparation.crnKernel("ACC", Tf = Tf);
+        Y = zeros(size(x, 1), 3);
+        for c = 1:3
+            Y(:, c) = conv(x(:, ia(c)), k.F, "same");
+        end
+        dt = diff(tO); gap = [false; dt > 1.5 * median(dt) | dt <= 0];
+        bad = conv(double(gap), ones(2 * k.Nh + 1, 1), "same") > 0;
+        bad(1:k.Nh) = true; bad(end - k.Nh + 1:end) = true;
+        Y(bad, :) = NaN;
+        for mode = ["raw tags" "TIM1B+CLK1B"]
+            if mode == "raw tags", tm = tO - day0; else, tm = tG - day0; end
+            keep = [true; diff(tm) > 0];
+            A = interp1(tm(keep), Y(keep, :), tB, "linear");
+            ok = all(isfinite(A), 2);
+            parts = strings(1, 3);
+            for j = 1:3
+                a = A(ok, pair(j)); bj = B(ok, j);
+                am = a - mean(a); bm = bj - mean(bj);
+                s = (am' * bm) / (am' * am);
+                d = bm - s * am;
+                % residual lag, 0.01 s grid, +-0.3 s
+                lags = -0.3:0.01:0.3; rl = zeros(size(lags));
+                tq = tB(ok);
+                for q = 1:numel(lags)
+                    aq = interp1(tm(keep), Y(keep, pair(j)), tq - lags(q), "linear");
+                    g = isfinite(aq);
+                    rl(q) = -rmsOf((bj(g) - mean(bj(g))) - s * (aq(g) - mean(aq(g))));
+                end
+                [~, ql] = max(rl);
+                parts(j) = sprintf("%s<-%s rel %.3g (hp %.3g), scale-1 %.2e, best lag %+.2f s", nb(ib(j)), na(ia(pair(j))), ...
+                    rmsOf(d) / rmsOf(bm), rmsOf(d - movmean(d, 301)) / rmsOf(bm - movmean(bm, 301)), s - 1, lags(ql));
+            end
+            o(end+1, 1) = sprintf("  %s Tf %.1f %-11s n %d: %s", sat, Tf, mode, nnz(ok), strjoin(parts, " | ")); %#ok<AGROW>
+        end
+    end
+end
+
+function [rc, eps, epsDrift, clkId] = readClk(p)
+% CLK1B parsed locally (gracefoReading v1.1.0: readL1b:noTime on rcv_time).
+% Columns: rcv_time GRACEFO_id clock_id eps_time eps_err eps_drift drift_err qualflg.
+    txt = fileread(p);
+    k = strfind(txt, "End of YAML header");
+    body = txt(k(1):end);
+    body = body(find(body == newline, 1) + 1:end);
+    c = textscan(body, "%f %s %f %f %f %f %f %s");
+    rc = c{1}; clkId = c{3}; eps = c{4}; epsDrift = c{6};
 end
 
 function R = corr2m(B, A)
