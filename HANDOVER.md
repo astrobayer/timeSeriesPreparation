@@ -42,8 +42,8 @@ time tags are **OBC time** (`time_ref` R).
   1e-7 s level.
 - ACC1A (untransformed) matches only partly (r 0.98 / 0.68): ACT1B comes
   from ACT1A, as V-5 says.
-- gracefoReading v1.1.0 defects, for a gracefoReading issue (G-side, not
-  this repository):
+- gracefoReading v1.1.0 defects, filed as astrobayer/gracefoReading#29
+  (G-side, not this repository):
   - CLK1B refuses (`readL1b:noTime`, `rcv_time` not recognised);
   - TIM1B_D has 31 of 10 800 records with rcvtime 0;
   - CLK1B_D has records with eps_time ≈ 0 (max −1.9e-7 s).
@@ -90,6 +90,13 @@ Out of scope:
 **Prediction** (before any run): **726 + 0 + 0 = 726**, that is 723 + 3.
 Per tag: contract 225, reference 261, precision 23, robustness 140,
 metamorphic 44, vectorisation 21, speed 12.
+
+**CI verdict (6d8e792, matlab job 108586877483): 726 + 0 + 0 = 726,
+green.** Per tag as predicted: contract 225, reference 261, precision 23,
+robustness 140, metamorphic 44, vectorisation 21, speed 12.
+TestCrnVerification passed 3/3 in 189 s (both satellites, both spans; it
+prints no values on success) with no warning. The whole suite took 37.1 min
+(testing time, +3.5 min from this class) and audit was green.
 
 ## X-11 — report — merged 2026-09-27 (PR #65, `7c3c222`; issue #14 closed); scope was frozen 2026-09-26
 
