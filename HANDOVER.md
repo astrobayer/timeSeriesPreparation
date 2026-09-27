@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.37 · 2026-09-27 · release 1.3.0 (X-11 + X-12) scope frozen; X-12 done — merged (PR #67, `0fa7b4b`), #15 closed**
+**Revision 0.38 · 2026-09-27 · X-13 (classic GRACE) scope frozen; release 1.3.0 done — merged (PR #68, `bc3415a`), v1.3.0 tagged**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,70 @@ restates:
 
 ---
 
-## Release 1.3.0 — X-11 + X-12; scope frozen 2026-09-27
+## X-13 — classic GRACE: masks, presets, a classic day end to end; scope frozen 2026-09-27
+
+Tier B. CONCEPT row X-13, V-8, issue #16, with the owner's decisions of
+2026-09-27 (interview after v1.3.0).
+
+**Found before the freeze (measured, with the fix placed where it belongs):**
+- Classic headers carry neither units nor qualflg meanings, so with
+  gracefoReading v1.2.0 a classic arc had no units: `align` refused it
+  (`unitUnknown`), `mask` refused classic THR1B (on_time not in
+  milliseconds) and every classic bit read "(not documented)". Owner:
+  the reader supplies them, from JPL D-22027 v1.3 chapter 6 —
+  **gracefoReading v1.3.0** (its PR #32, CI 162 + 0 + 1, tagged
+  2026-09-27). CI moves to it in PR #70 (workflow only).
+- The handbook's editing guidance matches the GRACE-FO presets: ACC1B
+  4.3.2 names bits 5/6/7 (filled data), KBR1B 4.1.2 bit 0 (phase break);
+  its bit tables (6.2, 6.7) equal the RL04 headers' for ACT1B and KBR1B.
+- **The CRN span of classic ACC1B stays open.** Owner: fetch classic
+  ACC1A. Scan PR #69 (closed unmerged, two rounds): ISDC's `grace/`
+  holds DOCUMENTS, GravIS, IONOSPHERE, Level-1B, Level-2, ORBIT and
+  SOFTWARE; every `grace/Level-1A/…` path answers 403, while GRACE-FO's
+  Level-1A is served. PO.DAAC needs an Earthdata login the runner does
+  not have. V-1's classic half waits for another ACC1A source.
+
+**Owner decisions (2026-09-27):**
+- units and meanings from the reader (gracefoReading 1.3.0), not a second
+  table here;
+- classic presets = the GRACE-FO ones (ACC1B removes bits 5 6 7; KBR1B
+  0 6 7 with SNR fraction 0.5, as now); the handbook's absolute KBR SNR
+  (> 450 in 0.1 dB-Hz) is recorded, not used;
+- integration: one real ACC1B day for A and B end to end; no mission-
+  aware strings and no classic template bank in this WP.
+
+**Scope (frozen):**
+- `Config`: ACC1B of mission GRACE gets `mask.removeBits = [5 6 7]`
+  (D-22027 4.3.2). GRACE-FO ACC1B keeps none: its bits were never
+  measured here. KBR1B is unchanged (both missions).
+- `TestIntegration/classicDaysEndToEnd` (reference; ORC-9, real classic
+  files): ACC1B and THR1B of 2008-07-02, A and B, from
+  `DATAPOOL\GRACE\L1B\JPL\RL02\2008\2008-07-02\`, through `run` with
+  QualFlags and Thrusters. Asserted: mission GRACE, release 02, units
+  m/s2; stages mask (and fill), align/qc skipped for want of a
+  reference; the qualflg layers equal the bits decoded independently by
+  `decodeQualFlags` and carry the handbook meanings; a THR1B layer with
+  firings; the epochs and observations are unchanged where kept.
+- `TestArcContract/arcFromClassicBinary`: the classic arc's units are
+  the handbook's (m/s2, rad/s2).
+- `TestCrnVerification` reads CLK1B through `gracefoReading.readL1b`
+  (v1.2.0 reads it) instead of its local parser; the numbers are the same.
+- `TestConfig`: the classic ACC1B preset and the GRACE-FO ACC1B without
+  one, as rows of the existing preset table.
+- CONCEPT: X-13 row, V-8 closed, V-1's classic half open with the reason;
+  help (`Config`, `mask`), CHANGELOG Unreleased.
+
+Out of scope (owner): exportNetcdf's keyword "GRACE-FO" and run's DataCite
+resourceType for classic arcs; `report`'s reference ASD (noiseReference
+covers GRACE-FO only, and `report` draws it for classic ACC1B/KBR1B too);
+the classic THR1B template bank. Recorded as debt below.
+
+**Tests (predicted):** TestIntegration +1 (reference). Every other change
+adds rows or assertions to existing tests.
+**Prediction: 727 + 0 + 0 = 727.** Per tag: contract 225, reference 262,
+precision 23, robustness 140, metamorphic 44, vectorisation 21, speed 12.
+
+## Release 1.3.0 — X-11 + X-12 — merged 2026-09-27 (PR #68, `bc3415a`; v1.3.0 tagged by the workflow); scope was frozen 2026-09-27
 
 Owner decision 2026-09-27 ("Release 1.3.0"), after PR #67 merged. MINOR:
 `report` (X-11) is new capability that leaves every caller working; X-12
@@ -2328,12 +2391,20 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
   `matlab-docs/examples/timeSeriesPreparation.json` still hold the untested
   proposal; the measured configuration is `.github/*.json` here. Updating the
   examples is a ci-actions PR (one repository per PR).
+- Classic GRACE metadata (X-13, owner 2026-09-27: out of that WP):
+  `exportNetcdf` writes the keyword "GRACE-FO" and `run`'s DataCite block
+  "Prepared GRACE-FO instrument time series" for classic arcs too, and
+  `report` draws GRACE-FO's reference ASD (noiseReference) for classic
+  ACC1B and KBR1B. Each is one mission-aware string or guard.
+- V-1's classic half (the CRN span of classic ACC1B, 70.7 s per D-22027
+  or 140.7 s as for GRACE-FO): no public classic ACC1A on ISDC (scan PR
+  #69); waits for another source.
 
 ---
 
 ## A. Status
 
-**Release 1.3.0 in progress** (scope above). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**X-13 in progress** (scope above). Release 1.3.0 merged (PR #68, `bc3415a`; CI 726 + 0 + 0; **release v1.3.0**). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
