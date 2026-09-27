@@ -1,0 +1,33 @@
+# THROWAWAY: runs only on its own PR and is never merged (X-13 scan, owner decision 2026-09-27).
+# Finds classic GRACE Level-1A (ACC1A) on ISDC and keeps the days in the owner's DATAPOOL
+# (GRACE\L1A\JPL\<release>\<yyyy>\<day>\).
+name: scan-classic-l1a
+on:
+  pull_request:
+    paths: ['.github/workflows/scan.yml', 'tools/scanClassicL1A.m']
+permissions:
+  contents: read
+concurrency:
+  group: scan-classic-l1a
+  cancel-in-progress: false
+jobs:
+  scan:
+    name: classic L1A discovery and download
+    runs-on: [self-hosted, Windows]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Scan
+        uses: matlab-actions/run-command@bfa857648f4895aa98a446fe41c85e0788421ed5 # v3
+        env:
+          READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}
+        with:
+          command: addpath('tools'); scanClassicL1A(getenv('READING_DATA_POOL'), ["2008-07-02" "2008-07-03"])
+
+      - name: Publish scan
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: classic-l1a-scan
+          path: artifacts/
