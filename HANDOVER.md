@@ -38,6 +38,14 @@ tag: contract 225, reference 262, precision 23, robustness 140,
 metamorphic 44, vectorisation 21, speed 12. The two version-dependent
 checks (TestArc, TestCampaign) compare with `internal.toolboxVersion()`.
 
+**CI verdict (bde3e1c, run 36385566964, matlab job 108810101306): 727 + 0
++ 0 = 727, green.** Per tag as predicted: contract 225, reference 262,
+precision 23, robustness 140, metamorphic 44, vectorisation 21, speed 12.
+The gate reports `timeSeriesPreparation v1.4.0`, and no line of the log
+names this toolbox at 1.3.0 (the only `v1.3.0` is the gracefoReading
+pin). The classic days log as on PR #71. The suite took 37.0 min, and
+audit was green.
+
 ## X-13 — classic GRACE: masks, presets, a classic day end to end — merged 2026-09-28 (PR #71, `beaafa5`; issue #16 closed); scope was frozen 2026-09-27
 
 Tier B. CONCEPT row X-13, V-8, issue #16, with the owner's decisions of
@@ -2464,7 +2472,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**Release 1.4.0 in progress** (scope above). X-13 merged (PR #71, `beaafa5`; CI 727 + 0 + 0; fault injection 725 + 2 + 1 as intended; issue #16 closed). CI pin gracefoReading v1.3.0 merged (PR #70, `71e7ce4`; CI 726 + 0 + 0). Release 1.3.0 merged (PR #68, `bc3415a`; CI 726 + 0 + 0; **release v1.3.0**). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**Release 1.4.0 green, awaiting merge** (PR #72; CI 727 + 0 + 0 on `bde3e1c`). X-13 merged (PR #71, `beaafa5`; CI 727 + 0 + 0; fault injection 725 + 2 + 1 as intended; issue #16 closed). CI pin gracefoReading v1.3.0 merged (PR #70, `71e7ce4`; CI 726 + 0 + 0). Release 1.3.0 merged (PR #68, `bc3415a`; CI 726 + 0 + 0; **release v1.3.0**). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
