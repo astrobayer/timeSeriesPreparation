@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.38 · 2026-09-27 · X-13 (classic GRACE) scope frozen; release 1.3.0 done — merged (PR #68, `bc3415a`), v1.3.0 tagged**
+**Revision 0.39 · 2026-09-28 · release 1.4.0 scope frozen; X-13 (classic GRACE) done — merged (PR #71, `beaafa5`), issue #16 closed**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -10,7 +10,43 @@ restates:
 
 ---
 
-## X-13 — classic GRACE: masks, presets, a classic day end to end; scope frozen 2026-09-27
+## Release 1.4.0 — X-13; scope frozen 2026-09-28
+
+Owner decision 2026-09-28 ("Release 1.4.0"), after PR #71 merged. MINOR:
+classic GRACE arcs now carry units and flag meanings and get the ACC1B
+fill-flag preset (X-13). Every GRACE-FO caller keeps working unchanged.
+The only default that changes is classic ACC1B `mask.removeBits`, from
+none to [5 6 7]. Before 1.3.0 of gracefoReading a classic arc had no
+units, so `align` refused it anyway.
+
+**Scope (frozen), as release 1.3.0 (PR #68):**
+- `chore: version 1.3.0 -> 1.4.0`, its own commit (GUIDE 3): Contents.m,
+  every help footer (version only; date and time move only where content
+  changes), `docs/errorIdentifiers.md` and the generated html
+  (regenerated), TestHelpExamples' header.
+- CHANGELOG: "Unreleased" becomes "1.4.0 — 2026-09-28"; README status, and
+  README's dependency line names gracefoReading >= 1.3.0 for classic arcs.
+- Not changed: every literal naming another repository's version
+  (gracefoReading 1.3.0, the CI pin `v1.3.0`, ci-actions tags) and literals
+  naming the release in which something happened (Arc schema "2 since
+  release 1.2.0", the example provenance record with version "1.2.0").
+- The release workflow tags `v1.4.0` on the merge commit and publishes the
+  release.
+
+**Prediction** (before any run): **727 + 0 + 0 = 727**, unchanged. Per
+tag: contract 225, reference 262, precision 23, robustness 140,
+metamorphic 44, vectorisation 21, speed 12. The two version-dependent
+checks (TestArc, TestCampaign) compare with `internal.toolboxVersion()`.
+
+**CI verdict (bde3e1c, run 36385566964, matlab job 108810101306): 727 + 0
++ 0 = 727, green.** Per tag as predicted: contract 225, reference 262,
+precision 23, robustness 140, metamorphic 44, vectorisation 21, speed 12.
+The gate reports `timeSeriesPreparation v1.4.0`, and no line of the log
+names this toolbox at 1.3.0 (the only `v1.3.0` is the gracefoReading
+pin). The classic days log as on PR #71. The suite took 37.0 min, and
+audit was green.
+
+## X-13 — classic GRACE: masks, presets, a classic day end to end — merged 2026-09-28 (PR #71, `beaafa5`; issue #16 closed); scope was frozen 2026-09-27
 
 Tier B. CONCEPT row X-13, V-8, issue #16, with the owner's decisions of
 2026-09-27 (interview after v1.3.0).
@@ -2436,7 +2472,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**X-13 green, awaiting merge** (PR #71; CI 727 + 0 + 0 on `07baae5`; fault injection 725 + 2 + 1 as intended). CI pin gracefoReading v1.3.0 merged (PR #70, `71e7ce4`; CI 726 + 0 + 0). Release 1.3.0 merged (PR #68, `bc3415a`; CI 726 + 0 + 0; **release v1.3.0**). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**Release 1.4.0 green, awaiting merge** (PR #72; CI 727 + 0 + 0 on `bde3e1c`). X-13 merged (PR #71, `beaafa5`; CI 727 + 0 + 0; fault injection 725 + 2 + 1 as intended; issue #16 closed). CI pin gracefoReading v1.3.0 merged (PR #70, `71e7ce4`; CI 726 + 0 + 0). Release 1.3.0 merged (PR #68, `bc3415a`; CI 726 + 0 + 0; **release v1.3.0**). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).

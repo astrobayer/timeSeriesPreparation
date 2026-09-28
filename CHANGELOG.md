@@ -3,7 +3,10 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
-## Unreleased
+## 1.4.0 — 2026-09-28
+
+Classic GRACE release (X-13). Classic arcs need gracefoReading 1.3.0 or
+later for their units and flag meanings.
 
 - **X-13** classic GRACE (issue #16). Classic arcs carry units and `qualflg`
   meanings from gracefoReading 1.3.0, taken from JPL D-22027 v1.3 chapter 6;

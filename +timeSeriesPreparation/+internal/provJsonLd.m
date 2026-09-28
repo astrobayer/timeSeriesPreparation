@@ -75,7 +75,7 @@ function txt = provJsonLd(provenance, options)
 %   See also timeSeriesPreparation.exportNetcdf, timeSeriesPreparation.Arc.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.4.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         provenance struct

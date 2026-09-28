@@ -40,7 +40,7 @@ function v = toolboxVersion()
 %   See also setupTimeSeriesPreparation, timeSeriesPreparation.Arc.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.4.0 | 2026-09-22 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     file = fullfile(fileparts(fileparts(mfilename("fullpath"))), "Contents.m");
     tok = regexp(fileread(file), "% Version (\d+\.\d+\.\d+)", "tokens", "once");

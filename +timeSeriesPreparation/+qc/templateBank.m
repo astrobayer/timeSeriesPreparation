@@ -55,7 +55,7 @@ function bank = templateBank()
 %   See also timeSeriesPreparation.qc.detectTemplates, timeSeriesPreparation.qc.screen.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.4.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     thr.lags = (-60:60)';
     thr.C = [
