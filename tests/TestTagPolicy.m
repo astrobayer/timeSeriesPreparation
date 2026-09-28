@@ -22,7 +22,7 @@ classdef TestTagPolicy < matlab.unittest.TestCase
 %                   test in an exempt folder stays silent.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.4.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Allowed = ["contract" "reference" "precision" "speed" ...

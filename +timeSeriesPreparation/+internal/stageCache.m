@@ -53,7 +53,7 @@ function [outs, status] = stageCache(cacheDir, stage, key, nOut, compute)
 %   See also timeSeriesPreparation.internal.contentHash, timeSeriesPreparation.run.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-25 23:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.4.0 | 2026-09-25 23:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         cacheDir (1,1) string
