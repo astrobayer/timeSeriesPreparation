@@ -29,8 +29,14 @@ classdef Config
 %     LRI1B remove bit 0 (phase break) and bits 6-7 (fill flags) and set
 %     snrFraction 0.5, provisional until real data refine it. Every other
 %     bit - ACT1B clock-offset extrapolation (3/4), KBR1B time-tag bias
-%     correction (5) - is reported by mask, not removed. Any other product
-%     removes no bit and has no snr layer unless told.
+%     correction (5) - is reported by mask, not removed. Classic GRACE
+%     (X-13, owner decision 2026-09-27): ACC1B of mission GRACE removes
+%     bits 5-7, the fill flags of the GRACE L1B handbook (JPL D-22027
+%     v1.3, 4.3.2 and 6.2, whose bit table equals ACT1B's), and classic
+%     KBR1B takes the KBR1B preset (4.1.2 and 6.7 match it); the
+%     handbook's absolute KBR SNR edit (> 450 in 0.1 dB-Hz) is not used.
+%     GRACE-FO ACC1B removes none: its bits were never measured here. Any
+%     other product removes no bit and has no snr layer unless told.
 %
 %     crn (X-04): field preset, the crnKernel preset the product was filtered
 %     with in L1B processing - "ACC" for ACC1B (GRACE) and ACT1B (GRACE-FO),
@@ -121,8 +127,9 @@ classdef Config
 %
 %   LIMITATIONS
 %     Presets exist for ACC1B, ACT1B, KBR1B and LRI1B; any other product
-%     gets the defaults. The classic GRACE presets beyond crn follow in
-%     X-13.
+%     gets the defaults. The crn preset of classic ACC1B ("ACC", 140.7 s)
+%     is GRACE-FO's; whether classic L1B used the handbook's 70.7 s is
+%     open (V-1), there being no public classic ACC1A to test it on.
 %
 %   REFERENCES
 %     docs/CONCEPT.md section 5 (Config), R5 (no assumed defaults). R-1: GRACE
@@ -131,7 +138,7 @@ classdef Config
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.run, timeSeriesPreparation.mask, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-27 22:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run" "export"]
@@ -183,6 +190,10 @@ classdef Config
             switch cfg.product
                 case "ACT1B"
                     cfg.mask.removeBits = [5 6 7];
+                case "ACC1B"
+                    if cfg.mission == "GRACE"      % D-22027 4.3.2; X-13
+                        cfg.mask.removeBits = [5 6 7];
+                    end
                 case {"KBR1B", "LRI1B"}
                     cfg.mask.removeBits = [0 6 7];
                     cfg.mask.snrFraction = 0.5;

@@ -9,8 +9,9 @@ classdef TestCrnVerification < matlab.unittest.TestCase
 %       1. ACT1A time tags, OBC time, to receiver time: linear in the TIM1B
 %          records (obctime -> rcvtime); records with a zero time dropped;
 %       2. receiver to GPS time: + eps_time of CLK1B, linear in receiver
-%          time (GPS = rcv_time + eps_time); CLK1B is parsed here, because
-%          gracefoReading v1.1.0 refuses it (readL1b:noTime);
+%          time (GPS = rcv_time + eps_time); CLK1B is read by
+%          gracefoReading.readL1b since its v1.2.0 (v1.1.0 refused it,
+%          readL1b:noTime, gracefoReading#29), and was parsed here before;
 %       3. resampled to the 0.1 s grid by linear interpolation, NaN where
 %          neighbouring samples are more than 0.15 s apart;
 %       4. crnApply with crnKernel("ACC") at the ACT1B epochs.
@@ -30,7 +31,7 @@ classdef TestCrnVerification < matlab.unittest.TestCase
 %                      have their own tests.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-27 10:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-27 22:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Bar = 2e-3
@@ -110,7 +111,9 @@ function d = dayData(testCase, sat)
     tO = double(ta) * 1e-9;
     tR = interp1(obc, rcv, tO, "linear", "extrap");
     % 2. receiver -> GPS time (CLK1B)
-    [rc, eps] = readClk(fC);
+    [tc, xc, auxc] = gracefoReading.readL1b(fC, "TimeFormat", "gpsns");
+    rc = double(tc) * 1e-9;                             % rcv_time, receiver time
+    eps = xc(:, strcmp(string(auxc.obsNames), "eps_time"));
     [rc, ic] = unique(rc); eps = eps(ic);
     tG = tR + interp1(rc, eps, tR, "linear", "extrap");
     % 3. resample to the 0.1 s grid
@@ -147,15 +150,4 @@ function f = poolFile(testCase, level, product, day, sat)
     hits = dir(fullfile(folder, product + "_" + day + "_" + sat + "_*.txt"));
     testCase.assumeNotEmpty(hits, "X-12 file missing: " + fullfile(folder, product + "_" + day + "_" + sat + "_*.txt"));
     f = string(fullfile(hits(1).folder, hits(1).name));
-end
-
-function [rc, eps] = readClk(p)
-% CLK1B after its YAML header: rcv_time GRACEFO_id clock_id eps_time eps_err
-% eps_drift drift_err qualflg (R-2; gracefoReading v1.1.0 refuses the file).
-    txt = fileread(p);
-    k = strfind(txt, "End of YAML header");
-    body = txt(k(1):end);
-    body = body(find(body == newline, 1) + 1:end);
-    c = textscan(body, "%f %s %f %f %f %f %f %s");
-    rc = c{1}; eps = c{4};
 end

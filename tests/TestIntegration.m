@@ -38,16 +38,28 @@ classdef TestIntegration < matlab.unittest.TestCase
 %     data from which the fit recovers b and s (tolerances from the noise,
 %     sigma_s about 1e-4).
 %
+%     Classic days (X-13, owner decision 2026-09-27): ACC1B and THR1B of
+%     2008-07-02, GRACE A and B (DATAPOOL GRACE\L1B\JPL\RL02, binary),
+%     through run with QualFlags and Thrusters and no Reference. Units
+%     and qualflg meanings come from gracefoReading >= 1.3.0 (JPL D-22027
+%     v1.3 chapter 6). Required: mission GRACE, release 02, m/s2; stages
+%     mask and fill, align and qc skipped for want of a reference; layers
+%     qualflg_b5-b7 equal to the bits decodeQualFlags gives, meaning
+%     "filled data"; a thr layer from at least one firing; weight 0
+%     exactly where a layer removes; epochs and kept observations
+%     unchanged.
+%
 %   COVERAGE
 %     reference      - the real day, ITSG moved by V-17, meets the V-4
-%                      thresholds; the synthetic
-%                      arc's planted truth is recovered.
+%                      thresholds; the synthetic arc's planted truth is
+%                      recovered; the classic days of A and B run end to
+%                      end with the classic presets.
 %     contract, precision, robustness, metamorphic, vectorisation, speed -
 %                      exempt: TestRun holds run's contract and each
 %                      stage's tests the rest.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.3.0 | 2026-09-25 13:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.3.0 | 2026-09-27 22:15 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         V4Corr  = [0.95 0.95 0.93]      % thresholds; measured 0.984 / 0.973 / 0.955
@@ -135,6 +147,55 @@ classdef TestIntegration < matlab.unittest.TestCase
             testCase.verifyEqual(sFit, s, "AbsTol", 5e-4);
             testCase.verifyEqual(bFit, b, "AbsTol", 5e-12);
         end
+
+        function classicDaysEndToEnd(testCase)
+            % X-13: ACC1B and THR1B of 2008-07-02 (classic GRACE, binary,
+            % RL02), A and B, through run with QualFlags and Thrusters.
+            pool = string(getenv("READING_DATA_POOL"));
+            testCase.assumeNotEmpty(char(pool), "READING_DATA_POOL is not set.");
+            testCase.assumeNotEmpty(meta.package.fromName("gracefoReading"), ...
+                "gracefoReading is not on the path.");
+            names = ["lin_accl_x" "lin_accl_y" "lin_accl_z"];
+            for sat = ["A" "B"]
+                [t, a, aux] = gracefoReading.readL1b(classicFile(testCase, pool, "ACC1B", sat), ...
+                    "TimeFormat", "gpsns");
+                arc = timeSeriesPreparation.Arc(t, a, aux, Columns = names);
+                testCase.verifyEqual([arc.mission arc.release arc.satellite], ["GRACE" "02" sat]);
+                testCase.verifyEqual(arc.units, repmat("m/s2", 1, 3), "Units from gracefoReading >= 1.3.0.");
+                [tt, ot, at] = gracefoReading.readL1b(classicFile(testCase, pool, "THR1B", sat), ...
+                    "TimeFormat", "gpsns");
+                thr = timeSeriesPreparation.Arc(tt, ot, at);
+
+                res = timeSeriesPreparation.run(arc, QualFlags = aux, Thrusters = thr);
+                testCase.verifyEqual(res.diagnostics.stages, ["mask" "fill"], sat);
+                sk = res.diagnostics.skipped;
+                testCase.verifyEqual(sk.reason(ismember(sk.stage, ["align" "qc"])), ...
+                    ["no Reference"; "no Reference"], sat);
+
+                bits = gracefoReading.decodeQualFlags(aux);
+                q = res.diagnostics.mask.qualflg;
+                for b = [5 6 7]
+                    testCase.verifyEqual(res.arc.layers.("qualflg_b" + b), bits(:, b + 1), sat + " bit " + b);
+                    testCase.verifyTrue(contains(q.meaning(b + 1), "filled data"), ...
+                        sat + " bit " + b + ": " + q.meaning(b + 1));
+                end
+                testCase.verifyEqual(q.removes', ismember(0:height(q) - 1, [5 6 7]), sat);
+                testCase.verifyGreaterThan(res.diagnostics.mask.thrusters.firings, 0, sat);
+                testCase.verifyTrue(any(res.arc.layers.thr), sat);
+                testCase.verifyEqual(res.arc.weights == 0, ...
+                    any(bits(:, 6:8), 2) | res.arc.layers.thr, sat);
+
+                kept = res.arc.weights > 0;
+                testCase.verifyGreaterThan(nnz(kept), 0, sat);
+                testCase.verifyEqual(res.arc.t, arc.t, sat);
+                testCase.verifyEqual(res.arc.obs(kept, :), arc.obs(kept, :), sat);
+                testCase.verifyFalse(any(res.arc.filled), sat + ": fill method ""none"" fills nothing.");
+                testCase.log(matlab.unittest.Verbosity.Terse, sprintf( ...
+                    "X-13 %s: %d epochs, %d removed (qualflg %d, thr %d; %d firings)", sat, ...
+                    numel(t), nnz(~kept), nnz(any(bits(:, 6:8), 2)), nnz(res.arc.layers.thr), ...
+                    res.diagnostics.mask.thrusters.firings));
+            end
+        end
     end
 end
 
@@ -163,6 +224,15 @@ function aux = itsgAux(auxi, names, file)
     end
     aux = struct("obsNames", {c}, "variableNames", {c}, "variableFieldNames", {c}, ...
         "variableUnits", units, "fileName", char(file), "product", "nonConservativeForces");
+end
+
+function f = classicFile(testCase, pool, product, sat)
+% The DATAPOOL file of classic PRODUCT of 2008-07-02 for SAT (RL02, binary).
+    folder = fullfile(pool, "GRACE", "L1B", "JPL", "RL02", "2008");
+    hits = dir(fullfile(folder, "**", product + "_2008-07-02_" + sat + "_*.dat"));
+    testCase.assertNotEmpty(hits, "Missing " + fullfile(folder, "**", ...
+        product + "_2008-07-02_" + sat + "_*.dat"));
+    f = string(fullfile(hits(1).folder, hits(1).name));
 end
 
 function t = epochs(n, stepNs)
