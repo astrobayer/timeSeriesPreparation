@@ -116,7 +116,7 @@ function res = correlate(arc, drv, model, maxLag, options)
 %   See also timeSeriesPreparation.drivers, timeSeriesPreparation.noise, timeSeriesPreparation.bootstrap, timeSeriesPreparation.tsmodels.tsAcf.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-24 10:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-09-24 10:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc (1,1) timeSeriesPreparation.Arc

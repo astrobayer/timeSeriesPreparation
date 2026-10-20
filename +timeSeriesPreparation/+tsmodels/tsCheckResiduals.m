@@ -68,7 +68,7 @@ function out = tsCheckResiduals(model, lags)
 %   See also timeSeriesPreparation.tsmodels.plotResiduals, timeSeriesPreparation.tsmodels.tsLjungBox, timeSeriesPreparation.tsmodels.tsAcf, timeSeriesPreparation.tsmodels.tsFitArima.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         model (1,1) struct
