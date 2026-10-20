@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.39 · 2026-09-28 · release 1.4.0 scope frozen; X-13 (classic GRACE) done — merged (PR #71, `beaafa5`), issue #16 closed**
+**Revision 0.40 · 2026-10-20 · X-19 (ACH1B preset) and release 1.5.0 scope frozen; issue #73**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -9,6 +9,51 @@ restates:
 - `docs/GUIDE.md` — the order of work and every procedure.
 
 ---
+
+## X-19 — Config preset for the hybrid ACH1B, and release 1.5.0; scope frozen 2026-10-20
+
+Issue #73. Found by NonGravForces N-10b (NonGravForces PR #104), which
+compares GRACE-D calibrations on ACT1B and ACH1B over 26 days of 2020-01
+and, to prepare both alike, labels its ACH1B arcs "ACT1B" (a documented
+workaround in its `tools/regressionBaseline.m`). `Config(arc)` gives
+ACH1B no preset: no crn preset, no minimum-data gate, no mask bits.
+
+**What the header says** (RL04, `ACH1B_2020-01-01_D_04.txt`, the real
+120-record extract in gracefoReading `tests/realdata`, present at the
+CI pin v1.3.0; byte-identical, CR aside, to NonGravForces'
+`data/samples/acx` copy): the same nine data columns as ACT1B, with the
+same names, units and column comments; the eight `qualflg` meanings
+**word for word ACT1B's** (bits 5-7 the fill flags by distance from the
+CRN centre, 3/4 the CLK1B extrapolation); `acl_*_res` "Residual of
+lin_accl_* from non-CRN-filtered value", i.e. CRN-filtered at 1 Hz; summary
+"1-Hz linear accelerations dervied [sic] from a hybrid transplant in SRF". The
+only difference in the variable block: ACT1B's angular columns say
+"0 for ACT1B". So every part of the ACT1B preset rests on a header fact
+ACH1B shares, and all three parts are mapped.
+
+**Scope (frozen):**
+- `Config`: ACH1B takes ACT1B's preset - `crn.preset` "ACC",
+  `unc.minWeightFraction` 0.5, `mask.removeBits` [5 6 7]. Help of
+  `Config` (and of `mask`, `observability` where they list the presets).
+- `TestConfig`: the preset tables gain ACH1B rows, and a new test reads
+  the real ACH1B and ACT1B extracts through `gracefoReading.readL1b` and
+  asserts the header facts the preset rests on (product, column names,
+  units, the eight bit meanings equal ACT1B's, the CRN residual comment)
+  and the preset of `Config` on the real arc.
+- CONCEPT: row X-19 in 10.1, V-16 and 6.1 row 1 name ACH1B.
+- Release 1.5.0 (MINOR: a preset for one more product; every caller keeps
+  working, the only default that moves is ACH1B's): `chore: version 1.4.0
+  -> 1.5.0` as its own commit over every literal, as in 1.4.0; CHANGELOG
+  section, README status.
+- Not in scope: `report`'s noiseReference overlay for ACH1B (it names
+  ACT1B/ACC1B only; ACH1B is a hybrid of measurement and models, so its
+  noise is not the instrument's without a measurement); removing the
+  workaround in NonGravForces (its own later step).
+
+**Prediction** (before any run): **728 + 0 + 0 = 728**, one more than
+1.4.0 (the new TestConfig test, tagged reference). Per tag: contract
+225, reference 263, precision 23, robustness 140, metamorphic 44,
+vectorisation 21, speed 12.
 
 ## Release 1.4.0 — X-13; scope frozen 2026-09-28
 
