@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.40 · 2026-10-20 · X-19 (ACH1B preset) and release 1.5.0 scope frozen; issue #73**
+**Revision 0.41 · 2026-10-20 · X-19 (ACH1B preset) + release 1.5.0 in PR #74: Tier A 728 total as predicted, the 8 non-passes host-data only; CI pending**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -54,6 +54,27 @@ ACH1B shares, and all three parts are mapped.
 1.4.0 (the new TestConfig test, tagged reference). Per tag: contract
 225, reference 263, precision 23, robustness 140, metamorphic 44,
 vectorisation 21, speed 12.
+
+**Fault injection** (local, not committed): ACH1B taken out of the mask
+case fails `TestConfig/ach1bPresetFromHeader` and
+`TestConfig/maskDefaultsAndPresets`; restored, TestConfig is 15/15.
+
+**Tier A verdict (2026-10-20, R2026a, `ef4e6b4`,
+`matlab -batch timeSeriesPreparationCiGate` with deps at CI's pins:
+gracefoReading v1.3.0, lsqvce v6.1.3; `READING_DATA_POOL=E:\DATAPOOL`):
+720 + 5 + 8 = 728** (the 5 failed are among the 8 incomplete). The total
+and every tag total are as predicted: contract 225/225, reference 256 of
+263, robustness 139 of 140, precision 23, metamorphic 44, vectorisation 21,
+speed 12. **Every non-pass is a DATAPOOL file this host does not hold**,
+none touches `Config`: `TestCrnVerification` x3 (no Level-1A),
+`TestDefectCatalogue` dc3/dc4/dc5 (no KBR1B of 2020-07),
+`TestIntegration/realDayAgainstItsg` (no ITSG under GRACEFO-1) and
+`classicDaysEndToEnd` (no classic RL02). The host's pool holds GRACE-FO
+L1B RL04 only. Recorded as a tier debt: the CI runner, which has the
+pool, gives the full verdict. Static audit (ci-actions v1.3.2) clean at
+1.5.0, docs in sync.
+
+**CI verdict:** pending (run 39409967168 queued on the self-hosted runner).
 
 ## Release 1.4.0 — X-13; scope frozen 2026-09-28
 
@@ -2517,7 +2538,7 @@ This clears the ci-actions debts "neither `action.yml` loaded by a runner"
 
 ## A. Status
 
-**Release 1.4.0 green, awaiting merge** (PR #72; CI 727 + 0 + 0 on `bde3e1c`). X-13 merged (PR #71, `beaafa5`; CI 727 + 0 + 0; fault injection 725 + 2 + 1 as intended; issue #16 closed). CI pin gracefoReading v1.3.0 merged (PR #70, `71e7ce4`; CI 726 + 0 + 0). Release 1.3.0 merged (PR #68, `bc3415a`; CI 726 + 0 + 0; **release v1.3.0**). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
+**X-19 + release 1.5.0 in PR #74, awaiting CI and merge** (issue #73; Tier A 728 total as predicted, non-passes host-data only). Release 1.4.0 merged (PR #72, `ad2c445`; CI 727 + 0 + 0; **release v1.4.0**). X-13 merged (PR #71, `beaafa5`; CI 727 + 0 + 0; fault injection 725 + 2 + 1 as intended; issue #16 closed). CI pin gracefoReading v1.3.0 merged (PR #70, `71e7ce4`; CI 726 + 0 + 0). Release 1.3.0 merged (PR #68, `bc3415a`; CI 726 + 0 + 0; **release v1.3.0**). X-12 merged (PR #67, `0fa7b4b`; CI 726 + 0 + 0; issue #15 closed). X-11 merged (PR #65, `7c3c222`; CI 723 + 0 + 0; issue #14 closed). X-18 merged (PR #64, `5cba363`; CI 716 + 0 + 0; **release v1.2.0**; issue #21 closed). X-17 merged (PR #63, `db47634`; CI 698 + 0 + 0; issue #20 closed). X-15 merged (PR #61, `a82c710`; CI 687 + 0 + 0; **release v1.1.0**; issue #18 closed). X-16 merged (PR #60, `ca5230f`; CI 676 + 0 + 0; issue #19 closed). X-14 merged (PR #59, `a264793`; CI 669 + 0 + 0; issue #17 closed). X-10 merged (PR #58, `3bc1f4c`; **release v1.0.0**; issue #13 closed).
 
 **Earlier:** X-05b merged.
 O-6 merged (PR #54, `7c7fb7b`; CI 622 + 0 + 0).
