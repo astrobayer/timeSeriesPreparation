@@ -17,7 +17,7 @@ function [arc, info] = mask(arc, options)
 %         are the file header's own. Each bit in RemoveBits becomes a layer
 %         "qualflg_b<k>". The presets remove the phase break (KBR1B and
 %         LRI1B bit 0) and the L1B fill flags, "interpolated data point
-%         (due to gap)" (ACT1B bits 5-7, KBR1B and LRI1B bits 6-7; classic
+%         (due to gap)" (ACT1B and ACH1B bits 5-7, KBR1B and LRI1B bits 6-7; classic
 %         GRACE ACC1B bits 5-7, "filled data", JPL D-22027 4.3.2). Every
 %         other bit is reported in info.qualflg and removes nothing: the
 %         ACT1B clock-offset extrapolation (bits 3/4), the KBR1B time-tag
@@ -136,7 +136,7 @@ function [arc, info] = mask(arc, options)
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.Config, timeSeriesPreparation.qc.screen, gracefoReading.decodeQualFlags, gracefoReading.readEventList.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-27 22:15 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.4.0 | 2026-10-20 12:40 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc (1,1) timeSeriesPreparation.Arc

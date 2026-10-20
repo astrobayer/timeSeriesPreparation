@@ -17,22 +17,30 @@ classdef TestConfig < matlab.unittest.TestCase
 %                      and run's defaults (qc.screen's and noise's own; order
 %                      and filterReference [], seed 0, cacheDir "", parallel false,
 %                      outDir "", overwrite false, mixedRelease false) and setting them; mask's defaults and its presets
-%                      (ACT1B and classic ACC1B bits 5-7; KBR1B, classic
+%                      (ACT1B, ACH1B and classic ACC1B bits 5-7; KBR1B, classic
 %                      KBR1B and LRI1B bits 0, 6, 7 and snrFraction 0.5;
 %                      GRACE-FO ACC1B and others none); drivers' defaults ("pchip", [], [], 10); align's defaults (pchip, [], 60 s, 1 s) and
 %                      setting them; fill's defaults ("none", [], []) and
 %                      setting them; unc's defaults ([], [], 1000, 0.6827, 5) and
-%                      the gate 0.5 for ACC1B, ACT1B, KBR1B and LRI1B only;
+%                      the gate 0.5 for ACC1B, ACT1B, ACH1B, KBR1B and LRI1B only;
 %                      mission, product and crn.preset taken from the arc
-%                      (ACC1B/ACT1B ACC, KBR1B KBR, others ""); crn.preset
+%                      (ACC1B/ACT1B/ACH1B ACC, KBR1B KBR, others ""); crn.preset
 %                      settable; toStruct carries all of them.
+%     reference      - the ACH1B preset (X-19) and the RL04 header facts it
+%                      rests on, read from the real ACH1B extract (gracefoReading
+%                      tests/realdata, GRACE-D 2020-01-01) against the real ACT1B
+%                      of tests/data/samples: product, the nine columns, their
+%                      units, the eight qualflg meanings word for word ACT1B's,
+%                      residuals "from non-CRN-filtered value"; then Config of
+%                      the real ACH1B arc equals Config of the real ACT1B arc in
+%                      crn, unc and mask.
 %     robustness     - unknown section and unknown field are refused, also
 %                      a misspelt align field and a misspelt qc field.
-%     precision, reference, speed, vectorisation, metamorphic - exempt: Config
+%     precision, speed, vectorisation, metamorphic - exempt: Config
 %                      stores settings and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-27 22:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.4.0 | 2026-10-20 12:40 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function nineSectionsAllDefined(testCase)
@@ -60,6 +68,7 @@ classdef TestConfig < matlab.unittest.TestCase
         function crnPresetPerProduct(testCase)
             t = int64(0:4)' * int64(1e9);
             for c = ["ACC1B_2008-01-01_A_02.dat" "ACC1B" "ACC"
+                     "ACH1B_2020-01-01_D_04.txt" "ACH1B" "ACC"
                      "KBR1B_2020-01-01_Y_04.txt" "KBR1B" "KBR"
                      "MAS1B_2020-01-01_C_04.txt" "MAS1B" ""]'
                 aux = struct("obsNames", {{'x'}}, "variableNames", {{'x'}}, ...
@@ -99,6 +108,7 @@ classdef TestConfig < matlab.unittest.TestCase
             t = int64(0:4)' * int64(1e9);
             for c = ["ACC1B_2008-01-01_A_02.dat" "ACC1B" "0.5"
                      "ACT1B_2020-01-01_D_04.txt" "ACT1B" "0.5"
+                     "ACH1B_2020-01-01_D_04.txt" "ACH1B" "0.5"
                      "KBR1B_2020-01-01_Y_04.txt" "KBR1B" "0.5"
                      "LRI1B_2020-01-01_Y_04.txt" "LRI1B" "0.5"
                      "MAS1B_2020-01-01_C_04.txt" "MAS1B" ""]'
@@ -122,6 +132,7 @@ classdef TestConfig < matlab.unittest.TestCase
                 "thrMargin", [], "eclipseMargin", [], "crnEdge", false));
             t = int64(0:4)' * int64(1e9);
             cases = {"ACT1B_2020-01-01_D_04.txt", "ACT1B", [5 6 7], []
+                     "ACH1B_2020-01-01_D_04.txt", "ACH1B", [5 6 7], []        % X-19, ACT1B's bit table
                      "KBR1B_2020-01-01_Y_04.txt", "KBR1B", [0 6 7], 0.5
                      "LRI1B_2020-01-01_Y_04.txt", "LRI1B", [0 6 7], 0.5
                      "ACC1B_2008-07-02_A_02.dat", "ACC1B", [5 6 7], []        % X-13, D-22027 4.3.2
@@ -168,6 +179,44 @@ classdef TestConfig < matlab.unittest.TestCase
             s = toStruct(timeSeriesPreparation.Config());
             testCase.verifyEqual(string(fieldnames(s))', ...
                 ["mission" "product" "mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run" "export"]);
+        end
+    end
+
+    methods (Test, TestTags = {'reference'})
+        function ach1bPresetFromHeader(testCase)
+            % X-19: ACH1B takes ACT1B's preset because its RL04 header says
+            % what ACT1B's says; each fact the preset rests on is read here.
+            testCase.assumeNotEmpty(meta.package.fromName('gracefoReading'), ...
+                "gracefoReading is not on the path; the ACH1B header cannot be read.");
+            here = fileparts(mfilename("fullpath"));
+            ach = fullfile(fileparts(fileparts(which("gracefoReading.readL1b"))), ...
+                "tests", "realdata", "ACH1B_2020-01-01_D_04.txt");
+            act = fullfile(here, "data", "samples", "ACT1B_2020-01-01_C_04.txt");
+            testCase.assertTrue(isfile(ach), "gracefoReading's tests/realdata lacks the ACH1B extract.");
+            [tH, oH, aH] = gracefoReading.readL1b(ach, "TimeFormat", "gpsns");
+            [tT, oT, aT] = gracefoReading.readL1b(act, "TimeFormat", "gpsns");
+            testCase.verifyEqual(string(aH.product), "ACH1B");
+            testCase.verifyEqual(string(aH.obsNames), string(aT.obsNames));
+            testCase.verifyEqual(numel(aH.obsNames), 9);
+            for v = string(aT.obsNames)
+                testCase.verifyEqual(aH.variableUnits.(v), aT.variableUnits.(v), v);
+            end
+            mH = string(aH.variableAttributes.qualflg.flag_meanings);
+            testCase.verifyEqual(numel(mH), 8);
+            testCase.verifyEqual(mH, string(aT.variableAttributes.qualflg.flag_meanings));
+            testCase.verifyTrue(all(startsWith(mH(6:8), "bit " + (5:7) + " = Interpolated data point (due to gap)")));
+            for a = ["x" "y" "z"]
+                testCase.verifySubstring(string(aH.variableAttributes.("acl_" + a + "_res").long_name), ...
+                    "from non-CRN-filtered value", a);
+            end
+            cH = timeSeriesPreparation.Config(timeSeriesPreparation.Arc(tH, oH, aH));
+            cT = timeSeriesPreparation.Config(timeSeriesPreparation.Arc(tT, oT, aT));
+            testCase.verifyEqual([cH.mission cH.product], ["GRACE-FO" "ACH1B"]);
+            testCase.verifyEqual(cH.crn, cT.crn);
+            testCase.verifyEqual(cH.unc, cT.unc);
+            testCase.verifyEqual(cH.mask, cT.mask);
+            testCase.verifyEqual([string(cH.crn.preset) string(cH.unc.minWeightFraction)], ["ACC" "0.5"]);
+            testCase.verifyEqual(cH.mask.removeBits, [5 6 7]);
         end
     end
 
