@@ -1,6 +1,6 @@
 # CONCEPT — GRACE-FO time-series preparation, accelerometer calibration, LRI/KBR processing
 
-**Revision 0.32 (DRAFT) · 2026-09-27 · written with Claude Opus 5 (Anthropic)**
+**Revision 0.33 (DRAFT) · 2026-10-20 · written with Claude Opus 5 and Claude Opus 5.5 (Anthropic)**
 
 This file is the **single point of truth for the design** of one pipeline
 spanning six toolboxes. Each repository's HANDOVER stays the single point of
@@ -38,6 +38,7 @@ preprocessing code**; its only items are reader obligations, G-01 … G-06.
 | 0.15 | X-04: section 6.1 row 4 brought in line with section 8 (it still said "DC gain 1.0004533 kept", which 0.14 voided); no design change |
 | 0.16 | X-07: the noise stage is the L2 function `noise` on `tsmodels`/`spectral` (3.2, 6.1 row 5); no other design change |
 | 0.17 | X-07: the reference noise-model library is the L1 function `noiseReference` (3.2, 6.1 row 5), its formulas read from P-13 and P-21 |
+| 0.33 | X-19: `Config` gives GRACE-FO's hybrid ACH1B the ACT1B preset (crn "ACC", gate 0.5, mask bits 5–7): its RL04 header has ACT1B's nine columns and units, the same eight `qualflg` meanings word for word and residuals "from non-CRN-filtered value" (V-16; found by NonGravForces N-10b, issue #73) |
 | 0.32 | X-13: V-8 closed — classic units and `qualflg` meanings come from gracefoReading 1.3.0 (JPL D-22027 v1.3 chapter 6); classic ACC1B removes bits 5–7 and classic KBR1B takes the KBR1B preset (4.3.2, 4.1.2); the CRN span of classic ACC1B stays open, no public classic ACC1A existing (ISDC `grace/Level-1A` 403, scan PR #69; owner decisions 2026-09-27) |
 | 0.31 | X-12: V-1 closed — CRN(ACT1A, 140.7 s) reproduces ACT1B to 2e-6 … 2.5e-5 relative rms per axis after the OBC → receiver → GPS mapping (TIM1B, CLK1B); the 70.7 s span of the classic GRACE handbook (R-4 p. 20) is refuted for GRACE-FO ACT, open for classic GRACE (8, 9; owner decisions 2026-09-27, scan PR #66) |
 | 0.30 | X-11: `report` (L2) draws four figures from a run result (series and masks, QC events, noise PSD against the model and the reference ASD, alignment and correlation) and, with ExportTo, writes PNGs and one self-contained HTML page; a campaign gets one report per day and an index page; no pixel references (10.1; owner decisions 2026-09-26) |
@@ -244,8 +245,8 @@ refuses anything but int64 gpsns time (`timeSeriesPreparation:Arc:timeFormat`).
 | `filled` | logical N×1 | set by `fill`; weight 0 in every fit |
 | `provenance` | struct array, append-only | one entry per stage |
 
-Columns are selected by name through a product dictionary: ACT1B uses
-`lin_accl_x/y/z`, LRI1B takes its names from the real header (V-3). There is
+Columns are selected by name through a product dictionary: ACT1B (and
+ACH1B, whose header names the same nine columns, X-19) uses `lin_accl_x/y/z`, LRI1B takes its names from the real header (V-3). There is
 no positional fallback.
 
 **`timeSeriesPreparation.Config`**
@@ -297,7 +298,7 @@ no positional fallback.
 
 | # | stage | function | guarantee |
 |---|---|---|---|
-| 1 | mask | `mask` | qualflg layers via `decodeQualFlags`, with the meanings the file header states, including the **L1B fill flags**: ACC gaps ≤ 100 s and ranging gaps < 21 s are cubic-filled in L1B processing (R-2, PDF pp. 18, 20), and ACT1B bits 5–7 and KBR1B/LRI1B bits 6/7 mark interpolated points by their distance from the CRN centre. The presets remove the fill flags and the KBR1B/LRI1B phase break (bit 0); the rest is reported, not removed — among it GRACE-FO ACT1B bits 3/4, which the RL04 header defines as the extrapolated CLK1B clock offset (> 5 s / ≤ 5 s from the CRN centre), not the large-range mode an earlier revision read from R-2 p. 32; an **SNR** layer below a fraction of the median (0.5, provisional); THR1B windows ± half the CRN fit interval; eclipse transitions from a driver series ± the same; CRN edges at gaps (off by default); a user layer; **official event lists** (G-05) as layers and calibration windows: TN-01 MANV rows as [epoch, epoch + stated duration], TN-01a windows stated by the caller, since its prose is never parsed |
+| 1 | mask | `mask` | qualflg layers via `decodeQualFlags`, with the meanings the file header states, including the **L1B fill flags**: ACC gaps ≤ 100 s and ranging gaps < 21 s are cubic-filled in L1B processing (R-2, PDF pp. 18, 20), and ACT1B bits 5–7 (ACH1B's header states the same table, X-19) and KBR1B/LRI1B bits 6/7 mark interpolated points by their distance from the CRN centre. The presets remove the fill flags and the KBR1B/LRI1B phase break (bit 0); the rest is reported, not removed — among it GRACE-FO ACT1B bits 3/4, which the RL04 header defines as the extrapolated CLK1B clock offset (> 5 s / ≤ 5 s from the CRN centre), not the large-range mode an earlier revision read from R-2 p. 32; an **SNR** layer below a fraction of the median (0.5, provisional); THR1B windows ± half the CRN fit interval; eclipse transitions from a driver series ± the same; CRN edges at gaps (off by default); a user layer; **official event lists** (G-05) as layers and calibration windows: TN-01 MANV rows as [epoch, epoch + stated duration], TN-01a windows stated by the caller, since its prose is never parsed |
 | 2 | QC | `qc` | residual-based outliers; impulses (matched filter on the CRN impulse response, THR1B priors); jumps (reported and turned into parameters, never masked); after X-16, a **labelled template bank** with one mask layer per type (X-17): empirical thruster templates per satellite (opt-in, `cfg.qc.templates`); magnetic torquer goes to N-11, heater is deferred (no key series in RL04), broad z-spikes are ignored |
 | 3 | align | `align`, `checkAlignment` | reference moved onto the observation epochs; lag diagnostic over ±60 s that warns above 1 s and never shifts silently (v3 F2) |
 | 4 | consistency | `crnKernel`, `crnApply` | exact ATBD kernel **as printed** (section 8), normalised at f0, DC gain 1 + 1.1e-7 (ACC) kept, never renormalised to unit DC; chunked per file day with half-span overlap, bit-identical to unchunked; NaN edges. **The convolution sum is evaluated only at the output epochs** (1 Hz for ACC1B from the 10 Hz grid): about 3.6e8 instead of 3.6e9 multiply-adds per day for 3 axes, pinned equal to full-rate convolution followed by sampling |
@@ -655,7 +656,7 @@ page, or real bytes with the file named.
 | V-13 | **closed** | AHK1B carries the accelerometer temperatures TSU Y+ / Y− / Z+ / Z−, TFEEU IF / REF / X / YZ and TICUN / TICUR. **Which columns are present per record is set by `prod_flag`**, so the reader must decode variable columns. The header has one malformed name ("TSU Z-" with a space). Units are not given (values ≈ 22 look like °C) | R-2 PDF pp. 31–32; `AHK1B_2020-01-02_C_04.txt` |
 | V-14 | **closed** | LHK1B carries LRI housekeeping (TM_RLU_TEMP, TMA_PMH_TEMP, …) but **no solar-array temperature**; RL04 L1B has none. AEI RTC1B provides the range thermal-coupling correction directly, so L-09 uses RTC1B | real LHK1B; D-6 |
 | V-15 | **closed** | PO.DAAC `GRACEFO_L1B_ASCII_GRAV_JPL_RL04`; ISDC daily archives `.noLRI` / `.LRI` / `.ACX`, each with an MD5 list; ITSG and ZARM publish no checksums | GUIDE Stage B runs |
-| V-16 | **closed** | ACX: AC0 thruster model, ACU transplant without thrusts (pitch offsets), ACS SRP/albedo correction, ACM drag and other forces; **ACH = ACU + ACS + ACM + AC0** (linear components), replacing ACT. Present every day of 2020-01 | R-7 (entry 2022-05-10); ISDC listing |
+| V-16 | **closed** | ACX: AC0 thruster model, ACU transplant without thrusts (pitch offsets), ACS SRP/albedo correction, ACM drag and other forces; **ACH = ACU + ACS + ACM + AC0** (linear components), replacing ACT. Present every day of 2020-01. The RL04 ACH1B header has ACT1B's nine columns and units, its eight `qualflg` meanings word for word and residuals "from non-CRN-filtered value" (1 Hz CRN output), so `Config` gives it ACT1B's preset (X-19) | R-7 (entry 2022-05-10); ISDC listing |
 | V-17 | **closed** 2026-09-25 | ITSG `nonConservativeForces` is **about 3 s late against JPL ACT1B** and **band-limited to about 10 mHz**. Cross-spectral phase over 2.5–10 mHz, weighted by coherence: x 3.1 / 5.4 / 2.6 s, z 3.0 / 3.0 / 1.3 s (C 2020-01-02, C 2020-01-03, D 2020-01-02); y has too little signal (0.8 / −2.3 / −2.0 s). Coherence falls below 0.3 above about 15 mHz on every axis. Below 2 mHz the phase is not a delay (different low-frequency content, e.g. TU Graz's own calibration), and it sets checkAlignment's full-band lag (−15 / +3 / +3 s, the opposite sign), which is therefore no timing measure for this pair. TU Graz's own ACT1B is timed like JPL's (P-2 App. A: GPS time via CLK1B, zero-phase CRN), and the README (2025-10-16) states only GPS time and 10 s sampling, so the delay comes from an undocumented step of the 10 s product. A caller comparing the two moves the ITSG epochs 3 s earlier; `run` never shifts | R-9 (README 2025-10-16); P-2 App. A; CI diagnostics on PR #58 (runs 36160272643, 36162760916, 36166998289) |
 
 **Further measured facts from Stage C**
@@ -714,6 +715,7 @@ repository has one open PR at a time.
 | timeSeriesPreparation | X-18 | CF/ACDD NetCDF export with PROV-O provenance and DataCite fields; Arc schema version and migration | — | X-15 |
 | timeSeriesPreparation | X-15 | campaign mode of `run` (6.6), per-day storage and the per-campaign manifest (5.2) → **release 1.1** | WP-19 part (`runBatch`) | X-14, X-16, G-03 |
 | timeSeriesPreparation | X-13 | classic GRACE: dictionaries, masks (`qualflg` per V-8), `Config` presets, classic fixtures in the integration test | — | G-02, X-10 |
+| timeSeriesPreparation | X-19 | `Config` preset for the hybrid ACH1B (as ACT1B, from its header), found by N-10b | ORC-12 | V-16, G-04 |
 | NonGravForces | N-04 | `sensor.Electrostatic` takes its default kernel from `crnKernel` | — | release 0.1 |
 | NonGravForces | N-01 | `qc` forwards to timeSeriesPreparation, then is deleted | — | release 0.2 |
 | NonGravForces | N-02 | `app.calibrate` upgraded (6.2), estimation via `lsqvce.fit`, `app.Calibration`, truth generator, integration test | WP-08, WP-09, WP-13, WP-18, WP-21 | release 1.0, V-6, R-02 |

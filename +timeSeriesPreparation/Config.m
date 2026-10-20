@@ -35,12 +35,17 @@ classdef Config
 %     v1.3, 4.3.2 and 6.2, whose bit table equals ACT1B's), and classic
 %     KBR1B takes the KBR1B preset (4.1.2 and 6.7 match it); the
 %     handbook's absolute KBR SNR edit (> 450 in 0.1 dB-Hz) is not used.
-%     GRACE-FO ACC1B removes none: its bits were never measured here. Any
-%     other product removes no bit and has no snr layer unless told.
+%     GRACE-FO ACC1B removes none: its bits were never measured here.
+%     GRACE-FO's hybrid transplant ACH1B (the .ACX archives, GRACE-D;
+%     X-19) takes ACT1B's preset in every section: its RL04 header has
+%     ACT1B's nine columns and units, the same eight qualflg meanings
+%     word for word, and residuals "from non-CRN-filtered value", i.e. the
+%     1 Hz CRN output. Any other product removes no bit and has no snr
+%     layer unless told.
 %
 %     crn (X-04): field preset, the crnKernel preset the product was filtered
-%     with in L1B processing - "ACC" for ACC1B (GRACE) and ACT1B (GRACE-FO),
-%     "KBR" for KBR1B (R-1 App. B; R-2 PDF p. 20). Any other product leaves
+%     with in L1B processing - "ACC" for ACC1B (GRACE), ACT1B and ACH1B
+%     (GRACE-FO), "KBR" for KBR1B (R-1 App. B; R-2 PDF p. 20). Any other product leaves
 %     it "" (not known, so not assumed).
 %
 %     align (X-06): fields method ("pchip"), maxGap ([] = 1.5 x the median
@@ -61,7 +66,7 @@ classdef Config
 %     unc (X-07): the gate and the uncertainty stages (CONCEPT 6.1, rows 6
 %     and 7). minWeightFraction is the minimum-data gate of observability
 %     (CONCEPT 5.2): an axis keeping less weight than this refuses. The
-%     presets set 0.5 for ACC1B, ACT1B, KBR1B and LRI1B (owner decision
+%     presets set 0.5 for ACC1B, ACT1B, ACH1B, KBR1B and LRI1B (owner decision
 %     2026-09-23: half the arc must survive, provisional until the
 %     regression baseline ORC-10 can refine it); any other product leaves
 %     it [] and observability then needs it given. blockLength ([] =
@@ -126,7 +131,7 @@ classdef Config
 %     s = toStruct(cfg);
 %
 %   LIMITATIONS
-%     Presets exist for ACC1B, ACT1B, KBR1B and LRI1B; any other product
+%     Presets exist for ACC1B, ACT1B, ACH1B, KBR1B and LRI1B; any other product
 %     gets the defaults. The crn preset of classic ACC1B ("ACC", 140.7 s)
 %     is GRACE-FO's; whether classic L1B used the handbook's 70.7 s is
 %     open (V-1), there being no public classic ACC1A to test it on.
@@ -138,7 +143,7 @@ classdef Config
 %   See also timeSeriesPreparation.Arc, timeSeriesPreparation.run, timeSeriesPreparation.mask, timeSeriesPreparation.crnKernel, timeSeriesPreparation.align, timeSeriesPreparation.fill, timeSeriesPreparation.observability, timeSeriesPreparation.drivers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-27 22:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-10-20 12:40 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Sections = ["mask" "qc" "crn" "align" "fill" "noise" "unc" "drivers" "run" "export"]
@@ -179,16 +184,16 @@ classdef Config
             cfg.mission = arc(1).mission;
             cfg.product = arc(1).product;
             switch cfg.product
-                case {"ACC1B", "ACT1B"}
+                case {"ACC1B", "ACT1B", "ACH1B"}
                     cfg.crn.preset = "ACC";
                 case "KBR1B"
                     cfg.crn.preset = "KBR";
             end
-            if any(cfg.product == ["ACC1B" "ACT1B" "KBR1B" "LRI1B"])
+            if any(cfg.product == ["ACC1B" "ACT1B" "ACH1B" "KBR1B" "LRI1B"])
                 cfg.unc.minWeightFraction = 0.5;
             end
             switch cfg.product
-                case "ACT1B"
+                case {"ACT1B", "ACH1B"}            % ACH1B: ACT1B's bit table; X-19
                     cfg.mask.removeBits = [5 6 7];
                 case "ACC1B"
                     if cfg.mission == "GRACE"      % D-22027 4.3.2; X-13

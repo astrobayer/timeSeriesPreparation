@@ -3,6 +3,22 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
+## 1.5.0 — 2026-10-20
+
+ACH1B release (X-19, issue #73). Found by NonGravForces N-10b, which
+compares GRACE-D calibrations on ACT1B and ACH1B and had to label its
+ACH1B arcs "ACT1B" to prepare both alike.
+
+- **X-19** `Config(arc)` gives GRACE-FO's hybrid transplant ACH1B (the
+  .ACX archives, GRACE-D; V-16) ACT1B's preset: `crn.preset` "ACC",
+  `unc.minWeightFraction` 0.5, `mask.removeBits` [5 6 7]. Before, it had
+  none, so `run` prepared it unlike ACT1B. Its RL04 header has ACT1B's nine
+  columns and units, the same eight `qualflg` meanings word for word and
+  residuals "from non-CRN-filtered value" (1 Hz CRN output);
+  `TestConfig/ach1bPresetFromHeader` reads the real ACH1B and ACT1B
+  extracts and asserts each of these facts and the preset. `report` still
+  draws noiseReference for ACT1B/ACC1B only.
+
 ## 1.4.0 — 2026-09-28
 
 Classic GRACE release (X-13). Classic arcs need gracefoReading 1.3.0 or

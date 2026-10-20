@@ -140,7 +140,7 @@ classdef Arc
 %   See also timeSeriesPreparation.Config, gracefoReading.readL1b, gracefoReading.readL1bMulti.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         SchemaVersion = "2"

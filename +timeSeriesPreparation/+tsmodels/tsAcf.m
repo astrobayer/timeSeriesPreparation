@@ -64,7 +64,7 @@ function [rho, lags, conf, nPairs] = tsAcf(x, maxLag)
 %   See also timeSeriesPreparation.tsmodels.tsPacf, timeSeriesPreparation.tsmodels.tsLjungBox, timeSeriesPreparation.tsmodels.tsFitArima.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         x {mustBeNumeric, mustBeReal}

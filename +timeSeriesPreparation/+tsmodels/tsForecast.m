@@ -104,7 +104,7 @@ function [yhat, se, lo, hi] = tsForecast(model, h, alpha, options)
 %   See also timeSeriesPreparation.tsmodels.tsFitArima, timeSeriesPreparation.tsmodels.tsFitSarima, timeSeriesPreparation.tsmodels.tsIntegrate, timeSeriesPreparation.tsmodels.tsModelDisp.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         model (1,1) struct

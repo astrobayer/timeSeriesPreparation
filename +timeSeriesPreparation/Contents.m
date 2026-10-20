@@ -1,5 +1,5 @@
 % timeSeriesPreparation - physics-free preparation of GRACE and GRACE-FO time series
-% Version 1.4.0  2026-09-28
+% Version 1.5.0  2026-10-20
 %
 %   Design: docs/CONCEPT.md. Order of work: docs/GUIDE.md.
 %

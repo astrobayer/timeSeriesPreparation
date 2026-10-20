@@ -31,7 +31,7 @@ classdef TestCheckAlignment < matlab.unittest.TestCase
 %     speed          - one day, 3 columns, +/-60 s in under 2 s.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function reportFields(testCase)

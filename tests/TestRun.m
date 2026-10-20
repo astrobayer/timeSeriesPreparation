@@ -33,7 +33,7 @@ classdef TestRun < matlab.unittest.TestCase
 %                      arithmetic; each stage's tests hold these.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Fields = ["arc" "reference" "diagnostics" "correlation" "flags" "config" "provenance"]

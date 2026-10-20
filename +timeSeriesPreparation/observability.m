@@ -20,8 +20,8 @@ function report = observability(arc, X, options)
 %     Minimum-data gate (CONCEPT 5.2): if any axis keeps less than
 %     MinWeightFraction, the call refuses with an identifier naming the
 %     axes; it never returns NaN metrics for them. MinWeightFraction []
-%     takes Config(arc).unc.minWeightFraction (0.5 for ACC1B, ACT1B, KBR1B,
-%     LRI1B; owner decision 2026-09-23). A product without a preset needs
+%     takes Config(arc).unc.minWeightFraction (0.5 for ACC1B, ACT1B, ACH1B,
+%     KBR1B, LRI1B; owner decision 2026-09-23). A product without a preset needs
 %     it given.
 %
 %     Metrics per axis, from the rows with w > 0, each scaled by sqrt(w):
@@ -102,7 +102,7 @@ function report = observability(arc, X, options)
 %   See also timeSeriesPreparation.Config, timeSeriesPreparation.bootstrap, timeSeriesPreparation.Arc.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.4.0 | 2026-09-23 20:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-10-20 12:40 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc (1,1) timeSeriesPreparation.Arc

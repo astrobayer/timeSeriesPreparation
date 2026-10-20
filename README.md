@@ -11,7 +11,7 @@ rangingPreparation (LRI/KBR):
 - bootstrap and cross-validation;
 - correlation analysis.
 
-**Status: release 1.4.0 (X-13).** Skeleton and CI (X-00b), sigtools v1.3.1
+**Status: release 1.5.0 (X-19).** Skeleton and CI (X-00b), sigtools v1.3.1
 as `+spectral` / `+tsmodels` (X-01, conventions X-02), `Arc` and `Config`
 (X-03), the exact ATBD CRN kernel and its output-epoch application (X-04),
 masks and the residual quality control ported from NonGravForces (X-05),
@@ -30,6 +30,8 @@ GRACE-FO Level-1A: CRN(ACT1A) reproduces ACT1B to 2.5e-5 relative rms or
 better per axis (X-12). Release 1.4.0 supports classic GRACE L1B (X-13):
 units and `qualflg` meanings from the GRACE handbook (via gracefoReading),
 the ACC1B fill-flag preset, and a classic A/B day through `run`.
+Release 1.5.0 gives GRACE-FO's hybrid ACH1B the ACT1B preset, which its
+header supports in full (X-19).
 Changes: `CHANGELOG.md`.
 
 ```matlab
