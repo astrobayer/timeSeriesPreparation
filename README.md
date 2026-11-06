@@ -11,7 +11,7 @@ rangingPreparation (LRI/KBR):
 - bootstrap and cross-validation;
 - correlation analysis.
 
-**Status: release 1.5.0 (X-19).** Skeleton and CI (X-00b), sigtools v1.3.1
+**Status: release 1.5.1 (Q12 test against lsqvce v7.0.1).** Skeleton and CI (X-00b), sigtools v1.3.1
 as `+spectral` / `+tsmodels` (X-01, conventions X-02), `Arc` and `Config`
 (X-03), the exact ATBD CRN kernel and its output-epoch application (X-04),
 masks and the residual quality control ported from NonGravForces (X-05),
@@ -32,6 +32,8 @@ units and `qualflg` meanings from the GRACE handbook (via gracefoReading),
 the ACC1B fill-flag preset, and a classic A/B day through `run`.
 Release 1.5.0 gives GRACE-FO's hybrid ACH1B the ACT1B preset, which its
 header supports in full (X-19).
+Release 1.5.1 holds the Q12 PSD → ACV agreement to the exact AR(1)
+autocovariance, so it passes with lsqvce v7.0.1 (and v6.1.3).
 Changes: `CHANGELOG.md`.
 
 ```matlab

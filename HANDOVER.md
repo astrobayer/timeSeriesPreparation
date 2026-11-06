@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.42 · 2026-10-20 · X-19 (ACH1B preset) and release 1.5.0 merged (PR #74, `977d10d`); CI 728 + 0 + 0; v1.5.0 released; issue #73 closed**
+**Revision 0.43 · 2026-11-07 · Q12 `psdToAcvAgrees` held to the exact AR(1) autocovariance; CI's lsqvce pin v6.1.3 → v7.0.1; release 1.5.1 (PR open)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -9,6 +9,62 @@ restates:
 - `docs/GUIDE.md` — the order of work and every procedure.
 
 ---
+
+## Q12 against lsqvce v7.0.1, and release 1.5.1 — 2026-11-07 (PR open); scope frozen 2026-11-07
+
+**Found** by running the suite through toolboxInstaller (2026-11-07),
+which installs lsqvce's newest release, v7.0.1, where CI pinned v6.1.3:
+`TestLsqvceAgreement/psdToAcvAgrees` failed for both spectra, by up to
+1.1e-4 (6.6e-6 of r(0)) at lag 49, growing like lag^2. **Cause, read
+in lsqvce:** since v6.6.2 (WP-111, "the PSD law's ACV without a lag
+period") `lsqvce.kernel.psd2acv` integrates the piecewise-linear
+interpolant of S exactly against the cosine, where the test assumed the
+trapezoid on both sides. Measured against the exact autocovariance of
+the AR(1) law the spectrum is built from, r(k) = phi^k / (1 - phi^2):
+`spec2acv` is within 5.7e-14 (ar09) and 2.1e-16 (ar097) of r(0);
+`psd2acv` v7.0.1 within 2.4e-6 and 6.6e-6. So at these lags the newer
+lsqvce kernel is the less accurate one; that is lsqvce's trade (no
+periodic wrap at long lags), recorded here, not changed here.
+
+**Scope (frozen):**
+- `psdToAcvAgrees`: each kernel against the exact r(k), `spec2acv` to
+  1e-12 r(0), `psd2acv` to the bound (df^2/12) * integral |S''| df
+  (from |S - S_lin| <= (df^2/8)|S''| per segment, averaged: df^2/12),
+  computed in the test from the grid, plus 1e-12 r(0); the two to the
+  sum. The class help states each tolerance and the measured values.
+- CI: the test-only lsqvce pin v6.1.3 → v7.0.1 (`.github/workflows/ci.yml`).
+- Release 1.5.1 (PATCH: a test fix and a dependency pin; no toolbox
+  function changes): `chore: version 1.5.0 -> 1.5.1` as its own commit over
+  every literal (216 files, as 1.5.0's), CHANGELOG section, README status.
+- Not in scope: whether lsqvce should keep the short-lag accuracy it gave
+  up in WP-111 (lsqvce's decision); the installer's missing
+  `READING_DATA_POOL` for this package's tests (toolboxInstaller's registry).
+
+**Prediction** (before any run): **728 + 0 + 0 = 728** on CI, unchanged
+(no test added or removed); every tag as at 1.5.0: contract 225,
+reference 263, precision 23, robustness 140, metamorphic 44,
+vectorisation 21, speed 12.
+
+**Fault injection** (local, not committed): with the bound halved,
+exactly `psdToAcvAgrees(ar09)` and `(ar097)` fail; restored, the class is
+14/14 with lsqvce v7.0.1 and 14/14 with v6.1.3 (`matlab -batch`, R2026a).
+
+**Tier A verdict (2026-11-07, R2026a, `607ad26` + records,
+`matlab -batch timeSeriesPreparationCiGate` with deps at CI's pins:
+gracefoReading v1.3.0, lsqvce v7.0.1; `READING_DATA_POOL=E:\DATAPOOL`):
+714 + 11 + 14 = 728** (the 11 failed are among the 14 incomplete: an
+`assertNotEmpty` on a pool file). The total is as predicted; contract 225,
+metamorphic 44, precision 23, speed 12, vectorisation 21 are full, reference
+250 of 263, robustness 139 of 140. **`TestLsqvceAgreement` is 14/14 with
+v7.0.1**, the failure this change is for. **Every non-pass is a DATAPOOL
+file this host does not hold now:** `TestCrnVerification` x3 (no
+Level-1A), `TestDefectCatalogue` dc1-dc8 (ACT1B, KBR1B, THR1B days of
+2020 under `GRACEFO\L1B\RL04`), `TestIntegration` x2, `TestTemplates/
+realThrusterDay`. **This host's pool changed since 1.5.0:** at X-19 it held
+GRACE-FO L1B RL04 (5 failed + 8 incomplete); on 2026-11-07 `E:\DATAPOOL`
+has no `GRACEFO` folder at all. Recorded as a tier debt for the CI runner,
+which has the pool. Static audit (ci-actions v1.3.2) clean at 1.5.1, docs
+in sync.
 
 ## X-19 — Config preset for the hybrid ACH1B, and release 1.5.0 — merged 2026-10-20 (PR #74, `977d10d`; issue #73 closed; v1.5.0 tagged by the workflow); scope was frozen 2026-10-20
 
