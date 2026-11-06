@@ -64,7 +64,7 @@ function T = eventTable(varargin)
 %   See also timeSeriesPreparation.qc.screen, timeSeriesPreparation.qc.hampel, timeSeriesPreparation.qc.detectImpulses, timeSeriesPreparation.qc.detectJumps.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 if nargin == 0
     T = table(datetime.empty(0,1), datetime.empty(0,1), string.empty(0,1), string.empty(0,1), ...

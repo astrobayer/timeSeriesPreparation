@@ -37,7 +37,7 @@ classdef TestFill < matlab.unittest.TestCase
 %                      capped by the model.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-09-24 08:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'reference'})
         function ar1OneSampleClosedForm(testCase)

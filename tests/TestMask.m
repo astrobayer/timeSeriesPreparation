@@ -37,7 +37,7 @@ classdef TestMask < matlab.unittest.TestCase
 %     precision, speed, vectorisation - exempt: comparisons of integers.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function noSourceNoLayer(testCase)

@@ -246,7 +246,7 @@ function res = run(arc, options)
 %   See also timeSeriesPreparation.Config, timeSeriesPreparation.internal.stageCache, timeSeriesPreparation.internal.fileSha256, timeSeriesPreparation.mask, timeSeriesPreparation.align, timeSeriesPreparation.qc.screen, timeSeriesPreparation.noise, timeSeriesPreparation.fill, timeSeriesPreparation.correlate.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         arc timeSeriesPreparation.Arc

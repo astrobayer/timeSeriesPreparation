@@ -60,7 +60,7 @@ function d = readNetcdf(file)
 %   See also timeSeriesPreparation.exportNetcdf, timeSeriesPreparation.qc.eventTable.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         file (1,1) string
