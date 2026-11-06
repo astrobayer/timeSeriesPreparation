@@ -5,7 +5,7 @@ classdef TestLsqvceAgreement < matlab.unittest.TestCase
 %     CONCEPT 11, Q12 (decided 2026-09-18): sigtools and lsqvce both keep
 %     their ARMA autocovariance, PSD -> ACV, whiteness and AR-fitting code,
 %     and this test holds them together mechanically. lsqvce is a
-%     test-only dependency (v6.1.3 in CI, deps/lsqvce); without it every
+%     test-only dependency (v7.0.1 in CI, deps/lsqvce); without it every
 %     test here is incomplete, never passed. Each tolerance names the term
 %     it bounds and was measured in NumPy on transcriptions of both sides
 %     (2026-09-23):
@@ -14,9 +14,23 @@ classdef TestLsqvceAgreement < matlab.unittest.TestCase
 %         8.6e-16 of r(0), and 4.6e-13 for poles at |z| = 0.98, whose
 %         stationary covariance has condition about 1/(1 - |z|^2) = 25.
 %         Held to 1e-10 r(0).
-%       spec2acv <-> psd2acv: the same trapezoid, once by inverse FFT and
-%         once as a direct cosine sum. Measured 3.2e-16 of R(0). Held to
-%         1e-12 R(0).
+%       spec2acv <-> psd2acv: NOT the same rule any more. Up to lsqvce
+%         v6.6.1 both were the trapezoid (measured 3.2e-16 of R(0)). Since
+%         v6.6.2 (WP-111) psd2acv integrates the piecewise-linear
+%         interpolant S_lin of S exactly against the cosine, so the two
+%         differ by O((omega df)^2), and an equality test between them
+%         would be a statement about lsqvce's version. Each is therefore
+%         held to the EXACT autocovariance of the AR(1) law the spectrum
+%         is built from, r(k) = phi^k / (1 - phi^2), with the tolerance
+%         of its own rule:
+%         spec2acv (trapezoid on a smooth periodic integrand, converging
+%         geometrically): measured 5.7e-14 and 2.1e-16 of r(0); held to
+%         1e-12 r(0).
+%         psd2acv: |error| <= integral |S - S_lin| df
+%         <= (df^2 / 12) * integral |S''| df, computed in the test from
+%         the grid itself; measured at 0.66 and 0.61 of that bound with
+%         v7.0.1 (2026-11-07), so the bound is not vacuous; plus
+%         1e-12 r(0) for rounding. Their agreement follows from the two.
 %       tsLjungBox <-> whitenessCorr: both use the biased sample ACF
 %         (mean removed, lag-0 normalised), so the largest |rho_k| of
 %         tsAcf equals whitenessCorr to rounding (1e-12). Q is then
@@ -30,8 +44,10 @@ classdef TestLsqvceAgreement < matlab.unittest.TestCase
 %
 %   COVERAGE
 %     reference      - four ARMA autocovariances, two PSD -> ACV
-%                      transforms, the whiteness statistic, and three AR
-%                      fits by Levinson and by Whittle agree with lsqvce.
+%                      transforms (each against the exact AR(1)
+%                      autocovariance and against each other), the
+%                      whiteness statistic, and three AR fits by Levinson
+%                      and by Whittle agree with lsqvce.
 %     robustness     - a 1e-7 planted error in the model fails the
 %                      tolerance.
 %     precision, contract, speed, vectorisation, metamorphic - exempt: the
@@ -39,7 +55,7 @@ classdef TestLsqvceAgreement < matlab.unittest.TestCase
 %                      this class checks agreement only.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-23 20:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.0 | 2026-11-07 02:30 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (TestParameter)
         Arma = struct("arma11", {{[1 0.5], [1 -0.9]}}, ...
@@ -72,8 +88,18 @@ classdef TestLsqvceAgreement < matlab.unittest.TestCase
             S = 2 * dt * abs(1 ./ (1 - phi * exp(-2i * pi * f * dt))).^2;
             [R, lags] = timeSeriesPreparation.spectral.spec2acv(f, S);
             r = lsqvce.kernel.psd2acv(f, S, dt, 50);
+            exact = phi .^ (0:49)' / (1 - phi^2);       % unit-variance AR(1) innovations
+            % (df^2/12) * integral |S''| df: the error of integrating the
+            % piecewise-linear interpolant instead of S (psd2acv since v6.6.2)
+            df = f(2) - f(1);
+            bound = df / 12 * sum(abs(diff(S, 2)));
             testCase.verifyEqual(lags(1:50), (0:49)' * dt, "RelTol", 1e-12);
-            testCase.verifyEqual(R(1:50), r, "AbsTol", 1e-12 * r(1));
+            testCase.verifyEqual(R(1:50), exact, "AbsTol", 1e-12 * exact(1), ...
+                "spec2acv against the exact AR(1) autocovariance");
+            testCase.verifyEqual(r, exact, "AbsTol", bound + 1e-12 * exact(1), ...
+                "psd2acv against the exact AR(1) autocovariance");
+            testCase.verifyEqual(R(1:50), r, "AbsTol", bound + 2e-12 * exact(1), ...
+                "the two kernels agree within the sum of their bounds");
         end
 
         function whitenessStatisticAgrees(testCase)
