@@ -3,6 +3,22 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
+## 1.5.1 — 2026-11-07
+
+Q12 agreement test, found by running the suite through toolboxInstaller,
+which installs lsqvce's newest release (v7.0.1) where CI pinned v6.1.3.
+
+- **Q12** `TestLsqvceAgreement/psdToAcvAgrees` asserted that `spec2acv`
+  and lsqvce's `psd2acv` agree to 1e-12 r(0) because both were the
+  trapezoid. Since lsqvce v6.6.2 `psd2acv` integrates the piecewise-linear
+  interpolant of S exactly against the cosine, and with v7.0.1 both cases
+  failed by up to 6.6e-6 of r(0), growing like lag^2. Each kernel is now
+  held to the exact AR(1) autocovariance phi^k / (1 - phi^2): `spec2acv`
+  to 1e-12 r(0) (measured 5.7e-14), `psd2acv` to the derived bound
+  (df^2/12) * integral |S''| df (measured at 0.66 and 0.61 of it), the two
+  to the sum. No toolbox function changes; the test count stays 728.
+- CI's test-only lsqvce pin moves v6.1.3 → v7.0.1.
+
 ## 1.5.0 — 2026-10-20
 
 ACH1B release (X-19, issue #73). Found by NonGravForces N-10b, which

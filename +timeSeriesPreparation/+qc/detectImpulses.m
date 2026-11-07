@@ -83,7 +83,7 @@ function [events, info] = detectImpulses(r, options)
 %   See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.qc.screen, timeSeriesPreparation.crnKernel.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-26 07:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-09-26 07:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 arguments
     r double

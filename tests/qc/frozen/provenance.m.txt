@@ -52,7 +52,7 @@ function p = provenance(unit, options)
 %   See also timeSeriesPreparation.internal.stageSeed, timeSeriesPreparation.internal.toolboxVersion.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-24 16:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-09-24 16:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         unit (1,1) string

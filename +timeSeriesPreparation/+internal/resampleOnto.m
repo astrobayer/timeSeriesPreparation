@@ -68,7 +68,7 @@ function [yq, info] = resampleOnto(t, y, valid, tq, method, maxGap)
 %   See also timeSeriesPreparation.align, timeSeriesPreparation.checkAlignment, interp1.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-09-23 10:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     M = size(y, 2);
     yq = NaN(numel(tq), M);

@@ -89,7 +89,7 @@ function res = regressDrivers(P, Z, options)
 %   See also timeSeriesPreparation.bootstrap, timeSeriesPreparation.observability, timeSeriesPreparation.partialCorrelation.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.0 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-09-24 11:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         P (:,:) double
