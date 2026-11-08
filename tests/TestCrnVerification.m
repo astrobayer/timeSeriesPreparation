@@ -31,7 +31,7 @@ classdef TestCrnVerification < matlab.unittest.TestCase
 %                      have their own tests.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.1 | 2026-09-27 22:10 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-11-08 23:00 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Bar = 2e-3
@@ -143,8 +143,7 @@ end
 
 function f = poolFile(testCase, level, product, day, sat)
 % The DATAPOOL file of PRODUCT on DAY for SAT; the test is incomplete without it.
-    pool = string(getenv("READING_DATA_POOL"));
-    testCase.assumeNotEmpty(char(pool), "READING_DATA_POOL is not set (X-12 needs the DATAPOOL).");
+    pool = dataPoolRoot(testCase, "X-12");
     testCase.assumeNotEmpty(meta.package.fromName("gracefoReading"), "gracefoReading is not on the path.");
     folder = fullfile(pool, "GRACEFO", level, "RL04", extractBefore(day, 5), day);
     hits = dir(fullfile(folder, product + "_" + day + "_" + sat + "_*.txt"));

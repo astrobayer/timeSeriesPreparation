@@ -59,7 +59,7 @@ classdef TestIntegration < matlab.unittest.TestCase
 %                      stage's tests the rest.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.1 | 2026-09-27 22:15 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-11-08 23:00 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         V4Corr  = [0.95 0.95 0.93]      % thresholds; measured 0.984 / 0.973 / 0.955
@@ -69,8 +69,7 @@ classdef TestIntegration < matlab.unittest.TestCase
 
     methods (Test, TestTags = {'reference'})
         function realDayAgainstItsg(testCase)
-            pool = string(getenv("READING_DATA_POOL"));
-            testCase.assumeNotEmpty(char(pool), "READING_DATA_POOL is not set.");
+            pool = dataPoolRoot(testCase, "V-4");
             testCase.assumeNotEmpty(meta.package.fromName("gracefoReading"), ...
                 "gracefoReading is not on the path.");
             day = datetime(2020, 1, 2);
@@ -151,8 +150,7 @@ classdef TestIntegration < matlab.unittest.TestCase
         function classicDaysEndToEnd(testCase)
             % X-13: ACC1B and THR1B of 2008-07-02 (classic GRACE, binary,
             % RL02), A and B, through run with QualFlags and Thrusters.
-            pool = string(getenv("READING_DATA_POOL"));
-            testCase.assumeNotEmpty(char(pool), "READING_DATA_POOL is not set.");
+            pool = dataPoolRoot(testCase, "X-13");
             testCase.assumeNotEmpty(meta.package.fromName("gracefoReading"), ...
                 "gracefoReading is not on the path.");
             names = ["lin_accl_x" "lin_accl_y" "lin_accl_z"];

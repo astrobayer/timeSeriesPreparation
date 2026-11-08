@@ -5,10 +5,10 @@ classdef TestDefectCatalogue < matlab.unittest.TestCase
 %     HANDOVER X-05 PR-A records the catalogue: file, epoch range and
 %     expected verdict per class, found by the scans of 2020-01 and
 %     2020-07 (throwaway PRs #49, #50). Each reference test reads its day
-%     from the DATAPOOL (READING_DATA_POOL, GRACEFO\L1B\RL04) with
+%     from the DATAPOOL (DATAPOOL, else READING_DATA_POOL; GRACEFO\L1B\RL04) with
 %     gracefoReading.readL1b and checks the recorded numbers first, so a
 %     changed file fails loudly, then the verdict of this toolbox. Without
-%     the variable or gracefoReading the tests are incomplete, never passed.
+%     a pool variable or gracefoReading the tests are incomplete, never passed.
 %     Seconds are GPS seconds of the file's day.
 %       DC-1  GRACE-D safe mode: ACT1B D 2020-01-18 ends at 18229 s, the
 %             01-19 file holds no data, 01-22 starts at 43385 s; the
@@ -40,7 +40,7 @@ classdef TestDefectCatalogue < matlab.unittest.TestCase
 %     robustness  - the three synthetic classes.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.1 | 2026-09-24 18:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.1 | 2026-11-08 23:00 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'reference'})
         function dc1SafeMode(testCase)
@@ -186,8 +186,7 @@ end
 
 function f = dayFile(testCase, product, day, sat)
 % The DATAPOOL file of PRODUCT on DAY for SAT; the test is incomplete without it.
-    pool = string(getenv("READING_DATA_POOL"));
-    testCase.assumeNotEmpty(char(pool), "READING_DATA_POOL is not set (D-9 needs the DATAPOOL).");
+    pool = dataPoolRoot(testCase, "D-9");
     testCase.assumeNotEmpty(meta.package.fromName("gracefoReading"), "gracefoReading is not on the path.");
     folder = fullfile(pool, "GRACEFO", "L1B", "RL04", extractBefore(day, 5), day);
     hits = dir(fullfile(folder, product + "_" + day + "_" + sat + "_*.txt"));
