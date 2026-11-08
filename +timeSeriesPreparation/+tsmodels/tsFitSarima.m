@@ -128,7 +128,7 @@ function model = tsFitSarima(x, order, seasonal, s, options)
 %   See also timeSeriesPreparation.tsmodels.tsFitArima, timeSeriesPreparation.tsmodels.tsAutoSarima, timeSeriesPreparation.tsmodels.tsForecast, timeSeriesPreparation.tsmodels.tsCheckResiduals, timeSeriesPreparation.tsmodels.tsModelDisp.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.1 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.2 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         x

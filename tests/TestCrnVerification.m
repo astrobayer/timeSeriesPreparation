@@ -31,7 +31,7 @@ classdef TestCrnVerification < matlab.unittest.TestCase
 %                      have their own tests.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.1 | 2026-11-08 23:00 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.2 | 2026-11-08 23:00 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (Constant)
         Bar = 2e-3
