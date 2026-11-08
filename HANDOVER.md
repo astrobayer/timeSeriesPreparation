@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.43 · 2026-11-07 · Q12 `psdToAcvAgrees` held to the exact AR(1) autocovariance; CI's lsqvce pin v6.1.3 → v7.0.1; release 1.5.1 (PR open)**
+**Revision 0.44 · 2026-11-08 · the tests read the data pool root as `DATAPOOL`, then `READING_DATA_POOL`; release 1.5.2 (PR open)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -9,6 +9,55 @@ restates:
 - `docs/GUIDE.md` — the order of work and every procedure.
 
 ---
+
+## Data pool rule, and release 1.5.2 — 2026-11-08 (PR open); scope frozen 2026-11-08
+
+**Owner, 2026-11-08:** "All data go always to the data pool. Only model
+code or libraries go to the toolbox." The contract is toolboxInstaller
+`docs/DATA_POOL.md`: pool root = an explicit option, then
+`getenv("DATAPOOL")` (the installer's `startup.m` sets it), then
+`getenv("READING_DATA_POOL")` (the older name, still honoured, never
+required). **This toolbox downloads nothing**, so only the tests read the
+pool, and the installer's missing `READING_DATA_POOL` for this package
+(Q12 record, "not in scope") is answered by `DATAPOOL`.
+
+**Scope (frozen):**
+- `tests/dataPoolRoot.m` (new helper, not a test): `DATAPOOL`, else
+  `READING_DATA_POOL`; the first variable that is set decides; with
+  neither, `assumeNotEmpty` (incomplete, never passed), the message names
+  both variables and the WP. It replaces the five `getenv("READING_DATA_POOL")`
+  reads of `TestCrnVerification` (X-12), `TestDefectCatalogue` (D-9),
+  `TestIntegration` (V-4 real day, X-13 classic days) and `TestTemplates`
+  (X-17). The layout below the root is unchanged.
+- GUIDE rev 1.12 (section 2 table, section 5) and `docs/references/REFERENCES.md`.
+- Release 1.5.2 (PATCH: tests and documentation only): `chore: version
+  1.5.1 -> 1.5.2` as its own commit over every literal (217 files: 1.5.1's
+  216 and the helper), CHANGELOG section, README status.
+- Not in scope: `.github/workflows/ci.yml` (it passes
+  `READING_DATA_POOL`, a valid fallback; its comment still names only that
+  variable).
+
+**Prediction** (before any run): **728 total** (no test added or removed;
+the helper is a function file, not a test class), every tag total as at
+1.5.1. Without a pool variable exactly the 14 pool tests incomplete,
+714 + 0 + 14; `DATAPOOL` and `READING_DATA_POOL` set to the same pool give
+the same verdict.
+
+**Tier A verdict (2026-11-08, R2026a, worktree `_wt/timeSeriesPreparation-datapool`
+at `6f7bbce`, `timeSeriesPreparationCiGate(Coverage=false, SearchDatabase=false)`
+with deps at CI's pins: gracefoReading v1.3.0, lsqvce v7.0.1, exported to
+`deps/`):**
+- neither variable: **714 + 0 + 14 = 728**, the 14 incomplete each with
+  "Neither DATAPOOL nor READING_DATA_POOL is set" (D-9 x8, X-12 x3, V-4,
+  X-13, X-17); contract 225, metamorphic 44, precision 23, speed 12,
+  vectorisation 21 full, reference 250 of 263, robustness 139 of 140;
+- `DATAPOOL=E:\DATAPOOL`: **728 + 0 + 0 = 728**, every tag full. **This
+  host's pool changed again since 1.5.1** (2026-11-07: no `GRACEFO` folder,
+  714 + 11 + 14): it now holds every day the suite reads;
+- only `READING_DATA_POOL=E:\DATAPOOL` (the fallback): **728 + 0 + 0 = 728, the same as with DATAPOOL**.
+
+The total is as predicted in all three. Static audit (ci-actions v1.3.2)
+clean at 1.5.2 (145 files), docs in sync (76 generated files).
 
 ## Q12 against lsqvce v7.0.1, and release 1.5.1 — 2026-11-07 (PR open); scope frozen 2026-11-07
 

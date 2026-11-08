@@ -3,6 +3,23 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
+## 1.5.2 — 2026-11-08
+
+The owner's data pool rule (2026-11-08, toolboxInstaller
+`docs/DATA_POOL.md`): the pool root is `DATAPOOL`, then
+`READING_DATA_POOL` (the older name, still honoured, never required).
+This toolbox downloads nothing; only the tests read the pool.
+
+- The five reads of `getenv("READING_DATA_POOL")` in `TestCrnVerification`,
+  `TestDefectCatalogue`, `TestIntegration` (two) and `TestTemplates` go
+  through one helper, `tests/dataPoolRoot.m`: `DATAPOOL`, else
+  `READING_DATA_POOL`; with neither the test is incomplete, as before,
+  and the message names both variables. The layout below the root is
+  unchanged.
+- GUIDE (rev 1.12) and `docs/references/REFERENCES.md` name the order.
+  CI keeps passing `READING_DATA_POOL`, a valid fallback.
+- No toolbox function changes; the test count stays 728.
+
 ## 1.5.1 — 2026-11-07
 
 Q12 agreement test, found by running the suite through toolboxInstaller,
