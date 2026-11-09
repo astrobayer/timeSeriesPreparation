@@ -21,7 +21,7 @@ classdef TestDrivers < matlab.unittest.TestCase
 %     speed          - exempt: one interp1 per driver and stretch.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.2 | 2026-09-24 10:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.6.0 | 2026-09-24 10:30 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'reference'})
         function equalsAlign(testCase)

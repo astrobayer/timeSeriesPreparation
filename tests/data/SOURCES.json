@@ -1,0 +1,196 @@
+{
+  "schema": 1,
+  "sources": [
+    {
+      "id": "l1b-2020-01-02",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-01-02_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-01-02/ACT1B_2020-01-02_C_04.txt",
+        "GRACEFO/L1B/RL04/2020/2020-01-02/ACT1B_2020-01-02_D_04.txt",
+        "GRACEFO/L1B/RL04/2020/2020-01-02/TIM1B_2020-01-02_C_04.txt",
+        "GRACEFO/L1B/RL04/2020/2020-01-02/TIM1B_2020-01-02_D_04.txt",
+        "GRACEFO/L1B/RL04/2020/2020-01-02/CLK1B_2020-01-02_C_04.txt",
+        "GRACEFO/L1B/RL04/2020/2020-01-02/CLK1B_2020-01-02_D_04.txt"
+      ],
+      "MB": 147,
+      "sha256": "b13e61ea46a2baab3cf97023ad4f8a86f5e7677faec21b2e68f0631206f2ece7",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-01-02 without the LRI products (147 MB download), for TestCrnVerification (X-12: ACT1B, TIM1B and CLK1B of C and D) and TestIntegration/realDayAgainstItsg (ACT1B C). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-01-04",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-01-04_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-01-04/ACT1B_2020-01-04_D_04.txt",
+        "GRACEFO/L1B/RL04/2020/2020-01-04/THR1B_2020-01-04_D_04.txt"
+      ],
+      "MB": 148,
+      "sha256": "566f019f028983b4aa1a903a3c06fa6752060b65d8480afe773a43391fe54669",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-01-04 without the LRI products (148 MB download), for TestDefectCatalogue and TestTemplates (DC-8: ACT1B and THR1B of D). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-01-08",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-01-08_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-01-08/ACT1B_2020-01-08_C_04.txt",
+        "GRACEFO/L1B/RL04/2020/2020-01-08/KBR1B_2020-01-08_Y_04.txt"
+      ],
+      "MB": 147,
+      "sha256": "8f80ceccf1fab53b504c93aa547eb3f0986fdfbfd0e20cfcfc41653b1fcab30c",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-01-08 without the LRI products (147 MB download), for TestDefectCatalogue (ACT1B C; KBR1B gaps inside the day, DC-3). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-01-09",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-01-09_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-01-09/KBR1B_2020-01-09_Y_04.txt"
+      ],
+      "MB": 148,
+      "sha256": "902a6e3947611c70f440feac5fca2f6fd8f2f43842e422a4c340bad0a9c851f5",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-01-09 without the LRI products (148 MB download), for TestDefectCatalogue (KBR1B). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-01-14",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-01-14_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-01-14/KBR1B_2020-01-14_Y_04.txt"
+      ],
+      "MB": 148,
+      "sha256": "35653aaa325aa2584fff7e0cd3cf782c369083dc7c28b19b568f1a81228c446a",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-01-14 without the LRI products (148 MB download), for TestDefectCatalogue (KBR1B, the gap across the day boundary). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-01-15",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-01-15_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-01-15/KBR1B_2020-01-15_Y_04.txt"
+      ],
+      "MB": 148,
+      "sha256": "67459fa93829f3e77fe7caaa79c78264daedc79a4369feb9d31abf1c9d167563",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-01-15 without the LRI products (148 MB download), for TestDefectCatalogue (KBR1B, the gap across the day boundary). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-01-18",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-01-18_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-01-18/ACT1B_2020-01-18_D_04.txt"
+      ],
+      "MB": 89,
+      "sha256": "4083eef1abc1d6a018eb1a9573c155a00dcdf827504d1194a41f4e919ab53583",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-01-18 without the LRI products (89 MB download), for TestDefectCatalogue (ACT1B D). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-01-19",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-01-19_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-01-19/ACT1B_2020-01-19_D_04.txt"
+      ],
+      "MB": 73,
+      "sha256": "8d870cfaa21ce834f917c12ca28398f326371a90043ebb614c2e1cece3740fe6",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-01-19 without the LRI products (73 MB download), for TestDefectCatalogue (ACT1B D). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-01-22",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-01-22_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-01-22/ACT1B_2020-01-22_D_04.txt"
+      ],
+      "MB": 131,
+      "sha256": "ec2afe1047d6ca5b4e2aaf0507c0a05340e0128342f2d7c6dde896ac2df6ff17",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-01-22 without the LRI products (131 MB download), for TestDefectCatalogue (ACT1B D). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-07-01",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-07-01_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-07-01/KBR1B_2020-07-01_Y_04.txt"
+      ],
+      "MB": 145,
+      "sha256": "13454b3fdb007f364f19ccea603a0292f3eda465b76bee3d24cdf09852c55596",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-07-01 without the LRI products (145 MB download), for TestDefectCatalogue (KBR1B qualflg). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-07-09",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-07-09_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-07-09/KBR1B_2020-07-09_Y_04.txt"
+      ],
+      "MB": 145,
+      "sha256": "758d79250171c0bf0b287ac482b5dcf866932dc9c93a09764c201c3e21808844",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-07-09 without the LRI products (145 MB download), for TestDefectCatalogue (KBR1B gaps and qualflg). Only the listed products are copied."
+    },
+    {
+      "id": "l1b-2020-07-12",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1B/JPL/INSTRUMENT/RL04/2020/gracefo_1B_2020-07-12_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1B/RL04/2020/2020-07-12/KBR1B_2020-07-12_Y_04.txt"
+      ],
+      "MB": 145,
+      "sha256": "6ef838459a7cab4d176c939091422de25e81a90a4d27c6ae168282c7c309d303",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1B served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1B day archive of 2020-07-12 without the LRI products (145 MB download), for TestDefectCatalogue (KBR1B). Only the listed products are copied."
+    },
+    {
+      "id": "l1a-2020-01-02",
+      "url": "https://isdc-data.gfz.de/grace-fo/Level-1A/JPL/INSTRUMENT/RL04/2020/gracefo_1A_2020-01-02_RL04.ascii.noLRI.tgz",
+      "files": [
+        "GRACEFO/L1A/RL04/2020/2020-01-02/ACT1A_2020-01-02_C_04.txt",
+        "GRACEFO/L1A/RL04/2020/2020-01-02/ACT1A_2020-01-02_D_04.txt"
+      ],
+      "MB": 423,
+      "sha256": "999d27f9deae9aafe49b369ff3fd5ad2434b4aebde34ec6cae81983c7b60523f",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE-FO Level-1A served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "GRACE-FO Level-1A day archive of 2020-01-02 without the LRI products (423 MB download), for TestCrnVerification (X-12: ACT1A of C and D against ACT1B)."
+    },
+    {
+      "id": "grace-l1b-2008-07-02",
+      "url": "https://isdc-data.gfz.de/grace/Level-1B/JPL/INSTRUMENT/RL02/2008/grace_1B_2008-07-02_02.tar.gz",
+      "files": [
+        "GRACE/L1B/JPL/RL02/2008/ACC1B_2008-07-02_A_02.dat",
+        "GRACE/L1B/JPL/RL02/2008/ACC1B_2008-07-02_B_02.dat",
+        "GRACE/L1B/JPL/RL02/2008/THR1B_2008-07-02_A_02.dat",
+        "GRACE/L1B/JPL/RL02/2008/THR1B_2008-07-02_B_02.dat"
+      ],
+      "MB": 32,
+      "sha256": "9a1a2e2778500e299d0f8e76de50982210146cab3a3b388dff19ea33e5b0e43b",
+      "licence": "unreviewed",
+      "licenceText": "NASA/JPL GRACE Level-1B RL02 served by GFZ's ISDC, under the provider's terms; not reviewed.",
+      "description": "Classic GRACE Level-1B day archive of 2008-07-02, RL02 binary (32 MB download), for TestIntegration/classicDaysEndToEnd (X-13: ACC1B and THR1B of A and B)."
+    },
+    {
+      "id": "itsg-ncf-2020-01-02",
+      "url": "https://ftp.tugraz.at/pub/ITSG/satelliteOrbitProducts/operational/GRACEFO-1/nonConservativeForces/2020/GRACEFO-1_nonConservativeForces_2020-01-02.txt.gz",
+      "files": [
+        "GRACEFO-1/nonConservativeForces/2020/GRACEFO-1_nonConservativeForces_2020-01-02.txt"
+      ],
+      "MB": 0.3,
+      "sha256": "5528e19a783b924add176a849d2904217437d60c7e7f517efff4ddda0b2b4914",
+      "licence": "unstated",
+      "licenceText": "ITSG (TU Graz) operational GRACE-FO non-conservative forces, served at ftp.tugraz.at. The server's README describes the products and states no licence.",
+      "description": "ITSG non-conservative forces of GRACEFO-1 on 2020-01-02 (0.3 MB download, unpacked from .gz), the reference of TestIntegration/realDayAgainstItsg."
+    }
+  ]
+}

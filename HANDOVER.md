@@ -1,6 +1,6 @@
 # HANDOVER — timeSeriesPreparation
 
-**Revision 0.44 · 2026-11-08 · the tests read the data pool root as `DATAPOOL`, then `READING_DATA_POOL`; release 1.5.2 (PR open)**
+**Revision 0.45 · 2026-11-09 · the repository owns its test-data list, `tests/data/SOURCES.json`, checked by `TestDataSources`; release 1.6.0 (PR open)**
 
 This file is the single point of truth for this repository's **status,
 obligations and repository-level decisions**. It points at, and never
@@ -9,6 +9,77 @@ restates:
 - `docs/GUIDE.md` — the order of work and every procedure.
 
 ---
+
+## Test-data list in the repository, and release 1.6.0 — 2026-11-09 (PR open); scope frozen 2026-11-09
+
+**Owner, 2026-11-09 (through the toolboxInstaller session):** the
+repository owns its test-data list. Until now toolboxInstaller's
+registry (`registry/timeSeriesPreparation.json`, `tests.data.sources`)
+named the third-party files the real-data tests read from the pool, and
+nothing tied that list to the tests. The installer will read it from
+this repository.
+
+**Scope (frozen):**
+- `tests/data/SOURCES.json` (new; `tests/data/samples/` stays as it is):
+  `{"schema": 1, "sources": [...]}`, the registry's array copied
+  verbatim with Python `json.load` / `json.dump(ensure_ascii=False,
+  indent=2)`, UTF-8, LF. 15 sources, 26 files, paths relative to the
+  DATAPOOL root.
+- `tests/TestDataSources.m` (new, 9 tests): contract - the file parses at
+  schema 1; every entry carries id, url, files, MB, licence, licenceText,
+  description (unique ids, https, MB > 0, sha256 64 hex where present,
+  relative paths); every listed file sits in a layout the pool tests look
+  in (`GRACEFO\L1A|L1B\RL04\<yyyy>\<date>\`, `GRACE\L1B\JPL\RL02\<yyyy>\`,
+  `GRACEFO-1|2\`); every listed file's product and date are named by a
+  test that reads the pool; every day a pool test names with literal
+  product, date and satellite (`readDay` / `dayFile`) is listed.
+  Robustness - each of the four findings fires on a planted manifest or
+  test text.
+- Documentation: GUIDE rev 1.13 (section 5), README status.
+- `.github/workflows/ci.yml`: **comments only** - the header and the job
+  `env` comment name `DATAPOOL` first and `READING_DATA_POOL` as the
+  fallback the workflow passes. No variable, step or pin changes. In its
+  own commit; the owner asked for one PR per repository, so GUIDE
+  section 1's "workflow changes stand alone" is departed from for a
+  comment-only edit, as 1.5.1 did for a pin.
+- Release 1.6.0 (MINOR: the repository now supplies the installer's
+  test-data list; no toolbox function changes): `chore: version 1.5.2 ->
+  1.6.0` as its own commit over every literal, CHANGELOG section, README
+  status.
+- Not in scope: toolboxInstaller (it switches to reading the file);
+  deriving pool names that the tests compute in loops (`TestCrnVerification`'s
+  `poolFile`, the `cases` table of DC-3, the satellite loops of
+  `TestIntegration`) - they are covered by the product-and-date direction
+  only.
+
+**Prediction** (before any run): **737 total** (728 + 9). Tags: contract
+230 (225 + 5), robustness 144 (140 + 4), reference 263,
+precision 23, metamorphic 44, vectorisation 21, speed 12. Without a pool
+variable exactly the 14 pool tests incomplete, **723 + 0 + 14**; with
+`DATAPOOL=E:\DATAPOOL`, **737 + 0 + 0**. `TestDataSources` reads no pool
+and downloads nothing, so it is 9/9 in both.
+
+**Fault injection** (local, not committed): the four robustness tests plant
+each finding (duplicate id, missing url, absolute path, malformed sha256;
+a file without its day folder; an unread KBR1B day; an unlisted literal
+THR1B day) and the healthy case. On copies of `tests/` with the real list
+mutated (`matlab -batch`, R2026a): healthy 9/9; THR1B 2020-01-04 dropped
+fails exactly `everyLiteralPoolDayIsListed`; the ITSG file moved out of
+`GRACEFO-1\` fails exactly `everyFileSitsWhereThePoolTestsLook`;
+**TIM1B C/D of 2020-01-02 dropped is NOT caught** (9/9) - TIM1B is named
+only through `poolFile`'s computed arguments. That is the limitation the
+scope names, measured.
+
+**Tier A verdict (2026-11-09, R2026a, matthiaspc, worktree
+`_wt/timeSeriesPreparation-sources` at `e3c3dd8`,
+`matlab -batch "timeSeriesPreparationCiGate(Coverage=false, SearchDatabase=false)"`
+with deps at CI's pins: gracefoReading v1.3.0, lsqvce v7.0.1, exported to
+`deps/`; `DATAPOOL=E:\DATAPOOL`, `READING_DATA_POOL` unset): 737 + 0 + 0 =
+737**, as predicted; contract 230, metamorphic 44, precision 23, reference
+263, robustness 144, speed 12, vectorisation 21, every tag as predicted;
+1721 s. **Not measured:** the no-pool environment (predicted 723 + 0 + 14;
+`TestDataSources` reads no pool) and the CI tier. Static audit (ci-actions
+v1.3.2) clean at 1.6.0 (146 files), docs in sync (76 generated files).
 
 ## Data pool rule, and release 1.5.2 — 2026-11-08 (PR open); scope frozen 2026-11-08
 

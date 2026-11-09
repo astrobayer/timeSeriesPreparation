@@ -18,7 +18,7 @@ function pool = dataPoolRoot(testCase, need)
 %     TestIntegration and TestTemplates, which exercise it whenever they run.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.2 | 2026-11-08 23:00 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.6.0 | 2026-11-08 23:00 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         testCase (1,1) matlab.unittest.TestCase

@@ -55,7 +55,7 @@ classdef TestLsqvceAgreement < matlab.unittest.TestCase
 %                      this class checks agreement only.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.2 | 2026-11-07 00:30 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.6.0 | 2026-11-07 00:30 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties (TestParameter)
         Arma = struct("arma11", {{[1 0.5], [1 -0.9]}}, ...
