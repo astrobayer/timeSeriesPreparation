@@ -15,7 +15,7 @@ classdef TestRequirePackage < matlab.unittest.TestCase
 %     robustness  - missing namespace and invalid caller are refused.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.2 | 2026-09-22 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.6.0 | 2026-09-22 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function presentNamespacePasses(testCase)

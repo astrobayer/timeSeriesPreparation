@@ -27,7 +27,7 @@ classdef TestExport < matlab.unittest.TestCase
 %                      writes stored values and computes nothing.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.2 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.6.0 | 2026-09-26 21:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function fileLayout(testCase)

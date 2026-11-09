@@ -92,7 +92,7 @@ function [best, tbl] = tsAutoSarima(x, maxOrder, maxSeasonal, s, options)
 %   See also timeSeriesPreparation.tsmodels.tsFitSarima, timeSeriesPreparation.tsmodels.tsAutoArima, timeSeriesPreparation.tsmodels.tsForecast, timeSeriesPreparation.tsmodels.tsModelDisp.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.2 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.6.0 | 2026-09-23 12:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         x {mustBeNumeric, mustBeReal}

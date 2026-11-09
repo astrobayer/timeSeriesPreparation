@@ -31,7 +31,7 @@ classdef TestDataSources < matlab.unittest.TestCase
 %                   and the healthy planted case is silent.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.2 | 2026-11-09 09:30 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.6.0 | 2026-11-09 09:30 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     properties
         Manifest

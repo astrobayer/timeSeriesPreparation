@@ -99,7 +99,7 @@ function out = report(res, options)
 %   See also timeSeriesPreparation.run, timeSeriesPreparation.spectral.powerSpectrum, timeSeriesPreparation.spectral.arma2psd, timeSeriesPreparation.noiseReference.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.2 | 2026-09-26 23:15 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.6.0 | 2026-09-26 23:15 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     arguments
         res (1,1) struct

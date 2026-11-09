@@ -92,7 +92,7 @@ function [mask, events, info] = screen(y_meas, y_model, epoch, options)
 %   See also timeSeriesPreparation.qc.residuals, timeSeriesPreparation.qc.hampel, timeSeriesPreparation.qc.detectImpulses, timeSeriesPreparation.qc.detectJumps, timeSeriesPreparation.qc.eventTable, timeSeriesPreparation.mask.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.2 | 2026-09-26 07:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.6.0 | 2026-09-26 07:45 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
 arguments
     y_meas double
