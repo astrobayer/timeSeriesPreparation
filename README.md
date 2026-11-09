@@ -11,7 +11,7 @@ rangingPreparation (LRI/KBR):
 - bootstrap and cross-validation;
 - correlation analysis.
 
-**Status: release 1.5.2 (the tests read the data pool as `DATAPOOL`, then `READING_DATA_POOL`).** Skeleton and CI (X-00b), sigtools v1.3.1
+**Status: release 1.6.0 (the repository owns its test-data list, `tests/data/SOURCES.json`).** Skeleton and CI (X-00b), sigtools v1.3.1
 as `+spectral` / `+tsmodels` (X-01, conventions X-02), `Arc` and `Config`
 (X-03), the exact ATBD CRN kernel and its output-epoch application (X-04),
 masks and the residual quality control ported from NonGravForces (X-05),
@@ -36,6 +36,9 @@ Release 1.5.1 holds the Q12 PSD → ACV agreement to the exact AR(1)
 autocovariance, so it passes with lsqvce v7.0.1 (and v6.1.3).
 Release 1.5.2 reads the data pool root of the real-data tests as `DATAPOOL`,
 then `READING_DATA_POOL` (the owner's data pool rule).
+Release 1.6.0 lists the files the real-data tests read from the pool in
+`tests/data/SOURCES.json`, which toolboxInstaller's *Get test data* reads,
+and `TestDataSources` checks it against the tests.
 Changes: `CHANGELOG.md`.
 
 ```matlab

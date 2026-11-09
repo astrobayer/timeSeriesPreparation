@@ -3,6 +3,34 @@
 Semantic versioning (`ci-actions/VERSIONING.md`); `+timeSeriesPreparation/Contents.m`
 is the single version source. Work packages are the rows of `docs/CONCEPT.md` 10.1.
 
+## 1.6.0 — 2026-11-09
+
+The repository owns its test-data list (the owner's request, 2026-11-09).
+Until now toolboxInstaller's registry (`registry/timeSeriesPreparation.json`,
+`tests.data.sources`) named the third-party files the real-data tests read
+from the DATAPOOL, and nothing tied that list to the tests. The installer
+reads it from this repository from now on.
+
+- **`tests/data/SOURCES.json`** (new; `tests/data/samples/` unchanged):
+  `{"schema": 1, "sources": [...]}`, the registry array copied verbatim
+  (Python `json.load` / `json.dump`, indent 2, UTF-8, LF). 15 sources,
+  26 files: GRACE-FO L1B RL04 days of 2020-01-02 … 2020-07-12, L1A
+  ACT1A of 2020-01-02, classic GRACE RL02 ACC1B/THR1B of 2008-07-02 and
+  the ITSG non-conservative forces of 2020-01-02; each with `url`,
+  `files` (relative to the DATAPOOL root), `MB`, `sha256`, `licence`,
+  `licenceText`, `description`.
+- **`tests/TestDataSources.m`** (contract 5, robustness 4): the file parses
+  at schema 1; every entry is complete (unique ids, https, MB > 0,
+  sha256 64 hex, relative paths); every file sits in a folder the pool
+  tests look in; every file's product and date are named by a test that
+  calls `dataPoolRoot`; every day such a test names with literal
+  arguments (`readDay` / `dayFile`) is listed. No pool, no download.
+  Limitation: names a test computes (`TestCrnVerification`'s `poolFile`)
+  are checked in one direction only.
+- `.github/workflows/ci.yml`: comments only - `DATAPOOL` first,
+  `READING_DATA_POOL` (which the workflow still passes) as the fallback.
+- GUIDE rev 1.13 (section 5). No toolbox function changes; tests 728 → 737.
+
 ## 1.5.2 — 2026-11-08
 
 The owner's data pool rule (2026-11-08, toolboxInstaller

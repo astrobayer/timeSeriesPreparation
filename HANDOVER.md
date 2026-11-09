@@ -59,6 +59,28 @@ variable exactly the 14 pool tests incomplete, **723 + 0 + 14**; with
 `DATAPOOL=E:\DATAPOOL`, **737 + 0 + 0**. `TestDataSources` reads no pool
 and downloads nothing, so it is 9/9 in both.
 
+**Fault injection** (local, not committed): the four robustness tests plant
+each finding (duplicate id, missing url, absolute path, malformed sha256;
+a file without its day folder; an unread KBR1B day; an unlisted literal
+THR1B day) and the healthy case. On copies of `tests/` with the real list
+mutated (`matlab -batch`, R2026a): healthy 9/9; THR1B 2020-01-04 dropped
+fails exactly `everyLiteralPoolDayIsListed`; the ITSG file moved out of
+`GRACEFO-1\` fails exactly `everyFileSitsWhereThePoolTestsLook`;
+**TIM1B C/D of 2020-01-02 dropped is NOT caught** (9/9) - TIM1B is named
+only through `poolFile`'s computed arguments. That is the limitation the
+scope names, measured.
+
+**Tier A verdict (2026-11-09, R2026a, matthiaspc, worktree
+`_wt/timeSeriesPreparation-sources` at `e3c3dd8`,
+`matlab -batch "timeSeriesPreparationCiGate(Coverage=false, SearchDatabase=false)"`
+with deps at CI's pins: gracefoReading v1.3.0, lsqvce v7.0.1, exported to
+`deps/`; `DATAPOOL=E:\DATAPOOL`, `READING_DATA_POOL` unset): 737 + 0 + 0 =
+737**, as predicted; contract 230, metamorphic 44, precision 23, reference
+263, robustness 144, speed 12, vectorisation 21, every tag as predicted;
+1721 s. **Not measured:** the no-pool environment (predicted 723 + 0 + 14;
+`TestDataSources` reads no pool) and the CI tier. Static audit (ci-actions
+v1.3.2) clean at 1.6.0 (146 files), docs in sync (76 generated files).
+
 ## Data pool rule, and release 1.5.2 — 2026-11-08 (PR open); scope frozen 2026-11-08
 
 **Owner, 2026-11-08:** "All data go always to the data pool. Only model
