@@ -8,7 +8,7 @@ id, citation, where the owner's copy lives, what it is needed for.
 - **A verification item (CONCEPT V-…) closes only when its number is read
   from the registered document**, with the page cited.
 - Rows marked *(DOI)* have no local copy.
-- `<ROOT>` = `READING_DATA_POOL`.
+- `<ROOT>` = `DATAPOOL` (or `READING_DATA_POOL`, the older name).
 - Manifests: `GRACEFO\DOCUMENTS\SHA256SUMS_documents_2026-09-19.txt` (220
   documents), plus the data manifests of GUIDE Stage B.
 

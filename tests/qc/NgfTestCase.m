@@ -15,7 +15,7 @@ classdef NgfTestCase < matlab.unittest.TestCase
 %     None of its own: a base class without test methods.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.1 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.2 | 2026-09-24 22:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (TestMethodSetup)
         function hushExtrapolation(tc)

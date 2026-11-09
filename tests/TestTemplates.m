@@ -25,7 +25,7 @@ classdef TestTemplates < matlab.unittest.TestCase
 %                      conv and a MAD, the bank is data.
 %
 %   ---------------------------------------------------------------------
-%   timeSeriesPreparation v1.5.1 | 2026-09-26 19:00 (CEST, UTC+02:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
+%   timeSeriesPreparation v1.5.2 | 2026-11-08 23:00 (CET, UTC+01:00) | Matthias Weigelt with the help of Claude Code (Anthropic)
 
     methods (Test, TestTags = {'contract'})
         function bankShape(testCase)
@@ -202,8 +202,7 @@ end
 
 function [t, obs, aux] = readDay(testCase, product, day, sat)
 % The DATAPOOL day file (as TestDefectCatalogue); incomplete without it.
-    pool = string(getenv("READING_DATA_POOL"));
-    testCase.assumeNotEmpty(char(pool), "READING_DATA_POOL is not set (X-17 needs the DATAPOOL).");
+    pool = dataPoolRoot(testCase, "X-17");
     testCase.assumeNotEmpty(meta.package.fromName("gracefoReading"), "gracefoReading is not on the path.");
     folder = fullfile(pool, "GRACEFO", "L1B", "RL04", extractBefore(day, 5), day);
     hits = dir(fullfile(folder, product + "_" + day + "_" + sat + "_*.txt"));
