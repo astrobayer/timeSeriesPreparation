@@ -1,8 +1,8 @@
 # GUIDE — building the GRACE/GRACE-FO preprocessing chain, step by step
 
-**Revision 1.12 · 2026-11-08 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
+**Revision 1.13 · 2026-11-09 · written with Claude Opus 5 (Anthropic) for Matthias Weigelt**
 
-Rev 1.12: the data pool root is read as `DATAPOOL`, then `READING_DATA_POOL` (owner's data pool rule, 2026-11-08; section 2 table and section 5). Rev 1.11: timeSeriesPreparation tags and releases through its release workflow (section 3); its `v0.1.0` recorded as an anomaly. Rev 1.10: X-01 and X-03 run as one batch PR (owner, 2026-09-22); Phase 1 row updated. Rev 1.9: timeSeriesPreparation's static audit command and CI contexts measured at X-00b (section 2). Rev 1.8: tier B defined correctly (MATLAB through CI); N-02 waits for lsqvce#110. Rev 1.7: Phase 0 complete (lsqvce v6.1.0 released). Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
+Rev 1.13: timeSeriesPreparation's test-data list is `tests/data/SOURCES.json`, which toolboxInstaller reads (section 5). Rev 1.12: the data pool root is read as `DATAPOOL`, then `READING_DATA_POOL` (owner's data pool rule, 2026-11-08; section 2 table and section 5). Rev 1.11: timeSeriesPreparation tags and releases through its release workflow (section 3); its `v0.1.0` recorded as an anomaly. Rev 1.10: X-01 and X-03 run as one batch PR (owner, 2026-09-22); Phase 1 row updated. Rev 1.9: timeSeriesPreparation's static audit command and CI contexts measured at X-00b (section 2). Rev 1.8: tier B defined correctly (MATLAB through CI); N-02 waits for lsqvce#110. Rev 1.7: Phase 0 complete (lsqvce v6.1.0 released). Rev 1.6: Stage C done — the register exists, local copies live in the DATAPOOL, V-items closed in CONCEPT 9.3. Rev 1.5: D-4/D-6/D-7/D-8 sources named by the owner, D-10 from ZARM (owner-approved); rangingPreparation issues in Appendix A. Rev 1.4: Stage B follows the owner's real DATAPOOL layout; `READING_DATA_POOL` is the DATAPOOL root (owner decision 2026-09-19); D-1 corrected; the runner tools. Rev 1.3: step 11 is yours (the token cannot mark a PR ready); A3 step 6 recorded as done (#15 merged with a merge commit); new standing rule on merged branches; timeSeriesPreparation issue numbers in Appendix A. Rev 1.2: lives in timeSeriesPreparation `docs/` since X-00a; the X-00a PR is named by role, not by number. Rev 1.1: the current GitHub token stays (owner decision 2026-09-18: one user, private repositories); A1 now only checks that it reaches the new repositories.
 
 This file is the **only authority for the order of work and for every
 procedure**: preparing repositories, collecting data and references,
@@ -240,6 +240,18 @@ layout; nothing is reorganised. Since the owner's data pool rule of
 as `DATAPOOL` first, which the installer's `startup.m` sets, and as
 `READING_DATA_POOL` (the older name, still honoured, never required) when
 `DATAPOOL` is unset; CI passes the latter.
+
+**Which files the tests need, and from where.** timeSeriesPreparation's
+real-data tests read the files listed in `tests/data/SOURCES.json`
+(`{"schema": 1, "sources": [...]}`; per source `id`, `url`, `files`
+relative to `<ROOT>`, `MB`, `sha256`, `licence`, `licenceText`,
+`description`). The repository owns the list and toolboxInstaller's
+*Get test data* reads it from there (1.6.0; before, it lived only in the
+installer's registry). `tests/TestDataSources.m` ties it to the tests:
+every listed file must sit where the pool tests look, its product and
+date must be named by one of them, and every day they name with literal
+arguments must be listed. A new real-data test adds its files to the list
+in the same change.
 
 ```
 <ROOT>\RawData\tests\realdata\                   flat day fixtures (2020-01-01, 2025-01-01, all products)
