@@ -52,6 +52,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      runner:
+        description: "auto | a8 | hosted - narrows the routing, never widens it"
+        required: false
+        default: auto
 
 permissions:
   contents: read
@@ -61,6 +66,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Where may MATLAB run for this event: A8, a GitHub-hosted runner, or
+  # nowhere? One decision for the whole organisation, in
+  # astrobayer/ci-actions (ci-route; docs/CI_GUIDE.md section 2): members
+  # only, no forks, A8 from a public repository only for the allow-listed
+  # user. This job never fails - a refusal arrives in the MATLAB job as
+  # runner=none and matlab-setup turns that required context red.
+  route:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      runner: ${{ steps.route.outputs.runner }}
+      runs-on: ${{ steps.route.outputs.runs-on }}
+      reason: ${{ steps.route.outputs.reason }}
+    steps:
+      - id: route
+        uses: astrobayer/ci-actions/ci-route@v1.4.0
+        with:
+          policy: ${{ vars.CI_MATLAB_RUNNER }}
+          request: ${{ github.event.inputs.runner }}
+
   audit:
     name: audit
     runs-on: ubuntu-latest
@@ -77,8 +104,9 @@ jobs:
           config: .github/matlab-docs.json
 
   matlab:
+    needs: [route]
     name: matlab
-    runs-on: [self-hosted, Windows]
+    runs-on: ${{ fromJSON(needs.route.outputs.runs-on) }}
     # 60: the gate took 27 min 7 s at X-05 PR-C (run 36033100696, 622 tests
     # with the D-9 DATAPOOL reads) against the former 30 (HANDOVER O-6).
     timeout-minutes: 60
@@ -87,14 +115,21 @@ jobs:
       HAVE_REFERENCE_TOKEN: ${{ secrets.REFERENCE_READ_TOKEN != '' }}
       # The DATAPOOL root for the real-day tests; read-only. The fallback
       # name: tests/dataPoolRoot.m reads DATAPOOL first, then this.
-      READING_DATA_POOL: ${{ vars.READING_DATA_POOL }}
+      READING_DATA_POOL: ${{ needs.route.outputs.runner == 'a8' && vars.READING_DATA_POOL || '' }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       # timeout-minutes sits here, not in the action: the composite schema
       # rejects the key on a step (ci-actions README, measured).
-      - uses: astrobayer/ci-actions/matlab-probe@v1.3.2
-        timeout-minutes: 2
+      # MATLAB on the routed runner: probed on A8, installed by setup-matlab on a
+      # GitHub-hosted runner (public repositories only), or a red step quoting
+      # the routing refusal. Replaces matlab-probe; same immutable-tag rule.
+      - uses: astrobayer/ci-actions/matlab-setup@v1.4.0
+        timeout-minutes: 15
+        with:
+          runner: ${{ needs.route.outputs.runner }}
+          reason: ${{ needs.route.outputs.reason }}
+          products: ${{ vars.CI_MATLAB_PRODUCTS }}
 
       # Pinned to a release tag: the minimum version this repository is
       # tested against moves in the PR that needs a newer one (GUIDE 3).
